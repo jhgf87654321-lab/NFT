@@ -655,8 +655,14 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       }
 
       const backgroundInstruction = isSpecial
-        ? 'The background MUST be a solid, vibrant color that is a direct contrast or a harmonious analogous match to the primary color of the clothing. Do not use plain white or grey backgrounds.'
-        : `Minimal studio backdrop (white/grey/soft neutral) with bold typography matching the ${randomTheme} vibe.`;
+        ? 'The background MUST be a solid, vibrant color field only (no patterns, no signage, no typography) that contrasts or harmonizes with the clothing. Do not use plain white or grey unless it enhances the outfit.'
+        : 'Minimal clean studio backdrop (white, grey, or soft neutral gradient only). Absolutely no typography, posters, signage, or readable text in the environment.';
+
+      const fullBodyFramingInstruction =
+        'FRAMING (NON-NEGOTIABLE): Single character, full-length full-body photograph — entire person visible from top of head to feet (toes/shoes fully in frame). Camera pulled back for a large heroic full-body editorial shot with modest padding above the head and below the feet. NOT half-body, NOT waist-up, NOT knee-up crop, NOT missing feet, NOT close-up portrait.';
+
+      const noBackgroundTextInstruction =
+        'BACKGROUND TEXT BAN (NON-NEGOTIABLE): The background and scene must contain NO readable text, NO typography, NO floating labels, NO captions, NO watermarks, NO QR codes, NO barcodes, NO UI overlays, NO poster words, and NO environmental signage. Garment logos/graphics on clothing are allowed only when required by the outfit or reference garment — never as background elements.';
       let complexRetroKeywords = '';
       if (params.thickness > 80 && params.era < 50) {
         complexRetroKeywords =
@@ -679,9 +685,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         ? 'Do NOT recolor or add colored trims/piping/stitching to the referenced garments. Keep the garment colors and graphics exactly as the reference (no extra neon accents).'
         : colorStyleBase;
 
-      const overlayInstruction = isSpecial
-        ? ''
-        : 'Overlay: minimal technical UI lines/crosshair as a BACKGROUND overlay only. DO NOT place UI graphics on clothing. (no QR codes, no watermarks).\n';
+      const overlayInstruction = '';
 
       const customFramingInstruction =
         designMode === 'Custom' &&
@@ -690,7 +694,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           customDesign.bottom === 'Custom' ||
           customDesign.shoes === 'aim' ||
           customDesign.shoes === 'Custom')
-          ? 'Framing: full-body head-to-toe portrait, centered, inside the canvas with visible padding at the top and bottom; ensure the entire head is fully visible with no head cut-off (no cropping).'
+          ? 'Reference try-on: keep the character centered; preserve full head-to-toe visibility with no head or feet cut-off.'
           : '';
 
       const isEraFuturisticHuman = params.era > 95 && gender !== 'Creature';
@@ -714,7 +718,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
 
         // 4. Composition
         const composition =
-          'Composition: High-fashion editorial photography, minimalist studio background, sharp rim lighting, cinematic depth of field, graphic design layout vibes.';
+          'Composition: High-fashion editorial full-body photography, minimalist clean studio background (no text), sharp rim lighting, cinematic depth of field, single subject centered in frame.';
 
         // 5. Stylized Keywords
         const stylizedKeywordsOptions = [
@@ -736,9 +740,12 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `A professional high-end luxury fashion NFT.\n` +
           `Theme: Futuristic Techwear Aesthetic and Cyber-Avant-Garde.\n` +
           `${composition}\n` +
+          `${fullBodyFramingInstruction}\n` +
+          `${noBackgroundTextInstruction}\n` +
           `Character: A highly advanced humanoid model. ${characterIdentity} Skin tone: ${selectedSkinColor}. Pose/Posture: ${poseStyle}.\n` +
           `Style Influences: ${finalStyleInstruction}\n` +
           (customFramingInstruction ? `${customFramingInstruction}\n` : '') +
+          `Background: ${backgroundInstruction}\n` +
           `Outfit: ${selectedClothingBranch} ${outfitDesc}\n` +
           `${materialDefinition}\n` +
           `Style Keywords: ${selectedStylizedKeywords}\n` +
@@ -752,12 +759,15 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         prompt =
           `A professional ${randomStyle} for a high-end luxury fashion NFT. Avant-garde fashion photography, high-fashion editorial full-body shot of a woman.\n` +
           `Theme: ${randomTheme}.\n` +
+          `${fullBodyFramingInstruction}\n` +
+          `${noBackgroundTextInstruction}\n` +
           `Style: Maximalist aesthetic, textile art, Japanese avant-garde style. ${finalStyleInstruction}\n` +
           `Character & Headpiece: ${characterDesc} Porcelain skin, bold red lips. Skin tone: ${selectedSkinColor}. Pose & Posture: ${poseStyle}.\n` +
           (customFramingInstruction ? `${customFramingInstruction}\n` : '') +
           `Clothing & Texture: patchwork, Bold geometric patterns mixed with floral motifs. The clothing layering and amount is ${thicknessStyle}.\n` +
           `${outfitDesc}\n` +
           `Environment & Lighting: ${backgroundInstruction} Studio lighting, sharp focus, high contrast.\n` +
+          `${overlayInstruction}` +
           `Color Palette: ${colorStyle}. Core color logic MUST feature highly saturated colors contrasted with black and white.\n` +
           `CRITICAL AESTHETIC INSTRUCTION: The image MUST look like a high-end real photograph. Holographic, iridescent, or reflective materials are allowed, but they MUST look like real physical fabrics photographed in a studio, NOT like a digital illustration, 3D render, or hand-drawn art. Use premium material textures.\n` +
           `CRITICAL LIGHTING AND PRODUCT INSTRUCTION: All clothing items (especially the top and shoes) MUST perfectly blend with the scene's lighting, BUT their core design, graphics, logos, and structure MUST NOT BE ALTERED from the provided reference images. This is a strict virtual try-on: the reference garments must be preserved pixel-for-pixel in terms of design, only adapting to the character's pose and lighting.\n` +
@@ -767,12 +777,14 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         prompt =
           `A professional ${randomStyle} for a high-end luxury fashion NFT.\n` +
           `Theme: ${randomTheme}.\n` +
-          `The composition is a single, unified full-frame image featuring exactly ONE character. Do NOT generate split screens, collages, multi-panel layouts, or separate detail shots. Do NOT generate QR codes, watermarks, or text barcodes that look like QR codes.\n` +
+          `The composition is a single, unified full-frame image featuring exactly ONE character. Do NOT generate split screens, collages, multi-panel layouts, or separate detail shots.\n` +
+          `${fullBodyFramingInstruction}\n` +
+          `${noBackgroundTextInstruction}\n` +
           `Background: ${backgroundInstruction}\n` +
-          `Graphic Elements: Overlay the image with minimalist, clean graphic design elements. Do NOT draw UI elements ON the clothing itself.\n` +
           `Character: ${characterDesc} Pose/Posture: ${poseStyle}.\n` +
           (customFramingInstruction ? `${customFramingInstruction}\n` : '') +
           `${outfitDesc}\n` +
+          `${overlayInstruction}` +
           `Colors & Textures: ${colorStyle}. ${finalStyleInstruction} The clothing layering and amount is ${thicknessStyle}.\n` +
           `Skin tone: ${selectedSkinColor}.\n` +
           `Photography & Quality: High-end luxury fashion photography, haute couture, sophisticated tailoring. Studio lighting, soft shadows, photorealistic, 8k uhd, sharp focus, realistic skin texture.\n` +
