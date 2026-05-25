@@ -58,7 +58,7 @@ type CreatorStateV1 = {
   creatureTexture: CreatureTexture;
   designMode: DesignMode;
   customDesign: { top: string; bottom: string; shoes: string };
-  aestheticStyle: 'Default' | '90s Haute Couture Runway';
+  aestheticStyle: 'Default' | '90s Haute Couture Runway' | 'Workwear';
   params: Record<string, number>;
   selectedSkinColor: string;
 };
@@ -102,7 +102,8 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
     heavy: 25,
     chromaticity: 60,
     era: 29,
-    thickness: 100
+    thickness: 100,
+    pose: 50,
   });
 
   const [selectedSkinColor, setSelectedSkinColor] = useState('#E0AC69'); // Default skin tone (Tan Bio)
@@ -158,6 +159,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         chromaticity: 60,
         era: 29,
         thickness: 100,
+        pose: 50,
       },
       selectedSkinColor: '#E0AC69',
     }),
@@ -302,6 +304,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           { label: '色彩浓度（Chromaticity）', key: 'chromaticity', value: params.chromaticity },
           { label: '年代（复古 → 现代 / Era）', key: 'era', value: params.era },
           { label: '厚重（性感 → 厚重 / Thickness）', key: 'thickness', value: params.thickness },
+          { label: '姿态（端正 → 大片 / Pose）', key: 'pose', value: params.pose ?? 50 },
         ];
       default:
         return [];
@@ -450,7 +453,32 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
             : `The clothing has subtle, elegant color accents of ${randomColor}. The background and skin tone must remain natural.`;
       const eraStyle = params.era > 70 ? 'ultra-modern, futuristic, and cutting-edge' : params.era < 30 ? 'retro, vintage, neutral, and simple' : 'a blend of contemporary and classic styles';
       let finalStyleInstruction = `The aesthetic era is ${eraStyle}.`;
-      if (aestheticStyle !== 'Default') {
+      if (aestheticStyle === 'Workwear') {
+        const occupations = [
+          {
+            name: 'high-end restaurant waiter/server (高级餐厅服务员)',
+            desc: 'elegant, modern luxury restaurant server uniform. Features a sleek stylized half-apron made of fine textured slate-grey canvas, a tailored crisp mandarin-collar shirt with subtle clean asymmetrical piping, custom pockets for service utensils, high-fashion modern bistro crew attire with a highly professional neat look.',
+          },
+          {
+            name: 'precision barber/hairstylist (专业理发师)',
+            desc: 'multi-pocket tactical leather barber harness utility vest worn over a minimalist tailored heavy dark cotton shirt. Features custom modular slots for scissors, tools and combs, sleek industrial metal buckles, durable and modern industrial-chic apparel, making it a stylish high-fashion haircut artisan statement.',
+          },
+          {
+            name: 'extreme outdoor sports enthusiast / explorer (户外运动者 / 探险家)',
+            desc: 'heavy-duty techwear outdoor sports enthusiast mountaineering gear. Features elements of Alpine climbing apparel with functional silver carabiners, weather-sealed neon-accented futuristic zippers, protective reinforced shoulder pads, durable waterproof tactical shell fabrics with geometric utility pocketing, alpine explorer style.',
+          },
+          {
+            name: 'boutique modern barista / craft brewer (咖啡师)',
+            desc: 'premium dual-tone raw canvas and heavy leather boutique barista apron with modular utility tool straps, tailored dark sleek undershirt with meticulously rolled-up sleeves, functional chic pockets, high-concept modern craft coffee expert uniform.',
+          },
+          {
+            name: 'futuristic high-tech robotic mechanic (智能机械师)',
+            desc: 'high-fashion futuristic protective worker overalls and mechanic jumpsuit. Features industrial utility contrast-color straps, heavy metallic clasps, caution high-visibility panels, grease-resistant technical canvas fabrics, and high-fashion heavy machine maintenance crew aesthetic.',
+          },
+        ];
+        const selectedOcc = occupations[Math.floor(Math.random() * occupations.length)];
+        finalStyleInstruction += ` The design theme is a specialized high-concept avant-garde WORKWEAR / PROFESSIONAL UNIFORM. The character's outfit MUST be a custom high-fashion clothing uniform designed specifically for a: ${selectedOcc.desc}. Blend this professional workwear attire concept beautifully with sophisticated high-fashion luxury runway aesthetic.`;
+      } else if (aestheticStyle !== 'Default') {
         finalStyleInstruction += ` The specific aesthetic style MUST be highly influenced by: ${aestheticStyle}.`;
       }
       const thicknessStyle = params.thickness > 70
@@ -573,10 +601,18 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           'Covered in high-fashion, meticulously groomed fur or hair. A majestic, beast-like humanoid with a powerful, primal yet elegant runway presence.';
       }
 
+      const poseVal = params.pose ?? 50;
+      const poseStyle =
+        poseVal < 30
+          ? 'The character is in a strictly upright, straight, completely symmetrical, flat-facing, rigid standing passport-like or catalog-style modeling posture, with both arms straight down naturally by their sides, simple, static, and formal standing pose with zero exaggeration'
+          : poseVal > 70
+            ? 'The character is striking an extremely dramatic, highly expressive, skewed, flamboyant avant-garde high-fashion magazine cover or editorial runway pose, featuring dynamic body-bending silhouette, off-center posture, and high-fashion modeling action'
+            : 'The character is standing in a standard elegant, poised, professional fashion model posture, a confident semi-dynamic posture with subtle natural angles and classic lookbook poise';
+
       const characterDesc =
         gender === 'Creature'
-          ? `A unique, otherworldly creature (alien, mutant, or bio-engineered humanoid). Texture/Vibe: ${creatureTextureDesc}. Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build: ${buildDesc}. Headwear: ${headwearDesc}. ${creatureSpecialInstructions}`
-          : `A stylish ${gender.toLowerCase()} fashion model${isTanBio ? ' with East Asian facial features' : ''}. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}.`;
+          ? `A unique, otherworldly creature (alien, mutant, or bio-engineered humanoid). Texture/Vibe: ${creatureTextureDesc}. Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build: ${buildDesc}. Headwear: ${headwearDesc}. Pose: ${poseStyle}. ${creatureSpecialInstructions}`
+          : `A stylish ${gender.toLowerCase()} fashion model${isTanBio ? ' with East Asian facial features' : ''}. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}. Pose: ${poseStyle}.`;
 
       const aimShoeDesc =
         'black high-top chunky boots with a prominent silver side zipper, thick ridged platform sole, black laces, and a contrasting light grey toe cap';
@@ -700,7 +736,8 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `A professional high-end luxury fashion NFT.\n` +
           `Theme: Futuristic Techwear Aesthetic and Cyber-Avant-Garde.\n` +
           `${composition}\n` +
-          `Character: A highly advanced humanoid model. ${characterIdentity} Skin tone: ${selectedSkinColor}.\n` +
+          `Character: A highly advanced humanoid model. ${characterIdentity} Skin tone: ${selectedSkinColor}. Pose/Posture: ${poseStyle}.\n` +
+          `Style Influences: ${finalStyleInstruction}\n` +
           (customFramingInstruction ? `${customFramingInstruction}\n` : '') +
           `Outfit: ${selectedClothingBranch} ${outfitDesc}\n` +
           `${materialDefinition}\n` +
@@ -716,7 +753,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `A professional ${randomStyle} for a high-end luxury fashion NFT. Avant-garde fashion photography, high-fashion editorial full-body shot of a woman.\n` +
           `Theme: ${randomTheme}.\n` +
           `Style: Maximalist aesthetic, textile art, Japanese avant-garde style. ${finalStyleInstruction}\n` +
-          `Character & Headpiece: ${characterDesc} Porcelain skin, bold red lips. Skin tone: ${selectedSkinColor}. The character is striking a dynamic, high-fashion magazine cover pose (e.g., confident gaze, dramatic angles, editorial body language).\n` +
+          `Character & Headpiece: ${characterDesc} Porcelain skin, bold red lips. Skin tone: ${selectedSkinColor}. Pose & Posture: ${poseStyle}.\n` +
           (customFramingInstruction ? `${customFramingInstruction}\n` : '') +
           `Clothing & Texture: patchwork, Bold geometric patterns mixed with floral motifs. The clothing layering and amount is ${thicknessStyle}.\n` +
           `${outfitDesc}\n` +
@@ -733,7 +770,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `The composition is a single, unified full-frame image featuring exactly ONE character. Do NOT generate split screens, collages, multi-panel layouts, or separate detail shots. Do NOT generate QR codes, watermarks, or text barcodes that look like QR codes.\n` +
           `Background: ${backgroundInstruction}\n` +
           `Graphic Elements: Overlay the image with minimalist, clean graphic design elements. Do NOT draw UI elements ON the clothing itself.\n` +
-          `Character: ${characterDesc} The character is striking a dynamic, high-fashion magazine cover pose (e.g., confident gaze, dramatic angles, editorial body language).\n` +
+          `Character: ${characterDesc} Pose/Posture: ${poseStyle}.\n` +
           (customFramingInstruction ? `${customFramingInstruction}\n` : '') +
           `${outfitDesc}\n` +
           `Colors & Textures: ${colorStyle}. ${finalStyleInstruction} The clothing layering and amount is ${thicknessStyle}.\n` +
@@ -1450,18 +1487,19 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                   </div>
                 )}
                 {activeCategory === 'Style' && (
-                  <div className="flex justify-between items-center mb-4 animate-in fade-in slide-in-from-left-2 duration-300">
+                  <div className="flex flex-col gap-2 mb-4 animate-in fade-in slide-in-from-left-2 duration-300">
                     <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">审美风格</span>
-                    <div className="flex gap-1 bg-white/5 p-1 rounded-lg overflow-x-auto no-scrollbar max-w-[60%]">
+                    <div className="flex flex-wrap gap-1.5 bg-white/5 p-1.5 rounded-xl">
                       {[
                         { label: '默认', value: 'Default' as const },
                         { label: "90's 高定", value: '90s Haute Couture Runway' as const },
+                        { label: '工装', value: 'Workwear' as const },
                       ].map((s) => (
                         <button
                           key={s.value}
                           onClick={() => setAestheticStyle(s.value)}
-                          className={`px-3 py-1 rounded text-[8px] uppercase font-bold transition-all whitespace-nowrap ${
-                            aestheticStyle === s.value ? 'bg-primary text-black' : 'text-white/50 hover:text-white'
+                          className={`px-3 py-1.5 rounded-lg text-[9px] uppercase font-bold transition-all ${
+                            aestheticStyle === s.value ? 'bg-primary text-black' : 'text-white/50 hover:text-white hover:bg-white/5'
                           }`}
                         >
                           {s.label}

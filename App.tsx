@@ -13,6 +13,7 @@ import Collection from './views/Collection';
 import Admin from './views/Admin';
 import ShareHub from './views/ShareHub';
 import CreatePost from './views/CreatePost';
+import ModelFaceGen from './views/ModelFaceGen';
 import Auth from './views/Auth';
 import { addNftToMyProfile } from './lib/userProfile';
 import { upsertImageInfo } from './lib/imageInfo';
@@ -160,6 +161,8 @@ const App: React.FC = () => {
             onSuccess={() => setCurrentView(View.SHARE_HUB)}
           />
         );
+      case View.MODEL_FACE_GEN:
+        return <ModelFaceGen onBack={() => setCurrentView(View.HOME)} />;
       default:
         return <Home onEnter={() => setCurrentView(View.SHARE_HUB)} onNavigate={setCurrentView} />;
     }

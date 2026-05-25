@@ -11,7 +11,8 @@ export enum View {
   COLLECTION = 'collection',
   ADMIN = 'admin',
   SHARE_HUB = 'share_hub',
-  CREATE_POST = 'create_post'
+  CREATE_POST = 'create_post',
+  MODEL_FACE_GEN = 'model_face_gen'
 }
 
 export interface Product {

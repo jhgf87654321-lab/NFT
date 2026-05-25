@@ -55,6 +55,13 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       view: View.CREATOR,
     },
     {
+      title: '模特捏脸',
+      desc: '参数化面部合成',
+      icon: 'face',
+      stats: '实时同步',
+      view: View.MODEL_FACE_GEN,
+    },
+    {
       title: 'AI 试穿扫描',
       desc: '98.5% 拟合精度协议',
       icon: 'view_in_ar',
