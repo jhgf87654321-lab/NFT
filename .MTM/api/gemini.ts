@@ -10,6 +10,26 @@ type TextPart = { text: string };
 type GeminiPart = InlineDataPart | TextPart;
 type SupportedGeminiImageModel = 'gemini-2.5-flash-image' | 'gemini-3.1-flash-image-preview';
 
+const SUPPORTED_ASPECT_RATIOS = new Set([
+  '1:1',
+  '3:2',
+  '2:3',
+  '3:4',
+  '4:3',
+  '4:5',
+  '5:4',
+  '9:16',
+  '16:9',
+  '21:9',
+]);
+
+function parseAspectRatio(body: unknown): string | undefined {
+  if (!isRecord(body)) return undefined;
+  const raw = body.aspectRatio;
+  if (!isNonEmptyString(raw)) return undefined;
+  return SUPPORTED_ASPECT_RATIOS.has(raw) ? raw : undefined;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -93,12 +113,22 @@ export default async function handler(
     const generateImageOnce = async (
       model: SupportedGeminiImageModel,
       parts: GeminiPart[],
+      aspectRatio?: string,
     ): Promise<{ imgData: string | null; debug: { finishReason?: string; textParts?: string } }> => {
+      const imageConfig = aspectRatio ? { aspectRatio } : undefined;
       const response = await ai.models.generateContent({
         model,
         contents: {
           parts,
         },
+        ...(imageConfig
+          ? {
+              config: {
+                responseModalities: ['IMAGE'],
+                imageConfig,
+              },
+            }
+          : {}),
       });
 
       for (const part of response.candidates?.[0]?.content?.parts || []) {
@@ -161,7 +191,8 @@ export default async function handler(
       const parts: GeminiPart[] = [...inlineParts];
       if (promptText) parts.push({ text: promptText });
 
-      const out = await generateImageOnce(model, parts);
+      const aspectRatio = parseAspectRatio(body) ?? '9:16';
+      const out = await generateImageOnce(model, parts, aspectRatio);
       const imgData = out.imgData;
       if (!imgData) {
         return res.status(500).json({
@@ -176,7 +207,8 @@ export default async function handler(
       return res.status(parsed.status).json({ error: parsed.error });
     }
 
-    const out = await generateImageOnce(parsed.model ?? 'gemini-2.5-flash-image', parsed.parts);
+    const aspectRatio = parseAspectRatio(body) ?? '9:16';
+    const out = await generateImageOnce(parsed.model ?? 'gemini-2.5-flash-image', parsed.parts, aspectRatio);
     const imgData = out.imgData;
     if (!imgData) {
       return res.status(500).json({

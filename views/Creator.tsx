@@ -90,9 +90,15 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   const [isAnalyzingShoes, setIsAnalyzingShoes] = useState(false);
   
   // NFT Themes and Traits for randomness
-  const themes = ['High-Fashion Editorial', 'Urban Techwear', 'Minimalist Avant-Garde', 'Graphic Lookbook', 'Streetwear Culture', 'Avant-Garde Magazine', 'Modern Tech-Fashion'];
+  const themes = ['High-Fashion Editorial', 'Urban Techwear', 'Minimalist Avant-Garde', 'Streetwear Culture', 'Modern Tech-Fashion', 'Studio Lookbook'];
   const materials = ['Matte Nylon', 'Crisp Cotton', 'Heavy Wool', 'Premium Leather', 'Textured Denim', 'Fine Linen'];
-  const styles = ['Magazine Cover Layout', 'Editorial Studio Portrait', 'High-End Fashion Photography', 'Cinematic Character Shot', 'Futuristic Fashion Portrait'];
+  const styles = [
+    'Full-Body Editorial Studio Portrait',
+    'Wide-Angle Lookbook Photography',
+    'High-End Full-Length Fashion Photography',
+    'Cinematic Full-Length Portrait',
+    'Futuristic Full-Body Fashion Portrait',
+  ];
 
   // Parameter states for each category
   const [params, setParams] = useState<Record<string, number>>({
@@ -606,7 +612,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         poseVal < 30
           ? 'The character is in a strictly upright, straight, completely symmetrical, flat-facing, rigid standing passport-like or catalog-style modeling posture, with both arms straight down naturally by their sides, simple, static, and formal standing pose with zero exaggeration'
           : poseVal > 70
-            ? 'The character is striking an extremely dramatic, highly expressive, skewed, flamboyant avant-garde high-fashion magazine cover or editorial runway pose, featuring dynamic body-bending silhouette, off-center posture, and high-fashion modeling action'
+            ? 'The character is striking a dramatic full-body editorial runway pose (entire body head-to-toe still fully visible in frame), with dynamic silhouette and off-center posture — never a tight portrait crop'
             : 'The character is standing in a standard elegant, poised, professional fashion model posture, a confident semi-dynamic posture with subtle natural angles and classic lookbook poise';
 
       const characterDesc =
@@ -663,6 +669,12 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
 
       const noBackgroundTextInstruction =
         'BACKGROUND TEXT BAN (NON-NEGOTIABLE): The background and scene must contain NO readable text, NO typography, NO floating labels, NO captions, NO watermarks, NO QR codes, NO barcodes, NO UI overlays, NO poster words, and NO environmental signage. Garment logos/graphics on clothing are allowed only when required by the outfit or reference garment — never as background elements.';
+
+      const outputPromptGuards =
+        '\n\n=== OUTPUT REQUIREMENTS (HIGHEST PRIORITY — OVERRIDES ANY CONFLICTING STYLE ABOVE) ===\n' +
+        '1) FULL BODY ONLY: Exactly one person, photographed head-to-toe with BOTH feet/shoes completely visible. Use a wide camera distance (3/4 to full-body fashion distance). NEVER waist-up, NEVER chest-up, NEVER knee-up crop, NEVER portrait close-up, NEVER cropped legs or missing feet.\n' +
+        '2) BACKGROUND: Plain studio backdrop (solid color or soft neutral gradient) ONLY. Absolutely NO readable letters, words, signs, posters, magazine layouts, captions, titles, watermarks, QR codes, barcodes, or UI overlays anywhere in the image.\n' +
+        '3) NO graphic-design text layouts, editorial typography, or environmental signage — fashion photo only.\n';
       let complexRetroKeywords = '';
       if (params.thickness > 80 && params.era < 50) {
         complexRetroKeywords =
@@ -753,7 +765,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `Details: ${detailDensity}\n` +
           `CRITICAL AESTHETIC INSTRUCTION: The image MUST look like a high-end real photograph. Holographic, iridescent, or reflective materials are allowed, but they MUST look like real physical fabrics photographed in a studio, NOT like a digital illustration, 3D render, or hand-drawn art. Avoid overly dense, messy, or chaotic fabric patterns. Use premium material textures.\n` +
           `CRITICAL LIGHTING AND PRODUCT INSTRUCTION: All clothing items (especially the top and shoes) MUST perfectly blend with the scene's lighting, BUT their core design, graphics, logos, and structure MUST NOT BE ALTERED from the provided reference images. This is a strict virtual try-on: the reference garments must be preserved pixel-for-pixel in terms of design, only adapting to the character's pose and lighting.\n` +
-          `The overall vibe is "High-Fashion Editorial" meets "Graphic Design", clean, premium, and modern.\n` +
+          `The overall vibe is clean high-fashion editorial photography, premium and modern, photoreal studio look.\n` +
           `${complexRetroKeywords}`;
       } else if (gender === 'Female' && params.era >= 0 && params.era <= 20) {
         prompt =
@@ -790,7 +802,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           `Photography & Quality: High-end luxury fashion photography, haute couture, sophisticated tailoring. Studio lighting, soft shadows, photorealistic, 8k uhd, sharp focus, realistic skin texture.\n` +
           `CRITICAL AESTHETIC INSTRUCTION: The image MUST look like a high-end real photograph. Holographic, iridescent, or reflective materials are allowed, but they MUST look like real physical fabrics photographed in a studio, NOT like a digital illustration, 3D render, or hand-drawn art. Avoid overly dense, messy, or chaotic fabric patterns. Use premium material textures.\n` +
           `CRITICAL LIGHTING AND PRODUCT INSTRUCTION: All clothing items (especially the top and shoes) MUST perfectly blend with the scene's lighting, BUT their core design, graphics, logos, and structure MUST NOT BE ALTERED from the provided reference images. This is a strict virtual try-on: the reference garments must be preserved pixel-for-pixel in terms of design, only adapting to the character's pose and lighting.\n` +
-          `The overall vibe is "High-Fashion Editorial" meets "Graphic Design", clean, premium, and modern.\n` +
+          `The overall vibe is clean high-fashion editorial photography, premium and modern, photoreal studio look.\n` +
           `${complexRetroKeywords}`;
       }
 
@@ -887,12 +899,21 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         }
       }
 
-      // Finally, add the main prompt text
-      parts.push({ text: prompt });
+      const hasReferenceImages = parts.some((p) => 'inlineData' in p);
+      if (hasReferenceImages) {
+        parts.unshift({
+          text:
+            'VIRTUAL TRY-ON OUTPUT RULES: Reference images are for GARMENT DESIGN ONLY — do NOT copy their crop, framing, or background. You MUST output a NEW full-body head-to-toe photo (both feet visible) on a plain text-free studio background.',
+        });
+      }
+
+      // Finally, add the main prompt text (guards at end for recency bias)
+      parts.push({ text: prompt + outputPromptGuards });
 
       const imgData = await generateGeminiImage({
         parts,
         model: usesSpecialDesignPrompts ? 'gemini-3.1-flash-image-preview' : 'gemini-2.5-flash-image',
+        aspectRatio: '9:16',
       });
 
       const compressForStorage = async (dataUrl: string) => {
@@ -1200,7 +1221,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                   <img 
                     src={generatedNFT || "https://lh3.googleusercontent.com/aida-public/AB6AXuD--GjfU0623yeRTQGDPufUFR_AcyGbJCkDdfYQhfa33Z6nvca-1TOXhrwFVg2N5RiCHhhy3LLnHiNPE21vAD5DcA2Ybgp58Awi8kx4HgdooY_0bSzEqpbjpS_-iChDaVB9XFOMF0XySUyr9DnLfvAKLRMLpUF0--s_ZQjd6bE-PCd32yRsBhZZlVXDlRTVcQxdS8H7_Soy7rKtHqLCBYjz1d1plDnlgiynjzy3CuJtVjDwjEZDYaBtic2CIRWiQ6BOaehZHTtoXjrT"} 
                     alt="Detail Focus"
-                    className={`w-full h-full object-cover transition-all duration-700 ${generatedNFT ? 'scale-100' : 'scale-[4] mix-blend-screen brightness-125 saturate-50'}`}
+                    className={`w-full h-full object-contain transition-all duration-700 ${generatedNFT ? 'scale-100' : 'scale-[4] mix-blend-screen brightness-125 saturate-50'}`}
                     style={!generatedNFT ? { filter: `drop-shadow(0 0 10px ${selectedSkinColor})` } : {}}
                     referrerPolicy="no-referrer"
                   />

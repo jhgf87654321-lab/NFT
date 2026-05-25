@@ -13,15 +13,30 @@ import { apiUrl, throwIfApiRouteMissing } from './apiBase';
 
 export type GeminiImageModel = 'gemini-2.5-flash-image' | 'gemini-3.1-flash-image-preview';
 
+/** Tall portrait ratio — best for full-body fashion shots */
+export type GeminiImageAspectRatio =
+  | '1:1'
+  | '3:4'
+  | '4:3'
+  | '9:16'
+  | '16:9'
+  | '2:3'
+  | '3:2'
+  | '4:5'
+  | '5:4'
+  | '21:9';
+
 type PromptRequest = {
   prompt: string;
   model?: GeminiImageModel;
   imageUrls?: string[];
+  aspectRatio?: GeminiImageAspectRatio;
 };
 
 type PartsRequest = {
   parts: GeminiPart[];
   model?: GeminiImageModel;
+  aspectRatio?: GeminiImageAspectRatio;
 };
 
 export async function generateGeminiImage(input: PromptRequest | PartsRequest) {
