@@ -35,6 +35,39 @@ const GENDER_LABEL: Record<Gender, string> = {
   Creature: '生物',
 };
 
+/** 审美风格「工装」：仅制服大类；具体职业/款型由「自定义服装设计」输入框填写 */
+export const WORKWEAR_THEME_KEYWORDS_ZH =
+  '高概念工装 / 制服大类（WORKWEAR · PROFESSIONAL UNIFORM）+ 奢侈品秀场融合';
+
+export function eraStyleFromEraParam(era: number): string {
+  if (era > 70) return 'ultra-modern, futuristic, and cutting-edge';
+  if (era < 30) return 'retro, vintage, neutral, and simple';
+  return 'a blend of contemporary and classic styles';
+}
+
+export function eraStyleLabelZh(era: number): string {
+  if (era > 70) return '超现代 / 未来感';
+  if (era < 30) return '复古 / 简约';
+  return '当代与经典融合';
+}
+
+/** 与 generateNFT 内工装分支一致的英文 prompt 片段；uniformDetail 来自设计页输入框 */
+export function buildWorkwearStyleInstruction(eraStyle: string, uniformDetail?: string): string {
+  const detail = uniformDetail?.trim() ?? '';
+  let block = `The aesthetic era is ${eraStyle}.`;
+  block +=
+    ' The design theme is a specialized high-concept avant-garde WORKWEAR / PROFESSIONAL UNIFORM category (general workwear and service-industry uniform aesthetic — a broad uniform class, NOT a random preset occupation). The character MUST wear a custom high-fashion uniform outfit.';
+  if (detail) {
+    block += ` The specific profession, role, garment types, cuts, fabrics, utility details, and uniform features MUST exactly follow the user specification: "${detail}". Prioritize this over any generic workwear defaults.`;
+  } else {
+    block +=
+      ' Use a versatile premium workwear uniform silhouette (functional pockets, durable tailored fabrics, professional service or industrial-chic look) without assigning a specific named job until the user provides details in the clothing prompt.';
+  }
+  block +=
+    ' Blend this workwear uniform concept beautifully with sophisticated high-fashion luxury runway aesthetic.';
+  return block;
+}
+
 interface ParameterSet {
   label: string;
   key: string;
@@ -219,6 +252,11 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       console.error('Failed to persist creatorState', e);
     }
   }, [activeCategory, gender, creatureTexture, designMode, customDesign, clothingPrompt, aestheticStyle, params, selectedSkinColor, defaultCreatorState]);
+
+  const workwearPreviewPrompt = useMemo(() => {
+    if (aestheticStyle !== 'Workwear') return '';
+    return buildWorkwearStyleInstruction(eraStyleFromEraParam(params.era ?? 50), clothingPrompt);
+  }, [aestheticStyle, params.era, clothingPrompt]);
 
   useEffect(() => {
     let mounted = true;
@@ -463,33 +501,11 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           : params.chromaticity < 30
             ? 'The clothing is strictly monochrome, black, white, and grey. The background and skin tone must remain natural.'
             : `The clothing has subtle, elegant color accents of ${randomColor}. The background and skin tone must remain natural.`;
-      const eraStyle = params.era > 70 ? 'ultra-modern, futuristic, and cutting-edge' : params.era < 30 ? 'retro, vintage, neutral, and simple' : 'a blend of contemporary and classic styles';
+      const clothingPromptTrimmed = clothingPrompt.trim();
+      const eraStyle = eraStyleFromEraParam(params.era ?? 50);
       let finalStyleInstruction = `The aesthetic era is ${eraStyle}.`;
       if (aestheticStyle === 'Workwear') {
-        const occupations = [
-          {
-            name: 'high-end restaurant waiter/server (高级餐厅服务员)',
-            desc: 'elegant, modern luxury restaurant server uniform. Features a sleek stylized half-apron made of fine textured slate-grey canvas, a tailored crisp mandarin-collar shirt with subtle clean asymmetrical piping, custom pockets for service utensils, high-fashion modern bistro crew attire with a highly professional neat look.',
-          },
-          {
-            name: 'precision barber/hairstylist (专业理发师)',
-            desc: 'multi-pocket tactical leather barber harness utility vest worn over a minimalist tailored heavy dark cotton shirt. Features custom modular slots for scissors, tools and combs, sleek industrial metal buckles, durable and modern industrial-chic apparel, making it a stylish high-fashion haircut artisan statement.',
-          },
-          {
-            name: 'extreme outdoor sports enthusiast / explorer (户外运动者 / 探险家)',
-            desc: 'heavy-duty techwear outdoor sports enthusiast mountaineering gear. Features elements of Alpine climbing apparel with functional silver carabiners, weather-sealed neon-accented futuristic zippers, protective reinforced shoulder pads, durable waterproof tactical shell fabrics with geometric utility pocketing, alpine explorer style.',
-          },
-          {
-            name: 'boutique modern barista / craft brewer (咖啡师)',
-            desc: 'premium dual-tone raw canvas and heavy leather boutique barista apron with modular utility tool straps, tailored dark sleek undershirt with meticulously rolled-up sleeves, functional chic pockets, high-concept modern craft coffee expert uniform.',
-          },
-          {
-            name: 'futuristic high-tech robotic mechanic (智能机械师)',
-            desc: 'high-fashion futuristic protective worker overalls and mechanic jumpsuit. Features industrial utility contrast-color straps, heavy metallic clasps, caution high-visibility panels, grease-resistant technical canvas fabrics, and high-fashion heavy machine maintenance crew aesthetic.',
-          },
-        ];
-        const selectedOcc = occupations[Math.floor(Math.random() * occupations.length)];
-        finalStyleInstruction += ` The design theme is a specialized high-concept avant-garde WORKWEAR / PROFESSIONAL UNIFORM. The character's outfit MUST be a custom high-fashion clothing uniform designed specifically for a: ${selectedOcc.desc}. Blend this professional workwear attire concept beautifully with sophisticated high-fashion luxury runway aesthetic.`;
+        finalStyleInstruction = buildWorkwearStyleInstruction(eraStyle, clothingPromptTrimmed);
       } else if (aestheticStyle !== 'Default') {
         finalStyleInstruction += ` The specific aesthetic style MUST be highly influenced by: ${aestheticStyle}.`;
       }
@@ -651,8 +667,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           ? `Outfit consists of: Top - ${topDesc}, Bottom - ${bottomDesc}, Footwear - ${shoesDesc}.`
           : `Outfit: Fashion-forward avant-garde clothing made of ${randomMaterial}.`;
 
-      const clothingPromptTrimmed = clothingPrompt.trim();
-      if (clothingPromptTrimmed) {
+      if (clothingPromptTrimmed && aestheticStyle !== 'Workwear') {
         outfitDesc += ` The specific garment designs, styles, cuts, features, graphics, patterns, fabrics, and design details MUST exactly match the user's custom instructions: "${clothingPromptTrimmed}". Prioritize this style instruction above all standard randomisations to execute exactly the design specified by the user.`;
       }
 
@@ -1527,11 +1542,17 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                   <textarea
                     value={clothingPrompt}
                     onChange={(e) => setClothingPrompt(e.target.value)}
-                    placeholder="描述具体服装：剪裁、廓形、图案、面料等（例：高领机能马甲，亮红色扣具，多层战术口袋）"
+                    placeholder={
+                      aestheticStyle === 'Workwear'
+                        ? '选工装时在此填写：具体职业 + 制服类型（例：精品咖啡师 · 帆布皮围裙与工装衬衫；或 登山探险 · 防水机能冲锋衣）'
+                        : '描述具体服装：剪裁、廓形、图案、面料等（例：高领机能马甲，亮红色扣具，多层战术口袋）'
+                    }
                     className="w-full h-20 bg-white/5 border border-white/10 rounded-xl p-3 text-[11px] text-white placeholder-white/20 focus:outline-none focus:border-primary/50 resize-none transition-all leading-relaxed"
                   />
                   <p className="text-[8px] text-white/30 leading-snug">
-                    随机与自定义模式均生效；填写后 AI 将优先按此描述生成服装细节与轮廓。
+                    {aestheticStyle === 'Workwear'
+                      ? '工装仅提供制服大类；具体职业与款型必须在此填写，否则为通用工装轮廓。'
+                      : '随机与自定义模式均生效；填写后 AI 将优先按此描述生成服装细节与轮廓。'}
                   </p>
                 </div>
               </div>
@@ -1574,6 +1595,39 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                         </button>
                       ))}
                     </div>
+
+                    {aestheticStyle === 'Workwear' && (
+                      <div className="mt-3 space-y-2 p-3 rounded-xl bg-primary/5 border border-primary/25 animate-in fade-in slide-in-from-top-1 duration-300">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-primary">工装 Prompt 关键词</span>
+                        <div className="text-[8px] space-y-1 text-white/50">
+                          <p>
+                            <span className="text-white/30">固定主题 · </span>
+                            {WORKWEAR_THEME_KEYWORDS_ZH}
+                          </p>
+                          <p>
+                            <span className="text-white/30">年代滑杆 · </span>
+                            {eraStyleLabelZh(params.era ?? 50)}（Era {params.era ?? 50}%）
+                          </p>
+                          <p className="text-white/40 pt-1 border-t border-white/5">
+                            具体职业与制服款型请在 <span className="text-primary/90">设计 → 自定义服装设计</span> 中填写；下方为根据当前输入生成的预览。
+                          </p>
+                        </div>
+                        {!clothingPrompt.trim() && (
+                          <p className="text-[8px] text-amber-400/90 leading-snug">
+                            尚未填写服装描述，铸造时将使用通用工装轮廓。
+                          </p>
+                        )}
+                        <details className="group" open>
+                          <summary className="text-[8px] font-bold text-white/40 uppercase tracking-widest cursor-pointer list-none flex items-center gap-1">
+                            <span className="material-icons-round text-[12px] transition-transform group-open:rotate-90">chevron_right</span>
+                            完整英文 Prompt 片段（预览）
+                          </summary>
+                          <pre className="mt-2 p-2 rounded-lg bg-black/40 border border-white/5 text-[7px] text-white/45 leading-relaxed whitespace-pre-wrap break-words max-h-36 overflow-y-auto no-scrollbar font-mono">
+                            {workwearPreviewPrompt}
+                          </pre>
+                        </details>
+                      </div>
+                    )}
                   </div>
                 )}
                 {getActiveParams().map(param => (
