@@ -1061,6 +1061,10 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
             setAuthMode('signIn');
             setIsAuthOpen(true);
             alert('请先登录以同步到 Wardrobe。');
+          } else if (msg.includes('PROFILE_CREATE_VERIFY_FAILED')) {
+            alert(
+              '图片已上传，但用户档案读回失败。请确认已登录，并在云开发检查 user_profiles 集合与安全规则（需允许当前用户读写自己的文档）。稍后在衣橱重试同步。',
+            );
           } else {
             alert('同步到 Wardrobe 失败，请稍后在 Wardrobe 中重试同步。');
           }

@@ -41,35 +41,75 @@ async function getUid() {
 
 function firstRowFromGetRes(res: unknown): UserProfileDoc | undefined {
   const raw = (res as any)?.data;
-  if (Array.isArray(raw)) return raw[0] as UserProfileDoc | undefined;
-  if (raw && typeof raw === 'object') return raw as UserProfileDoc;
+  if (Array.isArray(raw)) {
+    const row = raw[0];
+    if (row && typeof row === 'object') {
+      const { _id: _omit, ...rest } = row as Record<string, unknown>;
+      return rest as UserProfileDoc;
+    }
+    return undefined;
+  }
+  if (raw && typeof raw === 'object') {
+    const o = raw as Record<string, unknown>;
+    if ('uid' in o) {
+      const { _id: _omit, ...rest } = o;
+      return rest as UserProfileDoc;
+    }
+    return raw as UserProfileDoc;
+  }
+  return undefined;
+}
+
+function firstRowIdFromGetRes(res: unknown): string | undefined {
+  const raw = (res as any)?.data;
+  if (Array.isArray(raw) && raw[0] && typeof raw[0] === 'object') {
+    const id = (raw[0] as { _id?: unknown })._id;
+    return typeof id === 'string' && id.trim() ? id.trim() : undefined;
+  }
   return undefined;
 }
 
 async function getProfileDoc(uid: string): Promise<UserProfileDoc | null> {
   const db = getCloudbaseDb();
-  // Web 端安全规则常要求查询条件含当前用户子集；优先用 `{uid}` 模板（见 CloudBase 文档库安全规则说明）
+  const attempts: Array<() => Promise<unknown>> = [
+    () => db.collection(COLLECTION).where({ uid: '{uid}' }).limit(1).get(),
+    () => db.collection(COLLECTION).doc(uid).get(),
+    () => db.collection(COLLECTION).where({ uid }).limit(1).get(),
+  ];
+  for (const run of attempts) {
+    try {
+      const res = await run();
+      const doc = firstRowFromGetRes(res);
+      if (doc && doc.uid === uid) return doc;
+    } catch {
+      // try next strategy
+    }
+  }
+  return null;
+}
+
+/** 解析档案文档 _id（add 写入时 _id 可能不等于 uid） */
+async function resolveProfileDocRef(uid: string): Promise<{ docId: string; doc: UserProfileDoc } | null> {
+  const db = getCloudbaseDb();
   try {
     const res = await db.collection(COLLECTION).where({ uid: '{uid}' }).limit(1).get();
     const doc = firstRowFromGetRes(res);
-    if (doc && doc.uid === uid) return doc;
+    const rowId = firstRowIdFromGetRes(res);
+    if (doc && doc.uid === uid && rowId) return { docId: rowId, doc };
   } catch {
     // ignore
   }
   try {
-    const res = await db.collection(COLLECTION).doc(uid).get();
-    const doc = firstRowFromGetRes(res);
-    if (doc) return doc;
-  } catch {
-    // ignore and fallback to uid-field query
-  }
-  try {
     const res = await db.collection(COLLECTION).where({ uid }).limit(1).get();
     const doc = firstRowFromGetRes(res);
-    return doc ?? null;
+    const rowId = firstRowIdFromGetRes(res);
+    if (doc && doc.uid === uid && rowId) return { docId: rowId, doc };
   } catch {
-    return null;
+    // ignore
   }
+  const doc = await getProfileDoc(uid);
+  if (doc) return { docId: uid, doc };
+  return null;
 }
 
 async function setProfileDoc(uid: string, doc: UserProfileDoc) {
@@ -82,6 +122,16 @@ async function setProfileDoc(uid: string, doc: UserProfileDoc) {
     ...(doc.avatarUrl ? { avatarUrl: doc.avatarUrl } : {}),
     ownedNfts: doc.ownedNfts,
   };
+
+  const resolved = await resolveProfileDocRef(uid);
+  if (resolved && resolved.docId !== uid) {
+    try {
+      await db.collection(COLLECTION).doc(resolved.docId).update(payload);
+      return;
+    } catch {
+      // fall through to uid-keyed paths
+    }
+  }
 
   // CloudBase DB 在某些情况下对 doc(uid).set 可能返回 E11000 duplicate key（尤其是并发首次写入/旧数据迁移）。
   // 这里改为“先 update，失败再 set；如果 set 再次遇到 duplicate，则回退 update”。
@@ -127,7 +177,7 @@ async function setProfileDoc(uid: string, doc: UserProfileDoc) {
   }
 }
 
-/** 首次创建：优先 doc(uid).set（与 auth.uid 同 id，避免重复文档），失败再 add，最后走 setProfileDoc 全链路 */
+/** 首次创建：优先 doc(uid).set（与 auth.uid 同 id，避免重复文档），失败再 setProfileDoc 全链路 */
 async function createUserProfileDocument(uid: string, doc: UserProfileDoc) {
   const db = getCloudbaseDb();
   const payload = {
@@ -144,15 +194,6 @@ async function createUserProfileDocument(uid: string, doc: UserProfileDoc) {
     return;
   } catch (e) {
     console.warn('[userProfile] doc(uid).set create failed', (e as any)?.code ?? (e as any)?.message ?? e);
-  }
-
-  try {
-    const res = await db.collection(COLLECTION).add(payload);
-    const code = (res as any)?.code;
-    if (typeof code === 'string' && code.length > 0) throw new Error(code);
-    return;
-  } catch (e) {
-    console.warn('[userProfile] collection.add create failed', (e as any)?.code ?? (e as any)?.message ?? e);
   }
 
   await setProfileDoc(uid, doc);
@@ -188,14 +229,24 @@ export async function ensureUserProfile(uidHint?: string) {
     updatedAt: now,
     ownedNfts: [],
   };
-  await createUserProfileDocument(uid, doc);
-  // 写入后读可能受规则子集校验或短暂延迟影响，多轮重试
-  for (let i = 0; i < 20; i += 1) {
+  try {
+    await createUserProfileDocument(uid, doc);
+  } catch (e) {
     existing = await getProfileDoc(uid);
     if (existing) return existing;
-    await new Promise((r) => setTimeout(r, 80 + i * 40));
+    throw e;
   }
-  throw new Error('PROFILE_CREATE_VERIFY_FAILED');
+  // 写入后读可能受安全规则子集或短暂延迟影响；读不到时仍允许继续（乐观档案）
+  for (let i = 0; i < 30; i += 1) {
+    existing = await getProfileDoc(uid);
+    if (existing) return existing;
+    await new Promise((r) => setTimeout(r, 100 + i * 50));
+  }
+  console.warn(
+    '[userProfile] profile write completed but read-back verify timed out; using optimistic doc',
+    { uid },
+  );
+  return doc;
 }
 
 export async function ensureUserProfileStrict(uidHint?: string) {
@@ -262,7 +313,7 @@ export async function addNftToMyProfile(input: { cosUrl: string; serialNumber?: 
 
     console.log('[userProfile] addNftToMyProfile start', { uid, cosUrl, serialNumber: input.serialNumber, source: input.source });
 
-    const doc = await ensureUserProfile();
+    const doc = await ensureUserProfile(uid);
     console.log('[userProfile] ensureUserProfile ok for uid', doc.uid);
 
     const owned = Array.isArray(doc.ownedNfts) ? doc.ownedNfts : [];
