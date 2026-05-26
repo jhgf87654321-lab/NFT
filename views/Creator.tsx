@@ -58,6 +58,8 @@ type CreatorStateV1 = {
   creatureTexture: CreatureTexture;
   designMode: DesignMode;
   customDesign: { top: string; bottom: string; shoes: string };
+  /** 设计页：用文字描述服装款式/剪裁/面料等，写入生成 prompt */
+  clothingPrompt: string;
   aestheticStyle: 'Default' | '90s Haute Couture Runway' | 'Workwear';
   params: Record<string, number>;
   selectedSkinColor: string;
@@ -113,6 +115,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   });
 
   const [selectedSkinColor, setSelectedSkinColor] = useState('#E0AC69'); // Default skin tone (Tan Bio)
+  const [clothingPrompt, setClothingPrompt] = useState('');
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedNFT, setGeneratedNFT] = useState<string | null>(null);
@@ -156,6 +159,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       creatureTexture: 'Hairless',
       designMode: 'Random',
       customDesign: { top: 'Coat', bottom: 'Pants', shoes: 'Sneakers' },
+      clothingPrompt: '',
       aestheticStyle: 'Default',
       params: {
         muscularity: 35,
@@ -185,6 +189,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       if (parsed.creatureTexture) setCreatureTexture(parsed.creatureTexture);
       if (parsed.designMode) setDesignMode(parsed.designMode);
       if (parsed.customDesign) setCustomDesign(parsed.customDesign);
+      if (typeof parsed.clothingPrompt === 'string') setClothingPrompt(parsed.clothingPrompt);
       if (parsed.aestheticStyle) setAestheticStyle(parsed.aestheticStyle);
       if (parsed.params) setParams((prev) => ({ ...prev, ...parsed.params }));
       if (parsed.selectedSkinColor) setSelectedSkinColor(parsed.selectedSkinColor);
@@ -203,6 +208,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
         creatureTexture,
         designMode,
         customDesign,
+        clothingPrompt,
         aestheticStyle,
         params,
         selectedSkinColor,
@@ -212,7 +218,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       // ignore quota errors; generation output is more important
       console.error('Failed to persist creatorState', e);
     }
-  }, [activeCategory, gender, creatureTexture, designMode, customDesign, aestheticStyle, params, selectedSkinColor, defaultCreatorState]);
+  }, [activeCategory, gender, creatureTexture, designMode, customDesign, clothingPrompt, aestheticStyle, params, selectedSkinColor, defaultCreatorState]);
 
   useEffect(() => {
     let mounted = true;
@@ -640,10 +646,15 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
           : customDesign.shoes === 'Custom'
             ? `${customShoesDesc || 'custom shoes matching the reference image'}, exactly matching the reference`
             : customDesign.shoes;
-      const outfitDesc =
+      let outfitDesc =
         designMode === 'Custom'
           ? `Outfit consists of: Top - ${topDesc}, Bottom - ${bottomDesc}, Footwear - ${shoesDesc}.`
           : `Outfit: Fashion-forward avant-garde clothing made of ${randomMaterial}.`;
+
+      const clothingPromptTrimmed = clothingPrompt.trim();
+      if (clothingPromptTrimmed) {
+        outfitDesc += ` The specific garment designs, styles, cuts, features, graphics, patterns, fabrics, and design details MUST exactly match the user's custom instructions: "${clothingPromptTrimmed}". Prioritize this style instruction above all standard randomisations to execute exactly the design specified by the user.`;
+      }
 
       const isSpecial = true;
       let normalCount = parseInt(localStorage.getItem('normalMintCount') || '0', 10);
@@ -1499,6 +1510,30 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                     <span className="text-[10px] text-white/40 uppercase tracking-widest">AI 将随机生成一套造型</span>
                   </div>
                 )}
+
+                <div className="space-y-2 mt-4 pt-4 border-t border-white/5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">自定义服装设计</span>
+                    {clothingPrompt && (
+                      <button
+                        type="button"
+                        onClick={() => setClothingPrompt('')}
+                        className="text-[8px] font-bold text-red-400 hover:text-red-300 transition-all uppercase tracking-wider"
+                      >
+                        清空
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    value={clothingPrompt}
+                    onChange={(e) => setClothingPrompt(e.target.value)}
+                    placeholder="描述具体服装：剪裁、廓形、图案、面料等（例：高领机能马甲，亮红色扣具，多层战术口袋）"
+                    className="w-full h-20 bg-white/5 border border-white/10 rounded-xl p-3 text-[11px] text-white placeholder-white/20 focus:outline-none focus:border-primary/50 resize-none transition-all leading-relaxed"
+                  />
+                  <p className="text-[8px] text-white/30 leading-snug">
+                    随机与自定义模式均生效；填写后 AI 将优先按此描述生成服装细节与轮廓。
+                  </p>
+                </div>
               </div>
             ) : (
               /* Slider Layout for Body, Style */
