@@ -743,7 +743,7 @@ ${userContext}`;
         complexRetroKeywords =
           '\n' +
           'CRITICAL STYLE OVERRIDE (High Complexity Retro):\n' +
-          '- Concept & Style: Deconstruction (breaking traditional clothing structures, asymmetrical, destructive re-stitching and combination), Modern Hanbok / Neo-Traditional (blending traditional Eastern classical clothing like cross collars and large skirts with modern streetwear), Wasteland / Cyberpunk (rugged doomsday survival feel with futuristic tech rebellion), Maximalism (rich layers, stacked elements, rejecting minimalism).\n' +
+          '- Concept & Style: Deconstruction (breaking traditional clothing structures, asymmetrical elegance, flowing overlapping panels, and sophisticated tailoring), Modern Hanbok / Neo-Traditional (blending traditional Eastern classical clothing like cross collars and large skirts with modern streetwear), Wasteland / Cyberpunk (rugged doomsday survival feel with futuristic tech rebellion), Maximalism (rich layers, stacked elements, rejecting minimalism).\n' +
           '- Silhouette & Cut: Oversized / Voluminous (exaggerated fluffiness, extreme spatial presence and aura), Multi-layered (multiple layers of fabric stacked inside and out, adding heaviness, 3D structure, and dynamic beauty when walking), Cinched High Waist (emphasized high waistline with a wide belt, straps, or metal chains to elongate the lower body proportions).';
       }
 
@@ -839,7 +839,7 @@ ${userContext}`;
           `Style: Maximalist aesthetic, textile art, Japanese avant-garde style. ${finalStyleInstruction}\n` +
           `Character & Headpiece: ${characterDesc} Porcelain skin, bold red lips. Skin tone: ${selectedSkinColor}. Pose & Posture: ${poseStyle}.\n` +
           (customFramingInstruction ? `${customFramingInstruction}\n` : '') +
-          `Clothing & Texture: patchwork, Bold geometric patterns mixed with floral motifs. The clothing layering and amount is ${thicknessStyle}.\n` +
+          `Clothing & Texture: elegant drapery, sophisticated color-blocking, Bold geometric patterns mixed with floral motifs, exaggerated high collar. The clothing layering and amount is ${thicknessStyle}.\n` +
           `${outfitDesc}\n` +
           `Environment & Lighting: ${backgroundInstruction} Studio lighting, sharp focus, high contrast.\n` +
           `${overlayInstruction}` +
