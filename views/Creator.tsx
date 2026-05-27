@@ -154,22 +154,63 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   const [expandFeatures, setExpandFeatures] = useState('');
   const [isExpanding, setIsExpanding] = useState(false);
 
+  /** 用户显式要求科技/未来感审美时才在扩写中加入 techwear、cyber 等词汇 */
+  const expandWantsTechAesthetic = (occupation: string, features: string) => {
+    const combined = `${occupation} ${features}`.toLowerCase();
+    const techHints = [
+      '科技',
+      '未来感',
+      '未来',
+      '赛博',
+      '机能',
+      '科幻',
+      '赛博朋克',
+      'tech',
+      'techwear',
+      'cyber',
+      'cyberpunk',
+      'futuristic',
+      'sci-fi',
+      'scifi',
+      'sci fi',
+      'mechanical',
+      'neon',
+    ];
+    return techHints.some((hint) => combined.includes(hint.toLowerCase()));
+  };
+
   const handleExpandPrompt = async () => {
     if (!expandOccupation.trim()) return;
     setIsExpanding(true);
     try {
-      const userContext = expandFeatures.trim()
-        ? `occupation/role: ${expandOccupation.trim()}\nfeatures: ${expandFeatures.trim()}`
-        : `occupation/role: ${expandOccupation.trim()}`;
+      const occupation = expandOccupation.trim();
+      const features = expandFeatures.trim();
+      const userContext = features
+        ? `occupation/role: ${occupation}\nfeatures: ${features}`
+        : `occupation/role: ${occupation}`;
+      const wantsTech = expandWantsTechAesthetic(occupation, features);
 
-      const systemPrompt = `You are an elite, avant-garde high-fashion techwear designer.
+      const systemPrompt = wantsTech
+        ? `You are an elite, avant-garde high-fashion techwear designer.
 Your task is to take a given occupation/role and optional basic features, and expand them into a highly precise, exceptionally professional, and detailed English fashion design prompt (specifically focusing on clothing design, garments, cuts, layering, unique functional features, materials, and techwear/runway details).
 
 Guidelines for the output:
 1. ONLY return the expanded clothing prompt description itself. Do not include any introductions, pleasantries, explanations, or quotes.
 2. Focus deeply on professional clothing design: describe specific upper garments, lower garments, layering, precise fabrics/textures (e.g., ripstop nylon, raw textured leather, matte ceramic plates, thermal mesh), avant-garde cuts (e.g., asymmetrical tailoring, geometric silhouette, modular straps), and tactical or functional details that beautifully translate the specified occupation into futuristic high-fashion.
 3. Keep it within 2-3 highly evocative, coherent sentences (strictly in English) so it remains optimized for subsequent image generation. Do NOT make it excessively long.
-4. Integrate the user's features and characteristics organically.
+4. Integrate the user's features and characteristics organically. The user explicitly requested a tech/futuristic aesthetic — you may use cyber, techwear, and futuristic vocabulary accordingly.
+
+Input to expand:
+${userContext}`
+        : `You are an elite, avant-garde high-fashion designer and costume director.
+Your task is to take a given occupation/role and optional basic features, and expand them into a highly precise, exceptionally professional, and detailed English fashion design prompt (focusing on clothing design, garments, cuts, layering, materials, and runway-ready details appropriate to the role).
+
+Guidelines for the output:
+1. ONLY return the expanded clothing prompt description itself. Do not include any introductions, pleasantries, explanations, or quotes.
+2. Focus on believable, occupation-appropriate luxury or avant-garde fashion: specific upper/lower garments, layering, fabrics/textures (e.g., crisp cotton, wool twill, brushed leather, fine linen, structured denim, silk satin), tailored cuts, and functional details that suit the role — WITHOUT defaulting to sci-fi, cyberpunk, techwear, neon, holographic, robotic, or futuristic tropes.
+3. Do NOT add tech/cyber/futuristic vocabulary (e.g., cyber, techwear, neon, holographic, mecha, tactical modular harness, thermal mesh, ceramic plates, glowing wires) unless the user's input explicitly mentions tech, futuristic, cyber, sci-fi, or equivalent intent in any language.
+4. Keep it within 2-3 highly evocative, coherent sentences (strictly in English). Do NOT make it excessively long.
+5. Integrate the user's features and characteristics organically.
 
 Input to expand:
 ${userContext}`;
@@ -1631,6 +1672,9 @@ ${userContext}`;
                     <span className="material-icons-round text-xs">{isExpanding ? 'hourglass_top' : 'auto_awesome'}</span>
                     <span>{isExpanding ? 'Expanding Style Details...' : 'Expand Prompt / 智能扩写服装'}</span>
                   </button>
+                  <p className="text-[8px] text-white/30 leading-snug">
+                    默认按职业写实扩写，不会自动加入赛博/机能/霓虹等科技词汇；若需要科技感，请在职业或特征中写明「科技」「未来感」「赛博」等。
+                  </p>
                 </div>
 
                 <div className="space-y-2 mt-4 pt-4 border-t border-white/5">
