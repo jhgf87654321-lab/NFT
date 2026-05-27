@@ -6,6 +6,7 @@ import { GoogleGenAI } from '@google/genai';
 import { View } from '../types';
 import { getRandomAestheticReferences, uploadImageToCloudBase, type AestheticReference } from '../lib/apiClient';
 import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
+import { generateGeminiText } from '../lib/geminiTextClient';
 import { addNftToMyProfile, ensureUserProfile } from '../lib/userProfile';
 import { getCloudbaseAuth } from '../lib/cloudbase';
 import { getMintJobSnapshot, startMintJob, subscribeMintJob, type MintJobResult } from '../lib/mintJob';
@@ -149,6 +150,42 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
 
   const [selectedSkinColor, setSelectedSkinColor] = useState('#E0AC69'); // Default skin tone (Tan Bio)
   const [clothingPrompt, setClothingPrompt] = useState('');
+  const [expandOccupation, setExpandOccupation] = useState('');
+  const [expandFeatures, setExpandFeatures] = useState('');
+  const [isExpanding, setIsExpanding] = useState(false);
+
+  const handleExpandPrompt = async () => {
+    if (!expandOccupation.trim()) return;
+    setIsExpanding(true);
+    try {
+      const userContext = expandFeatures.trim()
+        ? `occupation/role: ${expandOccupation.trim()}\nfeatures: ${expandFeatures.trim()}`
+        : `occupation/role: ${expandOccupation.trim()}`;
+
+      const systemPrompt = `You are an elite, avant-garde high-fashion techwear designer.
+Your task is to take a given occupation/role and optional basic features, and expand them into a highly precise, exceptionally professional, and detailed English fashion design prompt (specifically focusing on clothing design, garments, cuts, layering, unique functional features, materials, and techwear/runway details).
+
+Guidelines for the output:
+1. ONLY return the expanded clothing prompt description itself. Do not include any introductions, pleasantries, explanations, or quotes.
+2. Focus deeply on professional clothing design: describe specific upper garments, lower garments, layering, precise fabrics/textures (e.g., ripstop nylon, raw textured leather, matte ceramic plates, thermal mesh), avant-garde cuts (e.g., asymmetrical tailoring, geometric silhouette, modular straps), and tactical or functional details that beautifully translate the specified occupation into futuristic high-fashion.
+3. Keep it within 2-3 highly evocative, coherent sentences (strictly in English) so it remains optimized for subsequent image generation. Do NOT make it excessively long.
+4. Integrate the user's features and characteristics organically.
+
+Input to expand:
+${userContext}`;
+
+      const expanded = await generateGeminiText({
+        parts: [{ text: systemPrompt }],
+        model: 'gemini-3.1-flash-preview',
+      });
+      if (expanded) setClothingPrompt(expanded);
+    } catch (error) {
+      console.error('Failed to expand prompt', error);
+      alert('提示词扩写失败，请稍后重试。');
+    } finally {
+      setIsExpanding(false);
+    }
+  };
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedNFT, setGeneratedNFT] = useState<string | null>(null);
@@ -1529,6 +1566,72 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
                     <span className="text-[10px] text-white/40 uppercase tracking-widest">AI 将随机生成一套造型</span>
                   </div>
                 )}
+
+                <div className="mt-4 pt-4 border-t border-white/5 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="material-icons-round text-xs text-primary animate-pulse">auto_awesome</span>
+                    <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">AI Prompt Expander / 智能扩写</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1.5">
+                      <label className="text-[8px] font-bold text-white/35 uppercase tracking-wider block">1. 目标职业 (Occupation)</label>
+                      <input
+                        type="text"
+                        value={expandOccupation}
+                        onChange={(e) => setExpandOccupation(e.target.value)}
+                        placeholder={
+                          aestheticStyle === 'Workwear'
+                            ? '例：精品咖啡师、登山向导'
+                            : '例：Cyberpunk DJ、Doctor'
+                        }
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-[10px] text-white placeholder-white/20 focus:outline-none focus:border-primary/50 transition-all font-sans"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[8px] font-bold text-white/35 uppercase tracking-wider block">2. 特征描述 (Features)</label>
+                      <input
+                        type="text"
+                        value={expandFeatures}
+                        onChange={(e) => setExpandFeatures(e.target.value)}
+                        placeholder="例：glowing wire, asymmetry"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-[10px] text-white placeholder-white/20 focus:outline-none focus:border-primary/50 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1 items-center">
+                    <span className="text-[7px] font-bold text-white/25 uppercase mr-1">快速预设:</span>
+                    {[
+                      { name: 'DJ', features: 'neon visor, asymmetrical neck, custom headsets' },
+                      { name: 'Medic / 医生', features: 'sterile capsule-white, micro-cross graphic, holographic diagnostic belt' },
+                      { name: 'Pilot / 飞行员', features: 'extreme G-force harness, golden shielding glass, leather neck collar' },
+                      { name: 'Mechanic / 机械师', features: 'grease-resistant charcoal fabric, modular buckles, mechanical tool waist holster' },
+                    ].map((tag) => (
+                      <button
+                        key={tag.name}
+                        type="button"
+                        onClick={() => {
+                          setExpandOccupation(tag.name.split(' / ')[0]);
+                          setExpandFeatures(tag.features);
+                        }}
+                        className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white text-[8px] transition-all font-bold"
+                      >
+                        {tag.name}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => void handleExpandPrompt()}
+                    disabled={isExpanding || !expandOccupation.trim()}
+                    className="w-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 py-2.5 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all text-[9.5px] uppercase font-black disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:bg-primary/10"
+                  >
+                    <span className="material-icons-round text-xs">{isExpanding ? 'hourglass_top' : 'auto_awesome'}</span>
+                    <span>{isExpanding ? 'Expanding Style Details...' : 'Expand Prompt / 智能扩写服装'}</span>
+                  </button>
+                </div>
 
                 <div className="space-y-2 mt-4 pt-4 border-t border-white/5">
                   <div className="flex justify-between items-center">
