@@ -155,6 +155,27 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
     window.setTimeout(() => setToastMessage(null), 3050);
   };
 
+  const clothingPromptNeedsEnglish = (text: string) => /[\u4e00-\u9fff]/.test(text);
+
+  const translateClothingPromptToEnglish = async (text: string): Promise<string> => {
+    const trimmed = text.trim();
+    if (!trimmed || !clothingPromptNeedsEnglish(trimmed)) return trimmed;
+    try {
+      const translated = await generateGeminiText({
+        parts: [
+          {
+            text: `Translate the following fashion/clothing design description into professional English suitable for an AI image generation prompt. Preserve all garment details, materials, cuts, and styling intent. Return ONLY the English text — no quotes, labels, or explanation.\n\n${trimmed}`,
+          },
+        ],
+        model: 'gemini-3.1-flash-preview',
+      });
+      return translated?.trim() || trimmed;
+    } catch (error) {
+      console.error('Failed to translate clothing prompt', error);
+      return trimmed;
+    }
+  };
+
   /** 用户显式要求科技/未来感审美时才在扩写中加入 techwear、cyber 等词汇 */
   const expandWantsTechAesthetic = (occupation: string, features: string) => {
     const combined = `${occupation} ${features}`.toLowerCase();
@@ -192,28 +213,28 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
       const wantsTech = expandWantsTechAesthetic(occupation, features);
 
       const systemPrompt = wantsTech
-        ? `You are an elite, avant-garde high-fashion techwear designer.
-Your task is to take a given occupation/role and optional basic features, and expand them into a highly precise, exceptionally professional, and detailed English fashion design prompt (specifically focusing on clothing design, garments, cuts, layering, unique functional features, materials, and techwear/runway details).
+        ? `你是一位顶尖的前卫高科技时装设计师。
+请根据用户提供的职业/角色与可选特征，扩写为精准、专业、详细的中文服装设计描述（聚焦服装款式、上下装、叠穿、功能细节、面料质感与科技机能/runway 细节）。
 
-Guidelines for the output:
-1. ONLY return the expanded clothing prompt description itself. Do not include any introductions, pleasantries, explanations, or quotes.
-2. Focus deeply on professional clothing design: describe specific upper garments, lower garments, layering, precise fabrics/textures (e.g., ripstop nylon, raw textured leather, matte ceramic plates, thermal mesh), avant-garde cuts (e.g., asymmetrical tailoring, geometric silhouette, modular straps), and tactical or functional details that beautifully translate the specified occupation into futuristic high-fashion.
-3. Keep it within 2-3 highly evocative, coherent sentences (strictly in English) so it remains optimized for subsequent image generation. Do NOT make it excessively long.
-4. Integrate the user's features and characteristics organically. The user explicitly requested a tech/futuristic aesthetic — you may use cyber, techwear, and futuristic vocabulary accordingly.
+输出要求：
+1. 只返回扩写后的服装描述正文，不要引言、解释或引号。
+2. 深入描述专业服装设计：具体上装、下装、叠穿层次、面料质感（如 ripstop 尼龙、做旧皮革、哑光陶瓷片、thermal mesh 等可保留英文材质名）、前卫剪裁与机能细节，将职业气质转化为未来感高定造型。
+3. 控制在 2–3 句连贯 evocative 中文，不宜过长。
+4. 有机融入用户特征。用户明确要求科技/未来感审美，可使用赛博、机能、未来感等中文词汇。
 
-Input to expand:
+待扩写输入：
 ${userContext}`
-        : `You are an elite, avant-garde high-fashion designer and costume director.
-Your task is to take a given occupation/role and optional basic features, and expand them into a highly precise, exceptionally professional, and detailed English fashion design prompt (focusing on clothing design, garments, cuts, layering, materials, and runway-ready details appropriate to the role).
+        : `你是一位顶尖的前卫高定时装设计师与造型指导。
+请根据用户提供的职业/角色与可选特征，扩写为精准、专业、详细的中文服装设计描述（聚焦服装款式、叠穿、面料与适合该角色的 runway 级细节）。
 
-Guidelines for the output:
-1. ONLY return the expanded clothing prompt description itself. Do not include any introductions, pleasantries, explanations, or quotes.
-2. Focus on believable, occupation-appropriate luxury or avant-garde fashion: specific upper/lower garments, layering, fabrics/textures (e.g., crisp cotton, wool twill, brushed leather, fine linen, structured denim, silk satin), tailored cuts, and functional details that suit the role — WITHOUT defaulting to sci-fi, cyberpunk, techwear, neon, holographic, robotic, or futuristic tropes.
-3. Do NOT add tech/cyber/futuristic vocabulary (e.g., cyber, techwear, neon, holographic, mecha, tactical modular harness, thermal mesh, ceramic plates, glowing wires) unless the user's input explicitly mentions tech, futuristic, cyber, sci-fi, or equivalent intent in any language.
-4. Keep it within 2-3 highly evocative, coherent sentences (strictly in English). Do NOT make it excessively long.
-5. Integrate the user's features and characteristics organically.
+输出要求：
+1. 只返回扩写后的服装描述正文，不要引言、解释或引号。
+2. 聚焦可信、符合职业气质的高级或前卫时装：具体上下装、叠穿、面料质感（如精梳棉、羊毛斜纹、磨砂皮革、细亚麻、结构丹宁、真丝缎等）、剪裁与功能细节——不要默认加入科幻、赛博朋克、机能、霓虹、全息、机械等未来 tropes。
+3. 除非用户输入明确提到科技、未来感、赛博、科幻等意图，否则不要添加 techwear/cyber/霓虹/全息/机械等未来词汇。
+4. 控制在 2–3 句连贯中文，不宜过长。
+5. 有机融入用户特征。
 
-Input to expand:
+待扩写输入：
 ${userContext}`;
 
       const expanded = await generateGeminiText({
@@ -646,10 +667,13 @@ ${userContext}`;
             ? 'The clothing is strictly monochrome, black, white, and grey. The background and skin tone must remain natural.'
             : `The clothing has subtle, elegant color accents of ${randomColor}. The background and skin tone must remain natural.`;
       const clothingPromptTrimmed = clothingPrompt.trim();
+      const clothingPromptEnglish = clothingPromptTrimmed
+        ? await translateClothingPromptToEnglish(clothingPromptTrimmed)
+        : '';
       const eraStyle = eraStyleFromEraParam(params.era ?? 50);
       let finalStyleInstruction = `The aesthetic era is ${eraStyle}.`;
       if (aestheticStyle === 'Workwear') {
-        finalStyleInstruction = buildWorkwearStyleInstruction(eraStyle, clothingPromptTrimmed);
+        finalStyleInstruction = buildWorkwearStyleInstruction(eraStyle, clothingPromptEnglish);
       } else if (aestheticStyle !== 'Default') {
         finalStyleInstruction += ` The specific aesthetic style MUST be highly influenced by: ${aestheticStyle}.`;
       }
@@ -815,8 +839,8 @@ ${userContext}`;
           ? `Outfit consists of: Top - ${topDesc}, Bottom - ${bottomDesc}, Footwear - ${shoesDesc}.`
           : `Outfit: Fashion-forward avant-garde clothing made of ${randomMaterial}.`;
 
-      if (clothingPromptTrimmed && aestheticStyle !== 'Workwear') {
-        outfitDesc += ` The specific garment designs, styles, cuts, features, graphics, patterns, fabrics, and design details MUST exactly match the user's custom instructions: "${clothingPromptTrimmed}". Prioritize this style instruction above all standard randomisations to execute exactly the design specified by the user.`;
+      if (clothingPromptEnglish && aestheticStyle !== 'Workwear') {
+        outfitDesc += ` The specific garment designs, styles, cuts, features, graphics, patterns, fabrics, and design details MUST exactly match the user's custom instructions: "${clothingPromptEnglish}". Prioritize this style instruction above all standard randomisations to execute exactly the design specified by the user.`;
       }
 
       const isSpecial = true;

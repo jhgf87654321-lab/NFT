@@ -111,21 +111,6 @@ export const LiveCanvas: React.FC<LiveCanvasProps> = ({
 
       {/* Action bottom button */}
       <div className="pt-3 border-t border-[#E5E5E5] space-y-3">
-        {generatedNFT && nftMetadata && (
-          <div className="bg-neutral-100 p-3 rounded-none border border-neutral-300 flex flex-col gap-1 select-none">
-            <div className="flex justify-between items-center text-[7.5px] uppercase font-bold text-neutral-400 font-mono">
-              <span>ACTIVE MODEL INDEX</span>
-              <span className="text-black font-mono font-bold tracking-widest">SPEC READY</span>
-            </div>
-            <h3 className="text-[11.5px] font-black uppercase tracking-tight text-neutral-900 leading-tight font-mono">
-              {nftMetadata.theme}
-            </h3>
-            <span className="text-[7.5px] font-bold text-neutral-400 uppercase tracking-wider block mt-1 font-mono">
-              RARITY SPECS: <span className="text-black font-bold">{nftMetadata.rarity}</span>
-            </span>
-          </div>
-        )}
-
         <button
           onClick={generateNFT}
           disabled={isGenerating}

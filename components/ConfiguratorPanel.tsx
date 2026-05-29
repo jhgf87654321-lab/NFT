@@ -647,42 +647,42 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
 
             {/* Custom Description Textarea with expander */}
             <div className="space-y-2 pt-3 border-t border-[#E5E5E5]">
-              <label className="text-[9px] uppercase font-bold tracking-widest text-neutral-400 font-mono">Custom Garments specification</label>
+              <label className="text-[9px] font-bold tracking-wide text-neutral-500">自定义服装描述</label>
               <textarea
                 value={clothingPrompt}
                 onChange={(e) => setClothingPrompt(e.target.value)}
-                placeholder="PROMPT TEXT // CUSTOM DETAILS..."
-                className="w-full bg-white border border-neutral-300 rounded-none p-3 text-[10px] font-bold text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:border-black min-h-[90px] leading-relaxed resize-none font-sans uppercase tracking-wider"
+                placeholder="在此输入服装款式、剪裁、面料、图案等细节（中文）；生成图片时将自动译为英文 prompt。"
+                className="w-full bg-white border border-neutral-300 rounded-none p-3 text-[10px] font-medium text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:border-black min-h-[90px] leading-relaxed resize-none font-sans"
               />
               
               {/* Expander form inside container */}
               <div className="p-3 bg-[#FAF9F6] border border-neutral-300 flex flex-col gap-2 mt-1 rounded-none">
-                <div className="flex justify-between items-center text-[7.5px] uppercase tracking-widest text-neutral-450 font-mono">
-                  <span>AI Prompt Enhancer</span>
-                  <span className="text-black font-mono">GEN-V2</span>
+                <div className="flex justify-between items-center text-[7.5px] text-neutral-500">
+                  <span className="font-bold">AI 提示词扩写</span>
+                  <span className="text-black font-mono text-[7px]">GEN-V2</span>
                 </div>
                 <input
                   type="text"
                   value={expandOccupation}
                   onChange={(e) => setExpandOccupation(e.target.value)}
-                  placeholder="OCCUPATION (E.G. 'BARISTA')"
-                  className="w-full bg-white border border-neutral-300 rounded-none px-2.5 py-1 text-[8px] font-bold text-neutral-800 focus:outline-none focus:border-black uppercase tracking-wider"
+                  placeholder="职业 / 角色（如：咖啡师、飞行员）"
+                  className="w-full bg-white border border-neutral-300 rounded-none px-2.5 py-1.5 text-[9px] font-medium text-neutral-800 focus:outline-none focus:border-black"
                 />
                 <input
                   type="text"
                   value={expandFeatures}
                   onChange={(e) => setExpandFeatures(e.target.value)}
-                  placeholder="ADDITIONAL CORE FEATURES (OPTIONAL)"
-                  className="w-full bg-white border border-neutral-300 rounded-none px-2.5 py-1 text-[8px] font-bold text-neutral-800 focus:outline-none focus:border-black uppercase tracking-wider"
+                  placeholder="附加特征（可选，如：宽松剪裁、金属扣件）"
+                  className="w-full bg-white border border-neutral-300 rounded-none px-2.5 py-1.5 text-[9px] font-medium text-neutral-800 focus:outline-none focus:border-black"
                 />
                 <button
                   type="button"
                   onClick={handleExpandPrompt}
                   disabled={isExpanding}
-                  className="w-full bg-black hover:bg-neutral-900 text-[#D4FF00] py-1.5 rounded-none text-[7.5px] font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50"
+                  className="w-full bg-black hover:bg-neutral-900 text-[#D4FF00] py-1.5 rounded-none text-[8px] font-bold tracking-wide transition-all flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50"
                 >
                   <span className="material-icons-round text-[9px]">{isExpanding ? 'sync' : 'auto_awesome'}</span>
-                    {isExpanding ? 'EXPANDING NODE...' : 'PROCESS DESIGN SPECS'}
+                    {isExpanding ? '扩写中…' : '智能扩写'}
                   </button>
                   <p className="text-[7px] text-neutral-450 leading-snug font-mono">
                     默认写实扩写；需科技感请在输入框写「科技」「未来感」「赛博」等。
