@@ -169,18 +169,15 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex justify-center min-h-screen bg-black overflow-hidden select-none">
-      <div className="relative w-full max-w-[430px] h-screen bg-background-dark overflow-hidden flex flex-col">
-        {/* Background Grids */}
-        <div className="fixed inset-0 grid-bg pointer-events-none opacity-10"></div>
-        
-        {/* Main Content Area — pb for fixed bottom nav */}
-        <div className="flex-1 overflow-y-auto no-scrollbar relative z-10 pb-28">
+    <div className="flex w-screen h-screen bg-[#FAF9F6] overflow-hidden select-none">
+      <div className="relative w-full h-full bg-[#FAF9F6] overflow-hidden flex flex-col md:flex-row">
+        <div className="absolute inset-0 grid-bg pointer-events-none opacity-[0.03]"></div>
+
+        <Navbar activeView={currentView} onViewChange={setCurrentView} />
+
+        <div className="flex-1 h-full overflow-y-auto relative z-10 pb-24 md:pb-0">
           {renderView()}
         </div>
-
-        {/* Global Navigation */}
-        <Navbar activeView={currentView} onViewChange={setCurrentView} />
       </div>
     </div>
   );

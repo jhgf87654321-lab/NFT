@@ -7,34 +7,18 @@ import { View } from '../types';
 import { getRandomAestheticReferences, uploadImageToCloudBase, type AestheticReference } from '../lib/apiClient';
 import { generateGeminiImage, type GeminiPart } from '../lib/geminiClient';
 import { generateGeminiText } from '../lib/geminiTextClient';
+import { ConfiguratorPanel } from '../components/ConfiguratorPanel';
+import { LiveCanvas } from '../components/LiveCanvas';
+import { WardrobeVault } from '../components/WardrobeVault';
 import { addNftToMyProfile, ensureUserProfile } from '../lib/userProfile';
 import { getCloudbaseAuth } from '../lib/cloudbase';
 import { getMintJobSnapshot, startMintJob, subscribeMintJob, type MintJobResult } from '../lib/mintJob';
 import { upsertImageInfo } from '../lib/imageInfo';
 
-type AuthMode = 'signIn' | 'signUp';
 type Category = 'Body' | 'Skin' | 'Style' | 'Design';
 type Gender = 'Male' | 'Female' | 'Creature';
 type CreatureTexture = 'Hairy' | 'Hairless';
 type DesignMode = 'Random' | 'Custom';
-
-const CATEGORY_LABEL: Record<Category, string> = {
-  Body: '身体',
-  Skin: '肤色',
-  Style: '风格',
-  Design: '设计',
-};
-
-const DESIGN_MODE_LABEL: Record<DesignMode, string> = {
-  Random: '随机',
-  Custom: '自定义',
-};
-
-const GENDER_LABEL: Record<Gender, string> = {
-  Male: '男',
-  Female: '女',
-  Creature: '生物',
-};
 
 /** 审美风格「工装」：仅制服大类；具体职业/款型由「自定义服装设计」输入框填写 */
 export const WORKWEAR_THEME_KEYWORDS_ZH =
@@ -154,6 +138,23 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
   const [expandFeatures, setExpandFeatures] = useState('');
   const [isExpanding, setIsExpanding] = useState(false);
 
+  const [lightingStyle, setLightingStyle] = useState('杂志封面');
+  const [backgroundTheme, setBackgroundTheme] = useState('赛博实验室');
+  const [grainFilter, setGrainFilter] = useState('无噪点');
+  const [refImageWeight, setRefImageWeight] = useState(50);
+  const [refImage, setRefImage] = useState<string | null>(null);
+  const [modcardImage, setModcardImage] = useState<string | null>(null);
+  const [isAnalyzingModcard, setIsAnalyzingModcard] = useState(false);
+  const [modcardDesc, setModcardDesc] = useState<string | null>(null);
+  const [myCyberCollection, setMyCyberCollection] = useState<CyberCollectionItem[]>([]);
+  const [points, setPoints] = useState(0);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    window.setTimeout(() => setToastMessage(null), 3050);
+  };
+
   /** 用户显式要求科技/未来感审美时才在扩写中加入 techwear、cyber 等词汇 */
   const expandWantsTechAesthetic = (occupation: string, features: string) => {
     const combined = `${occupation} ${features}`.toLowerCase();
@@ -234,9 +235,37 @@ ${userContext}`;
   const [nftMetadata, setNftMetadata] = useState<{ theme: string; rarity: string } | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<AuthMode>('signIn');
-  const [isSuccess, setIsSuccess] = useState(false);
+  useEffect(() => {
+    try {
+      const storedCollection = localStorage.getItem('myCyberCollection');
+      if (storedCollection) setMyCyberCollection(JSON.parse(storedCollection) as CyberCollectionItem[]);
+      const storedPoints = localStorage.getItem('userPoints');
+      if (storedPoints) setPoints(parseInt(storedPoints, 10) || 0);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleRecycle = (index: number) => {
+    const newCollection = [...myCyberCollection];
+    newCollection.splice(index, 1);
+    setMyCyberCollection(newCollection);
+    localStorage.setItem('myCyberCollection', JSON.stringify(newCollection));
+    const newPoints = points + 100;
+    setPoints(newPoints);
+    localStorage.setItem('userPoints', String(newPoints));
+    triggerToast('MODEL PROTOCOL RECYCLED. +100 SCORE VALUE.');
+  };
+
+  const handleSelectSavedItem = (nft: CyberCollectionItem) => {
+    setGeneratedNFT(nft.image);
+    setNftData(nft);
+    if (nft.prompt) setClothingPrompt(String(nft.prompt));
+    if (nft.theme) {
+      setNftMetadata({ theme: nft.theme, rarity: nft.isSpecial ? 'LEGENDARY' : 'COMMON' });
+    }
+    triggerToast('RETRIEVED PORTFOLIO DATA FROM VAULT.');
+  };
 
   const skinColors: Array<{ name: string; hex: string; hint?: string }> = [
     { name: 'Light Bio', hex: '#FFDBAC' },
@@ -248,19 +277,6 @@ ${userContext}`;
     { name: 'Obsidian', hex: '#1A1A1A' },
     { name: 'Neon Puls', hex: '#D4FF00' },
   ];
-
-  const handleAuthSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSuccess(true);
-    setTimeout(() => {
-      setIsAuthOpen(false);
-      setIsSuccess(false);
-    }, 1800);
-  };
-
-  const toggleMode = () => {
-    setAuthMode(authMode === 'signIn' ? 'signUp' : 'signIn');
-  };
 
   const defaultCreatorState = useMemo<CreatorStateV1>(
     () => ({
@@ -558,6 +574,56 @@ ${userContext}`;
     reader.readAsDataURL(file);
   };
 
+  const handleModcardUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result as string;
+      setModcardImage(base64);
+      setIsAnalyzingModcard(true);
+      setModcardDesc(null);
+
+      try {
+        const m = base64.match(/^data:([^;]+);base64,(.+)$/);
+        if (!m) throw new Error('invalid data url');
+        const desc = await generateGeminiText({
+          parts: [
+            {
+              text: `This is a model comp card or modcard containing photos and biometric details of a fashion model. Please thoroughly analyze the model's appearance, facial features, demographic/ethnicity, age range, body structure/pose, hairstyle/haircolor, facial expression, and general vibe. Provide a highly detailed, concise English description (2-3 sentences) summarizing these specific physical traits and modeling vibe to be directly injected as character instructions in a downstream generative image AI prompt. Do not write introductory or concluding text, only return the descriptive character instruction itself, strictly in English.`,
+            },
+            { inlineData: { mimeType: m[1]!, data: m[2]! } },
+          ],
+          model: 'gemini-2.5-flash',
+        });
+        setModcardDesc(desc);
+        triggerToast('MODCARD SPEC ANALYZED AND REGISTERED SUCCESSFULLY.');
+      } catch (error) {
+        console.error('Failed to analyze modcard image', error);
+        setModcardDesc('Analysis failed. Fallback default high-end fashion model.');
+        triggerToast('DECODING RUNWAY SPECS ENCOUNTERED AN ERROR.');
+      } finally {
+        setIsAnalyzingModcard(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClearModcard = () => {
+    setModcardImage(null);
+    setModcardDesc(null);
+    triggerToast('MODCARD COUTURE NODE SYSTEM DEPROVISIONED.');
+  };
+
+  const handleHbaFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setHbaImageBase64(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const generateNFT = async () => {
     const run = async (): Promise<MintJobResult> => {
       // Randomize traits for high variety
@@ -715,10 +781,14 @@ ${userContext}`;
             ? 'The character is striking a dramatic full-body editorial runway pose (entire body head-to-toe still fully visible in frame), with dynamic silhouette and off-center posture — never a tight portrait crop'
             : 'The character is standing in a standard elegant, poised, professional fashion model posture, a confident semi-dynamic posture with subtle natural angles and classic lookbook poise';
 
-      const characterDesc =
+      let characterDesc =
         gender === 'Creature'
           ? `A unique, otherworldly creature (alien, mutant, or bio-engineered humanoid). Texture/Vibe: ${creatureTextureDesc}. Size/Proportions: ${params.proportions > 70 ? 'Massive and imposing' : params.proportions < 30 ? 'Small and agile' : 'Medium build'}. Build: ${buildDesc}. Headwear: ${headwearDesc}. Pose: ${poseStyle}. ${creatureSpecialInstructions}`
           : `A stylish ${gender.toLowerCase()} fashion model${isTanBio ? ' with East Asian facial features' : ''}. Body type: ${params.muscularity > 70 ? 'muscular' : 'lean'} and ${buildDesc}. Height: ${params.proportions > 70 ? 'Tall stature' : params.proportions < 30 ? 'Short stature' : 'Average height'}. Headwear: ${headwearDesc}. Pose: ${poseStyle}.`;
+
+      if (gender !== 'Creature' && modcardDesc) {
+        characterDesc = `THE ABSOLUTE MODEL IDENTITY MANDATE: The model's entire appearance, gender, demographic ethnicity, precise facial features, bone structure, eyes, nose, lips, hair, hairstyle, hair color, age, facial expression, and skin tone MUST PERFECTLY and EXCLUSIVELY replicate the exact person shown in the uploaded modcard and described here: "${modcardDesc}". Keep all biometric details of this real human model perfectly intact and unchanged. You are strictly forbidden from generating any generic or secondary models; this specific model must be the one dressed in the specified clothing.`;
+      }
 
       const aimShoeDesc =
         'black high-top chunky boots with a prominent silver side zipper, thick ridged platform sole, black laces, and a contrasting light grey toe cap';
@@ -764,9 +834,11 @@ ${userContext}`;
         serialNumber = `No.${normalCount.toString().padStart(8, '0')}`;
       }
 
+      const sceneStyleInstruction = `Scene styling: lighting setup "${lightingStyle}", background theme "${backgroundTheme}", camera/grain filter "${grainFilter}", reference image influence weight ${refImageWeight}%.`;
+
       const backgroundInstruction = isSpecial
-        ? 'The background MUST be a solid, vibrant color field only (no patterns, no signage, no typography) that contrasts or harmonizes with the clothing. Do not use plain white or grey unless it enhances the outfit.'
-        : 'Minimal clean studio backdrop (white, grey, or soft neutral gradient only). Absolutely no typography, posters, signage, or readable text in the environment.';
+        ? `The background MUST be a solid, vibrant color field only (no patterns, no signage, no typography) that contrasts or harmonizes with the clothing. Do not use plain white or grey unless it enhances the outfit. ${sceneStyleInstruction}`
+        : `Minimal clean studio backdrop aligned with theme "${backgroundTheme}". Absolutely no typography, posters, signage, or readable text in the environment. ${sceneStyleInstruction}`;
 
       const fullBodyFramingInstruction =
         'FRAMING (NON-NEGOTIABLE): Single character, full-length full-body photograph — entire person visible from top of head to feet (toes/shoes fully in frame). Camera pulled back for a large heroic full-body editorial shot with modest padding above the head and below the feet. NOT half-body, NOT waist-up, NOT knee-up crop, NOT missing feet, NOT close-up portrait.';
@@ -917,6 +989,16 @@ ${userContext}`;
         if (!m) return null;
         return { inlineData: { mimeType: m[1]!, data: m[2]! } } as GeminiPart;
       };
+
+      if (gender !== 'Creature' && modcardImage && modcardDesc) {
+        const inline = dataUrlToInlinePart(modcardImage);
+        if (inline && 'inlineData' in inline) {
+          parts.push({
+            text: 'CRITICAL IDENTITY MANDATE - USE THIS EXACT MODEL: The following image is the EXACT modcard representing the model. You MUST replicate this model\'s exact face, features, hair, skin tone, gender, expression, and ethnic identity. Do not invent a generic avatar.',
+          });
+          parts.push(inline);
+        }
+      }
 
       // Add 'HBA' top reference if selected (user-uploaded image)
       if (designMode === 'Custom' && customDesign.top === 'HBA') {
@@ -1135,9 +1217,7 @@ ${userContext}`;
           }
           const msg = e instanceof Error ? e.message : String(e);
           if (msg.includes('NOT_SIGNED_IN')) {
-            // Prompt login on mobile/guest sessions so sync can succeed.
-            setAuthMode('signIn');
-            setIsAuthOpen(true);
+            onNavigate?.(View.AUTH);
             alert('请先登录以同步到 Wardrobe。');
           } else if (msg.includes('PROFILE_CREATE_VERIFY_FAILED')) {
             alert(
@@ -1195,6 +1275,8 @@ ${userContext}`;
         const trimmed = collection.slice(0, MAX_ITEMS - 1);
         const next = [nftDataObj, ...trimmed];
         localStorage.setItem('myCyberCollection', JSON.stringify(next));
+        setMyCyberCollection(next);
+        triggerToast('NEW COUTURE MINTED AND ADDED TO WARDROBE VAULT.');
         window.dispatchEvent(new Event('axon:collection-updated'));
       } catch (e) {
         console.error('Error saving to collection', e);
@@ -1225,728 +1307,119 @@ ${userContext}`;
     }
   };
 
-  const categories: Category[] = ['Body', 'Skin', 'Style', 'Design'];
 
   return (
-    <div className="relative min-h-full flex flex-col">
-      {/* Background Glows */}
-      <div className="fixed inset-0 pointer-events-none -z-20">
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[50%] bg-primary/5 blur-[120px] rounded-full"></div>
+    <div className="relative min-h-screen bg-[#FAF9F6] text-black selection:bg-primary selection:text-black">
+      <div className="fixed inset-0 pointer-events-none -z-20 overflow-hidden">
+        <div className="absolute top-[10%] right-[20%] w-[50%] h-[50%] bg-[#D4FF00]/5 blur-[150px] rounded-full"></div>
       </div>
 
-      <header className="relative z-50 px-8 pt-12 flex justify-between items-center mb-6">
-        <div>
-          <h1 className="font-future font-black text-3xl leading-none text-white tracking-tighter uppercase">NFT<br/>铸造</h1>
-          <p className="text-[10px] mt-2 tracking-[0.4em] uppercase text-white/40 font-bold leading-none">NFT 系列 V.1</p>
+      <header className="relative z-50 px-8 lg:px-16 pt-10 flex justify-between items-center mb-10 select-none">
+        <div className="flex items-baseline gap-6 font-sans">
+          <div>
+            <span className="text-[10px] font-black uppercase text-[#D4FF00] bg-black px-2.5 py-0.5 rounded tracking-[0.35rem] block leading-none">AXON LABS</span>
+            <h1 className="font-future font-black text-2xl leading-none text-black tracking-widest uppercase mt-2 font-display">NFT 铸造</h1>
+          </div>
+          <div className="h-6 w-px bg-black/15 hidden md:block"></div>
+          <p className="text-[9px] tracking-[0.3em] uppercase text-black/45 font-bold leading-none hidden md:block font-sans">COLLECTION VOLUME V.2</p>
         </div>
-        
-        <button 
-          onClick={() => {
-            onNavigate?.(View.AUTH);
-          }}
-          className="glass p-1 rounded-full border border-white/10 shadow-2xl hover:border-primary/50 transition-all active:scale-90"
-        >
-          <img
-            src={avatarUrl || 'https://picsum.photos/100/100?seed=axon_prime'}
-            alt="User"
-            className="w-14 h-14 rounded-full object-cover"
-            referrerPolicy="no-referrer"
-          />
-        </button>
+
+        <div className="flex items-center gap-6">
+          <span className="text-[9px] font-mono text-black/45 tracking-widest hidden lg:block uppercase">[ BLOCKCHAIN NODES ACTIVATED ]</span>
+          <button
+            type="button"
+            onClick={() => onNavigate?.(View.AUTH)}
+            className="group flex items-center gap-3 bg-white hover:bg-neutral-100 border border-black/10 rounded-full pl-5 pr-2 py-1.5 transition-all text-[9.5px] uppercase tracking-widest font-black active:scale-95 shadow-sm text-black"
+          >
+            <span>Network Node</span>
+            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-black/10 group-hover:border-primary/50 transition-colors">
+              <img src={avatarUrl || 'https://picsum.photos/100/100?seed=axon_prime'} alt="User" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-primary border border-white animate-pulse"></span>
+            </div>
+          </button>
+        </div>
       </header>
 
-      {/* Elongated Character Generation Preview Window */}
-      <div className="px-12 mb-8 relative z-10">
-        <div className="glass rounded-[3rem] border border-white/10 overflow-hidden relative shadow-[0_30px_60px_rgba(0,0,0,0.5)]">
-          {/* Diagnostic Header */}
-          <div className="bg-white/5 border-b border-white/5 px-8 py-4 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_#D4FF00]"></span>
-              <span className="text-[9px] font-black uppercase text-primary tracking-[0.2em]">区块节点：在线</span>
-            </div>
-            <div className="text-[7px] font-mono text-white/30 uppercase tracking-widest">
-              NFT 编号：#0x8277_MINT
-            </div>
-          </div>
-          
-          {/* Main Viewport */}
-          <div className="h-[480px] relative overflow-hidden bg-black/40">
-             <div className="absolute left-0 right-0 h-px bg-primary/50 shadow-[0_0_20px_#D4FF00] animate-scan z-20"></div>
-             
-             {/* Target Corners */}
-             <div className="absolute top-8 left-8 w-6 h-6 border-l border-t border-primary/40 rounded-tl-sm"></div>
-             <div className="absolute top-8 right-8 w-6 h-6 border-r border-t border-primary/40 rounded-tr-sm"></div>
-             <div className="absolute bottom-8 left-8 w-6 h-6 border-l border-b border-primary/40 rounded-bl-sm"></div>
-             <div className="absolute bottom-8 right-8 w-6 h-6 border-r border-b border-primary/40 rounded-br-sm"></div>
+      <main className="w-full max-w-7xl mx-auto px-4 lg:px-8 relative z-10 mb-28">
+        <div className="bg-white border border-neutral-300 rounded-none overflow-visible grid grid-cols-1 lg:grid-cols-12 shadow-none divide-y lg:divide-y-0 lg:divide-x divide-neutral-200">
+          <ConfiguratorPanel
+            activeCategory={activeCategory}
+            setActiveCategory={setActiveCategory}
+            gender={gender}
+            setGender={setGender}
+            creatureTexture={creatureTexture}
+            setCreatureTexture={setCreatureTexture}
+            designMode={designMode}
+            setDesignMode={setDesignMode}
+            customDesign={customDesign}
+            setCustomDesign={setCustomDesign}
+            aestheticStyle={aestheticStyle}
+            setAestheticStyle={setAestheticStyle}
+            params={params}
+            updateParam={updateParam}
+            skinColors={skinColors}
+            selectedSkinColor={selectedSkinColor}
+            setSelectedSkinColor={setSelectedSkinColor}
+            clothingPrompt={clothingPrompt}
+            setClothingPrompt={setClothingPrompt}
+            expandOccupation={expandOccupation}
+            setExpandOccupation={setExpandOccupation}
+            expandFeatures={expandFeatures}
+            setExpandFeatures={setExpandFeatures}
+            isExpanding={isExpanding}
+            handleExpandPrompt={handleExpandPrompt}
+            refImageWeight={refImageWeight}
+            setRefImageWeight={setRefImageWeight}
+            refImage={refImage}
+            setRefImage={setRefImage}
+            customTopImage={customTopImage}
+            isAnalyzingTop={isAnalyzingTop}
+            customTopDesc={customTopDesc}
+            customBottomImage={customBottomImage}
+            isAnalyzingBottom={isAnalyzingBottom}
+            customBottomDesc={customBottomDesc}
+            customShoesImage={customShoesImage}
+            isAnalyzingShoes={isAnalyzingShoes}
+            customShoesDesc={customShoesDesc}
+            handleCustomUpload={handleCustomUpload}
+            lightingStyle={lightingStyle}
+            setLightingStyle={setLightingStyle}
+            backgroundTheme={backgroundTheme}
+            setBackgroundTheme={setBackgroundTheme}
+            grainFilter={grainFilter}
+            setGrainFilter={setGrainFilter}
+            modcardImage={modcardImage}
+            isAnalyzingModcard={isAnalyzingModcard}
+            modcardDesc={modcardDesc}
+            handleModcardUpload={handleModcardUpload}
+            handleClearModcard={handleClearModcard}
+            hbaImageBase64={hbaImageBase64}
+            onHbaFileChange={handleHbaFileChange}
+            workwearPreviewPrompt={workwearPreviewPrompt}
+          />
 
-             <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none"></div>
-             
-             {/* Preview Metadata */}
-             <div className="absolute top-1/2 -translate-y-1/2 left-8 flex flex-col gap-6">
-                <div className="space-y-1">
-                  <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.3em] block">稀有度</span>
-                  <span className={`text-[9px] font-mono font-bold ${
-                    nftMetadata?.rarity === 'Mythic' ? 'text-accent' : 
-                    nftMetadata?.rarity === 'Legendary' ? 'text-yellow-400' : 
-                    'text-primary'
-                  }`}>{nftMetadata?.rarity || '---'}</span>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.3em] block">主题</span>
-                  <span className="text-[9px] font-mono text-white font-bold tracking-tighter">{nftMetadata?.theme || '---'}</span>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.3em] block">网络</span>
-                  <span className="text-[9px] font-mono text-white/40 font-bold">AXON_MAINNET</span>
-                </div>
-             </div>
+          <LiveCanvas
+            generatedNFT={generatedNFT}
+            isGenerating={isGenerating}
+            generateNFT={generateNFT}
+            nftMetadata={nftMetadata}
+            points={points}
+            triggerToast={triggerToast}
+          />
 
-             <div className="absolute bottom-10 left-10 flex flex-col gap-1">
-                <span className="text-[6px] font-bold text-white/40 uppercase tracking-[0.4em]">铸造进度</span>
-                <div className="w-20 h-1 bg-white/10 rounded-full overflow-hidden">
-                   <div className={`h-full bg-primary shadow-[0_0_10px_#D4FF00] transition-all duration-1000 ${isGenerating ? 'w-1/2 animate-pulse' : generatedNFT ? 'w-full' : 'w-0'}`}></div>
-                </div>
-             </div>
-
-             <div className="absolute bottom-10 right-10 flex items-center gap-3">
-                <div className="text-right">
-                  <span className="text-[6px] font-bold text-white/40 uppercase tracking-[0.3em] block">帧率</span>
-                  <span className="text-[10px] font-black text-white">120.00</span>
-                </div>
-                <div className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center">
-                  <span className="material-icons-round text-primary text-sm animate-spin" style={{ animationDuration: '3s' }}>hourglass_empty</span>
-                </div>
-             </div>
-
-             {/* Focus Overlay */}
-             <div className="absolute inset-0 flex items-center justify-center">
-               {isGenerating && !generatedNFT ? (
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] animate-pulse">铸造中…</span>
-                  </div>
-                ) : (
-                  <img 
-                    src={generatedNFT || "https://lh3.googleusercontent.com/aida-public/AB6AXuD--GjfU0623yeRTQGDPufUFR_AcyGbJCkDdfYQhfa33Z6nvca-1TOXhrwFVg2N5RiCHhhy3LLnHiNPE21vAD5DcA2Ybgp58Awi8kx4HgdooY_0bSzEqpbjpS_-iChDaVB9XFOMF0XySUyr9DnLfvAKLRMLpUF0--s_ZQjd6bE-PCd32yRsBhZZlVXDlRTVcQxdS8H7_Soy7rKtHqLCBYjz1d1plDnlgiynjzy3CuJtVjDwjEZDYaBtic2CIRWiQ6BOaehZHTtoXjrT"} 
-                    alt="Detail Focus"
-                    className={`w-full h-full object-contain transition-all duration-700 ${generatedNFT ? 'scale-100' : 'scale-[4] mix-blend-screen brightness-125 saturate-50'}`}
-                    style={!generatedNFT ? { filter: `drop-shadow(0 0 10px ${selectedSkinColor})` } : {}}
-                    referrerPolicy="no-referrer"
-                  />
-                )}
-             </div>
-          </div>
+          <WardrobeVault
+            myCyberCollection={myCyberCollection}
+            handleSelectSavedItem={handleSelectSavedItem}
+            handleRecycle={handleRecycle}
+            triggerToast={triggerToast}
+          />
         </div>
-      </div>
+      </main>
 
-      {/* Main Control Panel */}
-      <div className="mt-auto px-8 pb-32 relative z-10">
-        <div className="glass rounded-[2.5rem] p-6 shadow-2xl border border-white/5">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-[10px] font-bold tracking-[0.3em] uppercase text-primary">{activeCategory} Parameters</h2>
-            <span className="material-icons-round text-white/30 text-sm">settings</span>
-          </div>
-
-          <div className="min-h-[160px] flex flex-col justify-center">
-            {activeCategory === 'Skin' ? (
-              /* Color Selection Layout for Skin */
-              <div className="animate-in fade-in zoom-in-95 duration-300">
-                {gender === 'Creature' && (
-                  <div className="flex justify-between items-center mb-6">
-                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Creature Texture</span>
-                    <div className="flex gap-1 bg-white/5 p-1 rounded-lg">
-                      {['Hairy', 'Hairless'].map(t => (
-                        <button key={t} onClick={() => setCreatureTexture(t as CreatureTexture)} className={`px-3 py-1 rounded text-[8px] uppercase font-bold transition-all ${creatureTexture === t ? 'bg-primary text-black' : 'text-white/50 hover:text-white'}`}>{t}</button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="grid grid-cols-4 gap-4">
-                  {skinColors.map((color) => (
-                    <button
-                      key={color.hex}
-                      onClick={() => setSelectedSkinColor(color.hex)}
-                      className="flex flex-col items-center gap-2 group relative"
-                    >
-                      {color.hint ? (
-                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[7px] font-bold text-primary/80 uppercase tracking-widest whitespace-nowrap">
-                          {color.hint}
-                        </span>
-                      ) : null}
-                      <div 
-                        className={`w-12 h-12 rounded-2xl border-2 transition-all duration-300 flex items-center justify-center ${
-                          selectedSkinColor === color.hex 
-                          ? 'border-primary shadow-[0_0_15px_rgba(212,255,0,0.4)] scale-110' 
-                          : 'border-white/10 hover:border-white/30'
-                        }`}
-                        style={{ backgroundColor: color.hex }}
-                      >
-                        {selectedSkinColor === color.hex && (
-                          <span className="material-icons-round text-primary text-sm mix-blend-difference">check</span>
-                        )}
-                      </div>
-                      <span className={`text-[7px] font-bold uppercase tracking-tighter ${selectedSkinColor === color.hex ? 'text-primary' : 'text-white/20'}`}>
-                        {color.name}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : activeCategory === 'Design' ? (
-              /* Design Mode Layout */
-              <div className="animate-in fade-in zoom-in-95 duration-300">
-                <div className="flex justify-between items-center mb-6">
-                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">设计模式</span>
-                  <div className="flex gap-1 bg-white/5 p-1 rounded-lg">
-                    {(['Random', 'Custom'] as DesignMode[]).map((m) => (
-                      <button
-                        key={m}
-                        onClick={() => setDesignMode(m)}
-                        className={`px-4 py-1.5 rounded text-[9px] uppercase font-bold transition-all ${designMode === m ? 'bg-primary text-black' : 'text-white/50 hover:text-white'}`}
-                      >
-                        {DESIGN_MODE_LABEL[m]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                
-                {designMode === 'Custom' && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">上装</span>
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          { label: '大衣', value: 'Coat' },
-                          { label: '羽绒', value: 'Puffer' },
-                          { label: '短上衣', value: 'Crop Top' },
-                          { label: 'T恤', value: 'T-Shirt' },
-                          { label: '卫衣', value: 'Hoodie' },
-                          { label: 'HBA（特殊）', value: 'HBA' },
-                          { label: 'Custom（上传）', value: 'Custom' },
-                        ].map((item) => (
-                          <button
-                            key={item.value}
-                            onClick={() => setCustomDesign((p) => ({ ...p, top: item.value }))}
-                            className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${
-                              customDesign.top === item.value
-                                ? item.value === 'HBA' || item.value === 'Custom'
-                                  ? 'bg-blue-500 text-white border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.8)]'
-                                  : 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]'
-                                : item.value === 'HBA' || item.value === 'Custom'
-                                  ? 'border-blue-500/50 text-blue-400 hover:border-blue-400 hover:shadow-[0_0_10px_rgba(59,130,246,0.4)]'
-                                  : 'border-white/10 text-white/60 hover:border-white/30'
-                            }`}
-                          >
-                            {item.label}
-                          </button>
-                        ))}
-                      </div>
-                      {customDesign.top === 'HBA' && (
-                        <div className="mt-3 p-3 bg-white/5 border border-white/10 rounded-xl">
-                          <label className="block text-[8px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                            上传 HBA 参考图（可选）
-                          </label>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              const reader = new FileReader();
-                              reader.onloadend = () => setHbaImageBase64(reader.result as string);
-                              reader.readAsDataURL(file);
-                            }}
-                            className="text-[9px] text-white/60 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[9px] file:font-bold file:bg-white/10 file:text-white hover:file:bg-white/20 transition-all"
-                          />
-                          {hbaImageBase64 && (
-                            <img
-                              src={hbaImageBase64}
-                              alt="HBA 参考图"
-                              className="mt-3 h-16 w-16 object-cover rounded-lg border border-white/20"
-                            />
-                          )}
-                        </div>
-                      )}
-
-                      {customDesign.top === 'Custom' && (
-                        <div className="mt-3 p-3 bg-white/5 border border-white/10 rounded-xl">
-                          <label className="block text-[8px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                            上传 Custom 上装参考图（可选）
-                          </label>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => void handleCustomUpload(e, 'top')}
-                            className="text-[9px] text-white/60 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[9px] file:font-bold file:bg-white/10 file:text-white hover:file:bg-white/20 transition-all"
-                          />
-                          {isAnalyzingTop && <span className="text-[10px] text-primary animate-pulse ml-2">Analyzing...</span>}
-                          {customTopImage && (
-                            <img
-                              src={customTopImage}
-                              alt="Custom Top"
-                              className="mt-3 h-16 w-16 object-cover rounded-lg border border-white/20"
-                            />
-                          )}
-                          {customTopDesc && (
-                            <p className="mt-2 text-[8px] text-white/60 leading-tight">{customTopDesc}</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">下装</span>
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          { label: '短裤', value: 'Shorts' },
-                          { label: '长裤', value: 'Pants' },
-                          { label: '短裙', value: 'Skirt' },
-                          { label: '长裙', value: 'Long Skirt' },
-                          { label: 'Custom（上传）', value: 'Custom' },
-                        ].map((item) => (
-                          <button
-                            key={item.value}
-                            onClick={() => setCustomDesign((p) => ({ ...p, bottom: item.value }))}
-                            className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${
-                              customDesign.bottom === item.value
-                                ? item.value === 'Custom'
-                                  ? 'bg-blue-500 text-white border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.8)]'
-                                  : 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]'
-                                : item.value === 'Custom'
-                                  ? 'border-blue-500/50 text-blue-400 hover:border-blue-400 hover:shadow-[0_0_10px_rgba(59,130,246,0.4)]'
-                                  : 'border-white/10 text-white/60 hover:border-white/30'
-                            }`}
-                          >
-                            {item.label}
-                          </button>
-                        ))}
-                      </div>
-
-                      {customDesign.bottom === 'Custom' && (
-                        <div className="mt-3 p-3 bg-white/5 border border-white/10 rounded-xl">
-                          <label className="block text-[8px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                            上传 Custom 下装参考图（可选）
-                          </label>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => void handleCustomUpload(e, 'bottom')}
-                            className="text-[9px] text-white/60 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[9px] file:font-bold file:bg-white/10 file:text-white hover:file:bg-white/20 transition-all"
-                          />
-                          {isAnalyzingBottom && <span className="text-[10px] text-primary animate-pulse ml-2">Analyzing...</span>}
-                          {customBottomImage && (
-                            <img
-                              src={customBottomImage}
-                              alt="Custom Bottom"
-                              className="mt-3 h-16 w-16 object-cover rounded-lg border border-white/20"
-                            />
-                          )}
-                          {customBottomDesc && (
-                            <p className="mt-2 text-[8px] text-white/60 leading-tight">{customBottomDesc}</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">鞋履</span>
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          { label: '运动鞋', value: 'Sneakers' },
-                          { label: '战术靴', value: 'Combat Boots' },
-                          { label: '拖鞋', value: 'Slippers' },
-                          { label: '便鞋', value: 'Regular Shoes' },
-                          { label: 'AIM（特殊）', value: 'aim' },
-                          { label: 'Custom（上传）', value: 'Custom' },
-                        ].map((item) => (
-                          <button
-                            key={item.value}
-                            onClick={() => setCustomDesign((p) => ({ ...p, shoes: item.value }))}
-                            className={`px-3 py-1.5 rounded-full text-[9px] uppercase font-bold border transition-all ${
-                              customDesign.shoes === item.value
-                                ? item.value === 'aim' || item.value === 'Custom'
-                                  ? 'bg-blue-500 text-white border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.8)]'
-                                  : 'bg-white text-black border-white shadow-[0_0_10px_rgba(255,255,255,0.3)]'
-                                : item.value === 'aim' || item.value === 'Custom'
-                                  ? 'border-blue-500/50 text-blue-400 hover:border-blue-400 hover:shadow-[0_0_10px_rgba(59,130,246,0.4)]'
-                                  : 'border-white/10 text-white/60 hover:border-white/30'
-                            }`}
-                          >
-                            {item.label}
-                          </button>
-                        ))}
-                      </div>
-
-                      {customDesign.shoes === 'Custom' && (
-                        <div className="mt-3 p-3 bg-white/5 border border-white/10 rounded-xl">
-                          <label className="block text-[8px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                            上传 Custom 鞋履参考图（可选）
-                          </label>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => void handleCustomUpload(e, 'shoes')}
-                            className="text-[9px] text-white/60 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[9px] file:font-bold file:bg-white/10 file:text-white hover:file:bg-white/20 transition-all"
-                          />
-                          {isAnalyzingShoes && <span className="text-[10px] text-primary animate-pulse ml-2">Analyzing...</span>}
-                          {customShoesImage && (
-                            <img
-                              src={customShoesImage}
-                              alt="Custom Shoes"
-                              className="mt-3 h-16 w-16 object-cover rounded-lg border border-white/20"
-                            />
-                          )}
-                          {customShoesDesc && (
-                            <p className="mt-2 text-[8px] text-white/60 leading-tight">{customShoesDesc}</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-                {designMode === 'Random' && (
-                  <div className="h-24 flex items-center justify-center border border-dashed border-white/10 rounded-2xl bg-white/5">
-                    <span className="text-[10px] text-white/40 uppercase tracking-widest">AI 将随机生成一套造型</span>
-                  </div>
-                )}
-
-                <div className="mt-4 pt-4 border-t border-white/5 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="material-icons-round text-xs text-primary animate-pulse">auto_awesome</span>
-                    <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">AI Prompt Expander / 智能扩写</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1.5">
-                      <label className="text-[8px] font-bold text-white/35 uppercase tracking-wider block">1. 目标职业 (Occupation)</label>
-                      <input
-                        type="text"
-                        value={expandOccupation}
-                        onChange={(e) => setExpandOccupation(e.target.value)}
-                        placeholder={
-                          aestheticStyle === 'Workwear'
-                            ? '例：精品咖啡师、登山向导'
-                            : '例：Cyberpunk DJ、Doctor'
-                        }
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-[10px] text-white placeholder-white/20 focus:outline-none focus:border-primary/50 transition-all font-sans"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[8px] font-bold text-white/35 uppercase tracking-wider block">2. 特征描述 (Features)</label>
-                      <input
-                        type="text"
-                        value={expandFeatures}
-                        onChange={(e) => setExpandFeatures(e.target.value)}
-                        placeholder="例：glowing wire, asymmetry"
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-[10px] text-white placeholder-white/20 focus:outline-none focus:border-primary/50 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1 items-center">
-                    <span className="text-[7px] font-bold text-white/25 uppercase mr-1">快速预设:</span>
-                    {[
-                      { name: 'DJ', features: 'neon visor, asymmetrical neck, custom headsets' },
-                      { name: 'Medic / 医生', features: 'sterile capsule-white, micro-cross graphic, holographic diagnostic belt' },
-                      { name: 'Pilot / 飞行员', features: 'extreme G-force harness, golden shielding glass, leather neck collar' },
-                      { name: 'Mechanic / 机械师', features: 'grease-resistant charcoal fabric, modular buckles, mechanical tool waist holster' },
-                    ].map((tag) => (
-                      <button
-                        key={tag.name}
-                        type="button"
-                        onClick={() => {
-                          setExpandOccupation(tag.name.split(' / ')[0]);
-                          setExpandFeatures(tag.features);
-                        }}
-                        className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white text-[8px] transition-all font-bold"
-                      >
-                        {tag.name}
-                      </button>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => void handleExpandPrompt()}
-                    disabled={isExpanding || !expandOccupation.trim()}
-                    className="w-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 py-2.5 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all text-[9.5px] uppercase font-black disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:bg-primary/10"
-                  >
-                    <span className="material-icons-round text-xs">{isExpanding ? 'hourglass_top' : 'auto_awesome'}</span>
-                    <span>{isExpanding ? 'Expanding Style Details...' : 'Expand Prompt / 智能扩写服装'}</span>
-                  </button>
-                  <p className="text-[8px] text-white/30 leading-snug">
-                    默认按职业写实扩写，不会自动加入赛博/机能/霓虹等科技词汇；若需要科技感，请在职业或特征中写明「科技」「未来感」「赛博」等。
-                  </p>
-                </div>
-
-                <div className="space-y-2 mt-4 pt-4 border-t border-white/5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">自定义服装设计</span>
-                    {clothingPrompt && (
-                      <button
-                        type="button"
-                        onClick={() => setClothingPrompt('')}
-                        className="text-[8px] font-bold text-red-400 hover:text-red-300 transition-all uppercase tracking-wider"
-                      >
-                        清空
-                      </button>
-                    )}
-                  </div>
-                  <textarea
-                    value={clothingPrompt}
-                    onChange={(e) => setClothingPrompt(e.target.value)}
-                    placeholder={
-                      aestheticStyle === 'Workwear'
-                        ? '选工装时在此填写：具体职业 + 制服类型（例：精品咖啡师 · 帆布皮围裙与工装衬衫；或 登山探险 · 防水机能冲锋衣）'
-                        : '描述具体服装：剪裁、廓形、图案、面料等（例：高领机能马甲，亮红色扣具，多层战术口袋）'
-                    }
-                    className="w-full h-20 bg-white/5 border border-white/10 rounded-xl p-3 text-[11px] text-white placeholder-white/20 focus:outline-none focus:border-primary/50 resize-none transition-all leading-relaxed"
-                  />
-                  <p className="text-[8px] text-white/30 leading-snug">
-                    {aestheticStyle === 'Workwear'
-                      ? '工装仅提供制服大类；具体职业与款型必须在此填写，否则为通用工装轮廓。'
-                      : '随机与自定义模式均生效；填写后 AI 将优先按此描述生成服装细节与轮廓。'}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              /* Slider Layout for Body, Style */
-              <div className="space-y-6">
-                {activeCategory === 'Body' && (
-                  <div className="flex justify-between items-center mb-2 animate-in fade-in slide-in-from-left-2 duration-300">
-                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">性别 / 类型</span>
-                    <div className="flex gap-1 bg-white/5 p-1 rounded-lg">
-                      {(['Male', 'Female', 'Creature'] as Gender[]).map((g) => (
-                        <button
-                          key={g}
-                          onClick={() => setGender(g)}
-                          className={`px-3 py-1 rounded text-[8px] uppercase font-bold transition-all ${gender === g ? 'bg-primary text-black' : 'text-white/50 hover:text-white'}`}
-                        >
-                          {GENDER_LABEL[g]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {activeCategory === 'Style' && (
-                  <div className="flex flex-col gap-2 mb-4 animate-in fade-in slide-in-from-left-2 duration-300">
-                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">审美风格</span>
-                    <div className="flex flex-wrap gap-1.5 bg-white/5 p-1.5 rounded-xl">
-                      {[
-                        { label: '默认', value: 'Default' as const },
-                        { label: "90's 高定", value: '90s Haute Couture Runway' as const },
-                        { label: '工装', value: 'Workwear' as const },
-                      ].map((s) => (
-                        <button
-                          key={s.value}
-                          onClick={() => setAestheticStyle(s.value)}
-                          className={`px-3 py-1.5 rounded-lg text-[9px] uppercase font-bold transition-all ${
-                            aestheticStyle === s.value ? 'bg-primary text-black' : 'text-white/50 hover:text-white hover:bg-white/5'
-                          }`}
-                        >
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    {aestheticStyle === 'Workwear' && (
-                      <div className="mt-3 space-y-2 p-3 rounded-xl bg-primary/5 border border-primary/25 animate-in fade-in slide-in-from-top-1 duration-300">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-primary">工装 Prompt 关键词</span>
-                        <div className="text-[8px] space-y-1 text-white/50">
-                          <p>
-                            <span className="text-white/30">固定主题 · </span>
-                            {WORKWEAR_THEME_KEYWORDS_ZH}
-                          </p>
-                          <p>
-                            <span className="text-white/30">年代滑杆 · </span>
-                            {eraStyleLabelZh(params.era ?? 50)}（Era {params.era ?? 50}%）
-                          </p>
-                          <p className="text-white/40 pt-1 border-t border-white/5">
-                            具体职业与制服款型请在 <span className="text-primary/90">设计 → 自定义服装设计</span> 中填写；下方为根据当前输入生成的预览。
-                          </p>
-                        </div>
-                        {!clothingPrompt.trim() && (
-                          <p className="text-[8px] text-amber-400/90 leading-snug">
-                            尚未填写服装描述，铸造时将使用通用工装轮廓。
-                          </p>
-                        )}
-                        <details className="group" open>
-                          <summary className="text-[8px] font-bold text-white/40 uppercase tracking-widest cursor-pointer list-none flex items-center gap-1">
-                            <span className="material-icons-round text-[12px] transition-transform group-open:rotate-90">chevron_right</span>
-                            完整英文 Prompt 片段（预览）
-                          </summary>
-                          <pre className="mt-2 p-2 rounded-lg bg-black/40 border border-white/5 text-[7px] text-white/45 leading-relaxed whitespace-pre-wrap break-words max-h-36 overflow-y-auto no-scrollbar font-mono">
-                            {workwearPreviewPrompt}
-                          </pre>
-                        </details>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {getActiveParams().map(param => (
-                  <div key={param.key} className="space-y-2 animate-in fade-in slide-in-from-left-2 duration-300">
-                    <div className="flex justify-between text-[11px] uppercase font-bold">
-                      <span className="text-white/60">{param.label}</span>
-                      <span className="text-primary font-black">{param.value}%</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      value={param.value}
-                      onChange={(e) => updateParam(param.key, parseInt(e.target.value))}
-                      className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary" 
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6 mt-8">
-            {categories.map((cat) => (
-              <button 
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`flex-shrink-0 px-5 py-2 rounded-full font-bold text-[10px] uppercase transition-all duration-300 ${
-                  activeCategory === cat 
-                  ? 'bg-primary text-black shadow-[0_0_15px_rgba(212,255,0,0.2)]' 
-                  : 'glass text-white/40 hover:text-white/70'
-                }`}
-              >
-                {CATEGORY_LABEL[cat]}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex gap-4">
-            <button 
-              onClick={generateNFT}
-              disabled={isGenerating}
-              className="flex-1 bg-white text-black py-4.5 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl font-black uppercase tracking-[0.2em] text-[12px] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span>{isGenerating ? '铸造中…' : '生成专属 NFT'}</span>
-              <span className="material-icons-round text-sm">{isGenerating ? 'hourglass_top' : 'token'}</span>
-            </button>
-            {generatedNFT && (
-              <button
-                type="button"
-                onClick={async () => {
-                  const url = nftData?.cosUrl || generatedNFT;
-                  const name = (nftData?.serialNumber || 'avatar').replace(/\s/g, '_').replace(/\./g, '_') + '.jpg';
-                  try {
-                    if (url.startsWith('data:')) {
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = name;
-                      a.click();
-                      return;
-                    }
-                    const res = await fetch(url, { mode: 'cors' });
-                    const blob = await res.blob();
-                    const obj = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = obj;
-                    a.download = name;
-                    a.click();
-                    URL.revokeObjectURL(obj);
-                  } catch (e) {
-                    console.error(e);
-                    if (url && !url.startsWith('data:')) window.open(url, '_blank');
-                  }
-                }}
-                className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/40 hover:bg-primary hover:text-black transition-colors"
-                title="保存 2K 图片"
-              >
-                <span className="material-icons-round">download</span>
-              </button>
-            )}
-            <button 
-              onClick={() => {
-                setParams({
-                  muscularity: 35, jawline: 70, proportions: 64, heavy: 25,
-                  chromaticity: 60, era: 29, thickness: 100
-                });
-                setSelectedSkinColor('#E0AC69');
-                setGender('Female');
-                setCreatureTexture('Hairless');
-                setDesignMode('Random');
-                setAestheticStyle('Default');
-                setGeneratedNFT(null);
-                setNftMetadata(null);
-                setNftData(null);
-              }}
-              className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center glass hover:bg-white/10 transition-colors border border-white/10"
-            >
-              <span className="material-icons-round">refresh</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Authentication Modal */}
-      {isAuthOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/70 backdrop-blur-3xl animate-in fade-in duration-300">
-          <div className="w-full max-w-[390px] bg-card-dark border border-white/10 rounded-[4.5rem] p-12 shadow-2xl relative overflow-hidden transition-all duration-500">
-            <button 
-              onClick={() => setIsAuthOpen(false)}
-              className="absolute top-10 right-10 w-12 h-12 rounded-full glass flex items-center justify-center text-white/40 hover:text-white transition-colors z-20"
-            >
-              <span className="material-icons-round">close</span>
-            </button>
-
-            {isSuccess ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-black mb-6 animate-pulse shadow-[0_0_30px_#D4FF00]">
-                  <span className="material-icons-round text-4xl">{authMode === 'signIn' ? 'login' : 'how_to_reg'}</span>
-                </div>
-                <h3 className="text-3xl font-black mb-2 uppercase text-white tracking-tighter leading-none">{authMode === 'signIn' ? 'Synchronized' : 'Initialized'}</h3>
-                <p className="text-white/30 text-[11px] uppercase tracking-[0.4em] font-bold mt-2">神经节点在线</p>
-              </div>
-            ) : (
-              <div className="flex flex-col">
-                <div className="mb-14">
-                  <span className="text-[11px] font-bold text-primary uppercase tracking-[0.5em] mb-4 block underline underline-offset-8">Web3 V.1.0</span>
-                  <h3 className="text-4xl font-black leading-[0.9] uppercase tracking-tighter text-white">
-                    {authMode === 'signIn' ? <>连接<br/>钱包</> : <>NFT<br/>铸造</>}
-                  </h3>
-                </div>
-
-                <form onSubmit={handleAuthSubmit} className="space-y-8">
-                  <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking-[0.3em]">账号</label>
-                    <input 
-                      required
-                      type="email" 
-                      placeholder="USER_CORE@AXON.SYS"
-                      className="w-full bg-white/5 border border-white/10 rounded-[2.5rem] px-10 py-6 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10 font-space"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-white/20 ml-6 tracking-[0.3em]">密码</label>
-                    <input 
-                      required
-                      type="password" 
-                      placeholder="••••••••••••"
-                      className="w-full bg-white/5 border border-white/10 rounded-[2.5rem] px-10 py-6 text-sm text-white focus:outline-none focus:border-primary/50 transition-all placeholder:text-white/10"
-                    />
-                  </div>
-                  <button 
-                    type="submit"
-                    className="w-full bg-white text-black py-7 rounded-[3rem] flex items-center justify-between px-12 font-black uppercase tracking-[0.2em] text-[12px] mt-10 shadow-2xl active:scale-95 transition-all group"
-                  >
-                    <span>{authMode === 'signIn' ? '开始' : '建立'}</span>
-                    <div className="bg-primary p-3 rounded-2xl text-black group-hover:scale-110 transition-transform">
-                      <span className="material-icons-round text-lg">{authMode === 'signIn' ? 'vpn_key' : 'fingerprint'}</span>
-                    </div>
-                  </button>
-                </form>
-
-                <button 
-                  onClick={toggleMode} 
-                  className="mt-12 text-[10px] text-white/30 uppercase tracking-[0.4em] hover:text-primary transition-colors text-center w-full font-bold"
-                >
-                  {authMode === 'signIn' ? '请求协议接入' : '节点已激活？'}
-                </button>
-              </div>
-            )}
-          </div>
+      {toastMessage && (
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[250] bg-black text-[#D4FF00] text-[9.5px] font-black uppercase tracking-[0.3em] px-8 py-4 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-white/10 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 pointer-events-none">
+          <span className="w-1.5 h-1.5 bg-[#D4FF00] rounded-full animate-ping"></span>
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>
