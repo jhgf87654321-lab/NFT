@@ -28,7 +28,7 @@ export const WardrobeVault: React.FC<WardrobeVaultProps> = ({
   });
 
   return (
-    <div className="lg:col-span-4 w-full flex flex-col bg-[#FAF9F6] text-black overflow-y-auto no-scrollbar relative max-h-[85vh] p-5 justify-between border-t lg:border-t-0 rounded-none">
+    <div className="lg:col-span-4 w-full h-full max-h-[85vh] flex flex-col bg-[#FAF9F6] text-black overflow-y-auto no-scrollbar relative p-5 border-t lg:border-t-0 rounded-none">
       <div>
         {/* Title specs mimicking modcard.asia design record registry */}
         <div className="flex items-center justify-between pb-3 border-b border-[#E5E5E5] mb-4">

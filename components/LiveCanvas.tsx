@@ -18,9 +18,9 @@ export const LiveCanvas: React.FC<LiveCanvasProps> = ({
   triggerToast,
 }) => {
   return (
-    <div className="lg:col-span-4 w-full flex flex-col bg-white overflow-hidden relative min-h-[500px] lg:min-h-[750px] border-b lg:border-b-0 border-r border-[#E5E5E5] p-5 justify-between rounded-none">
+    <div className="lg:col-span-4 w-full h-full max-h-[85vh] flex flex-col bg-white overflow-hidden relative border-b lg:border-b-0 border-r border-[#E5E5E5] p-5 rounded-none">
       {/* Top Details Panel */}
-      <div className="flex items-center justify-between pb-3 border-b border-[#E5E5E5]">
+      <div className="shrink-0 flex items-center justify-between pb-3 border-b border-[#E5E5E5] mb-4">
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 bg-[#D4FF00] border border-black"></span>
           <span className="text-[10px] font-bold tracking-wider uppercase font-mono text-neutral-800">PREVIEW RENDERER</span>
@@ -32,8 +32,8 @@ export const LiveCanvas: React.FC<LiveCanvasProps> = ({
       </div>
 
       {/* Main interactive center stage canvas */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4 relative py-8">
-        <div className="w-full max-w-[340px] aspect-[3/4] bg-[#FAF9F6] border border-neutral-300 rounded-none relative overflow-hidden shadow-none flex items-center justify-center group">
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-start pt-1 pb-3 overflow-hidden">
+        <div className="w-full max-w-[340px] mx-auto aspect-[3/4] bg-[#FAF9F6] border border-neutral-300 rounded-none relative overflow-hidden shadow-none flex items-center justify-center group">
           {/* Subtle design helper grid resembling physical fashion blueprint cards */}
           <div className="absolute inset-0 pointer-events-none opacity-20">
             <div className="absolute top-0 bottom-0 left-1/2 w-px bg-neutral-400"></div>
@@ -110,7 +110,7 @@ export const LiveCanvas: React.FC<LiveCanvasProps> = ({
       </div>
 
       {/* Action bottom button */}
-      <div className="pt-3 border-t border-[#E5E5E5] space-y-3">
+      <div className="shrink-0 pt-3 border-t border-[#E5E5E5]">
         <button
           onClick={generateNFT}
           disabled={isGenerating}

@@ -107,7 +107,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
   workwearPreviewPrompt,
 }) => {
   return (
-    <div className="lg:col-span-4 w-full flex bg-[#FAF9F6] text-black overflow-y-auto no-scrollbar relative max-h-[85vh] flex-col border-b lg:border-b-0 border-r border-[#E5E5E5] p-5 rounded-none">
+    <div className="lg:col-span-4 w-full h-full max-h-[85vh] flex bg-[#FAF9F6] text-black overflow-y-auto no-scrollbar relative flex-col border-b lg:border-b-0 border-r border-[#E5E5E5] p-5 rounded-none">
       {/* Mini Brand header resembling modcard.asia model record card style */}
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#E1E1E1]">
         <div className="flex items-center gap-2">

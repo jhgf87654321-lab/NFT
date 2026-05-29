@@ -1365,7 +1365,7 @@ ${userContext}`;
       </header>
 
       <main className="w-full max-w-7xl mx-auto px-4 lg:px-8 relative z-10 mb-28">
-        <div className="bg-white border border-neutral-300 rounded-none overflow-visible grid grid-cols-1 lg:grid-cols-12 shadow-none divide-y lg:divide-y-0 lg:divide-x divide-neutral-200">
+        <div className="bg-white border border-neutral-300 rounded-none overflow-visible grid grid-cols-1 lg:grid-cols-12 lg:items-stretch shadow-none divide-y lg:divide-y-0 lg:divide-x divide-neutral-200">
           <ConfiguratorPanel
             activeCategory={activeCategory}
             setActiveCategory={setActiveCategory}
