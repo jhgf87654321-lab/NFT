@@ -92,8 +92,8 @@ export default async function handler(
     return res.status(parsed.status).json({ error: parsed.error });
   }
 
-  const preferred = (parsed.model || '').trim();
-  const modelCandidates = [preferred, 'gemini-2.5-flash', 'gemini-2.0-flash'].filter(
+  const preferred = (parsed.model || 'gemini-2.5-flash').trim();
+  const modelCandidates = [preferred, 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].filter(
     (m, i, a) => m && a.indexOf(m) === i,
   );
 

@@ -167,7 +167,7 @@ const Creator: React.FC<CreatorProps> = ({ onNavigate }) => {
             text: `Translate the following fashion/clothing design description into professional English suitable for an AI image generation prompt. Preserve all garment details, materials, cuts, and styling intent. Return ONLY the English text — no quotes, labels, or explanation.\n\n${trimmed}`,
           },
         ],
-        model: 'gemini-3.1-flash-preview',
+        model: 'gemini-2.5-flash',
       });
       return translated?.trim() || trimmed;
     } catch (error) {
@@ -239,7 +239,7 @@ ${userContext}`;
 
       const expanded = await generateGeminiText({
         parts: [{ text: systemPrompt }],
-        model: 'gemini-3.1-flash-preview',
+        model: 'gemini-2.5-flash',
       });
       if (expanded) setClothingPrompt(expanded);
     } catch (error) {
@@ -562,7 +562,7 @@ ${userContext}`;
         const mimeType = dataUrl.split(';')[0].split(':')[1];
 
         const response = await ai.models.generateContent({
-          model: 'gemini-3.1-flash-preview',
+          model: 'gemini-2.5-flash',
           contents: {
             parts: [
               {

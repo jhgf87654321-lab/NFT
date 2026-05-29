@@ -106,9 +106,8 @@ export default async function handler(
   // Use vision-capable models available in current API; avoid deprecated "gemini-1.5-flash" (404 in v1beta).
   const models = [
     (process.env.OUTFIT_MODEL || '').trim(),
-    'gemini-2.0-flash',
     'gemini-2.5-flash',
-    'gemini-1.5-flash-latest',
+    'gemini-2.5-flash-lite',
   ].filter(Boolean);
 
   let lastText = '';
