@@ -245,7 +245,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
 
       <div className="flex justify-between items-end mb-6">
         <div>
-          <h3 className="font-display text-2xl font-black italic uppercase leading-none">风格系列</h3>
+          <h3 className="text-2xl font-black italic uppercase leading-none">风格系列</h3>
           <p className="text-white/40 text-xs font-bold mt-1">神秘 NFT 盲盒</p>
         </div>
         <button className="text-primary text-[10px] font-black uppercase tracking-widest">查看全部</button>
@@ -288,7 +288,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
 
       {/* 分类导航 */}
       <div className="mb-6">
-        <h3 className="font-display text-xl font-black italic uppercase leading-none mb-4">分类</h3>
+        <h3 className="text-xl font-black italic uppercase leading-none mb-4">分类</h3>
         <div className="flex flex-col gap-3">
           {userCollections.map((col, idx) => {
             const isRegular = idx === 0;
