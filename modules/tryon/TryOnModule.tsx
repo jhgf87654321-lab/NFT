@@ -296,7 +296,7 @@ export default function TryOnModule() {
           className="relative w-[85%] aspect-[3/4] rounded-[3rem] overflow-hidden border border-white/10 text-left"
         >
           {cameraMode !== 'off' ? (
-            <div className="w-full h-full flex items-center justify-center bg-black/10">
+            <div className="w-full h-full flex items-center justify-center bg-primary/10">
               <video
                 ref={videoRef}
                 autoPlay
@@ -306,7 +306,7 @@ export default function TryOnModule() {
               />
             </div>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-black/10">
+            <div className="w-full h-full flex items-center justify-center bg-primary/10">
               <img
                 src={
                   (viewMode === 'nft' ? generatedNFT : uploadedImage) ||
@@ -318,7 +318,7 @@ export default function TryOnModule() {
               />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent"></div>
           <div className="absolute left-0 right-0 h-[2px] bg-primary shadow-[0_0_20px_#5F3D94] animate-scan z-20"></div>
           {!uploadedImage && cameraMode === 'off' && (
             <div className="absolute bottom-10 left-0 right-0 text-center pointer-events-none">
@@ -331,7 +331,7 @@ export default function TryOnModule() {
           )}
 
           {uploadedImage && generatedNFT && cameraMode === 'off' && (
-            <div className="absolute top-4 left-4 z-30 px-3 py-1 rounded-full bg-black/50 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-white/70">
+            <div className="absolute top-4 left-4 z-30 px-3 py-1 rounded-full bg-primary/50 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-white/70">
               点击切换：{viewMode === 'tryon' ? '试穿' : 'NFT'}
             </div>
           )}
@@ -387,12 +387,12 @@ export default function TryOnModule() {
           }`}
         >
           <button
-            className="w-8 h-16 bg-black/50 backdrop-blur-md rounded-l-xl flex items-center justify-center border border-r-0 border-white/10 text-white/50 absolute -left-8"
+            className="w-8 h-16 bg-primary/50 backdrop-blur-md rounded-l-xl flex items-center justify-center border border-r-0 border-white/10 text-white/50 absolute -left-8"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           >
             <span className="material-icons-round text-xl">{isSidebarOpen ? 'chevron_right' : 'chevron_left'}</span>
           </button>
-          <div className="bg-black/80 backdrop-blur-xl border border-white/10 p-4 rounded-l-3xl flex flex-col gap-4">
+          <div className="bg-primary/80 backdrop-blur-xl border border-white/10 p-4 rounded-l-3xl flex flex-col gap-4">
             <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center p-2">
               <img
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBG6WqRaM55MRml9LIPs_F5kVbZokZOg2YSXEGbMsVuJaVnAQcul7346_uJBQfrumeMs4RJiVPPq0C4EwSgycaRap4Wa4bVXnw8Oeb26kb3FQX08gbiOAYcgZK5kNmSxC3_IQXEOvQlOiHo1jtmsUxbA-5gYQPmcqtYnorvKBp9s2gJ6jYpum6fuqx7rk1d9NBrIOSAk-Qj_kjrZ9KLLaz1MHOsgcTHCYMcR-spaluEu3woUbt8YGT0nEQQAqMItW19S-MbmrJzPWm"
@@ -418,7 +418,7 @@ export default function TryOnModule() {
         </div>
       </div>
 
-      <div className="bg-black glass p-4 pb-28 rounded-t-[3rem] border-t border-white/10 z-30 flex justify-center">
+      <div className="bg-primary glass p-4 pb-28 rounded-t-[3rem] border-t border-white/10 z-30 flex justify-center">
         <button
           onClick={() => void handleApplyStyle()}
           disabled={isApplying || (cooldownUntil !== null && Date.now() < cooldownUntil)}
@@ -432,7 +432,7 @@ export default function TryOnModule() {
       </div>
 
       {isCollectionModalOpen && myCyberCollection.length > 0 && (
-        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[200] bg-primary/80 backdrop-blur-xl flex items-center justify-center p-6">
           <div className="w-full max-w-[380px] glass rounded-[2.5rem] border border-white/10 p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold uppercase tracking-widest text-primary">我的藏品</h3>

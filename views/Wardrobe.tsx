@@ -401,7 +401,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
 
       <div className="px-8 pb-32">
         {/* Share Platform Hero (from Store) */}
-        <div className="relative h-60 bg-black rounded-[2.5rem] overflow-hidden border border-white/5 mb-8">
+        <div className="relative h-60 bg-primary rounded-[2.5rem] overflow-hidden border border-white/5 mb-8">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20"></div>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
             <span className="material-icons-round text-5xl text-primary mb-2">public</span>
@@ -504,7 +504,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
       </div>
 
       {selectedNft && (
-        <div className="fixed inset-0 z-[210] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[210] bg-primary/80 backdrop-blur-xl flex items-center justify-center p-6">
           <div className="w-full max-w-md bg-card-dark rounded-[3rem] border border-white/10 p-6 relative">
             <button
               type="button"

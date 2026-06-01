@@ -1341,10 +1341,10 @@ ${userContext}`;
       <header className="relative z-50 px-8 lg:px-16 pt-10 flex justify-between items-center mb-10 select-none">
         <div className="flex items-baseline gap-6 font-sans">
           <div>
-            <span className="text-[10px] font-black uppercase text-[#5F3D94] bg-black px-2.5 py-0.5 rounded tracking-[0.35rem] block leading-none">AXON LABS</span>
+            <span className="text-[10px] font-black uppercase bg-primary text-white px-2.5 py-0.5 rounded tracking-[0.35rem] block leading-none">AXON LABS</span>
             <h1 className="font-future font-black text-2xl leading-none text-black tracking-widest uppercase mt-2 font-display">NFT 铸造</h1>
           </div>
-          <div className="h-6 w-px bg-black/15 hidden md:block"></div>
+          <div className="h-6 w-px bg-primary/15 hidden md:block"></div>
           <p className="text-[9px] tracking-[0.3em] uppercase text-black/45 font-bold leading-none hidden md:block font-sans">COLLECTION VOLUME V.2</p>
         </div>
 
@@ -1353,10 +1353,10 @@ ${userContext}`;
           <button
             type="button"
             onClick={() => onNavigate?.(View.AUTH)}
-            className="group flex items-center gap-3 bg-white hover:bg-neutral-100 border border-black/10 rounded-full pl-5 pr-2 py-1.5 transition-all text-[9.5px] uppercase tracking-widest font-black active:scale-95 shadow-sm text-black"
+            className="group flex items-center gap-3 bg-white hover:bg-neutral-100 border border-primary/10 rounded-full pl-5 pr-2 py-1.5 transition-all text-[9.5px] uppercase tracking-widest font-black active:scale-95 shadow-sm text-black"
           >
             <span>Network Node</span>
-            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-black/10 group-hover:border-primary/50 transition-colors">
+            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-primary/10 group-hover:border-primary/50 transition-colors">
               <img src={avatarUrl || 'https://picsum.photos/100/100?seed=axon_prime'} alt="User" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-primary border border-white animate-pulse"></span>
             </div>
@@ -1441,7 +1441,7 @@ ${userContext}`;
       </main>
 
       {toastMessage && (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[250] bg-black text-[#5F3D94] text-[9.5px] font-black uppercase tracking-[0.3em] px-8 py-4 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-white/10 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 pointer-events-none">
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[250] bg-primary text-white text-[9.5px] font-black uppercase tracking-[0.3em] px-8 py-4 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-white/10 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 pointer-events-none">
           <span className="w-1.5 h-1.5 bg-[#5F3D94] rounded-full animate-ping"></span>
           <span>{toastMessage}</span>
         </div>

@@ -64,19 +64,19 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       <div className="absolute inset-0 grid-bg opacity-[0.03] pointer-events-none z-0"></div>
 
       <div className="flex-1 flex flex-col min-w-0 z-10 p-6 md:p-10 relative">
-        <header className="flex justify-between items-start border-b border-black/10 pb-6 mb-8 mt-4">
+        <header className="flex justify-between items-start border-b border-primary/10 pb-6 mb-8 mt-4">
           <div className="flex flex-col items-start gap-0.5">
             <span className="text-black/50 text-[8px] font-black uppercase tracking-[0.5em] block">SPECULATIVE MATRIX</span>
             <div className="flex items-center gap-2">
               <span className="text-xl font-black uppercase tracking-tight">AXON FUTURE_</span>
-              <span className="bg-black text-[#5F3D94] text-[6.5px] font-black uppercase px-2 py-0.5 rounded tracking-widest">PRO.NODE</span>
+              <span className="bg-primary text-white text-[6.5px] font-black uppercase px-2 py-0.5 rounded tracking-widest">PRO.NODE</span>
             </div>
           </div>
 
           <button
             type="button"
             onClick={() => onNavigate?.(View.AUTH)}
-            className="w-11 h-11 rounded-full overflow-hidden border border-black/10 hover:border-black hover:scale-105 active:scale-95 transition-all shadow-sm"
+            className="w-11 h-11 rounded-full overflow-hidden border border-primary/10 hover:border-primary hover:scale-105 active:scale-95 transition-all shadow-sm"
           >
             <img
               src={avatarUrl || 'https://picsum.photos/100/100?seed=axon_prime'}
@@ -94,7 +94,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') onEnter();
           }}
-          className="relative w-full h-[min(36vh,320px)] sm:h-[min(40vh,360px)] border border-black rounded-[2rem] overflow-hidden shadow-md cursor-pointer group mb-10"
+          className="relative w-full h-[min(36vh,320px)] sm:h-[min(40vh,360px)] border border-primary rounded-[2rem] overflow-hidden shadow-md cursor-pointer group mb-10"
         >
           <img
             src={HomeHeroImg}
@@ -109,32 +109,32 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
             </div>
             <span className="text-[8px] font-black tracking-widest uppercase text-white/90 drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)] font-space">EDITORIAL NODE</span>
           </div>
-          <div className="absolute bottom-5 right-5 w-12 h-12 bg-[#5F3D94] rounded-full border border-black flex items-center justify-center shadow-lg transform group-hover:scale-110 active:scale-95 transition-transform text-white">
-            <span className="material-icons-round text-black text-lg animate-pulse">north_east</span>
+          <div className="absolute bottom-5 right-5 w-12 h-12 bg-[#5F3D94] rounded-full border border-primary flex items-center justify-center shadow-lg transform group-hover:scale-110 active:scale-95 transition-transform text-white">
+            <span className="material-icons-round text-white text-lg animate-pulse">north_east</span>
           </div>
         </div>
 
         <button
           type="button"
           onClick={onEnter}
-          className="group relative w-full bg-black text-white hover:bg-[#5F3D94] hover:text-white hover:border-black p-5 rounded-full border border-black flex items-center justify-between px-8 overflow-hidden active:scale-98 transition-all mb-12 shadow-sm"
+          className="group relative w-full bg-primary text-white hover:bg-[#5F3D94] hover:text-white hover:border-primary p-5 rounded-full border border-primary flex items-center justify-between px-8 overflow-hidden active:scale-98 transition-all mb-12 shadow-sm"
         >
           <span className="font-black uppercase tracking-[0.25em] text-[10px]">??????</span>
-          <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors">
+          <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
             <span className="material-icons-round text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
           </div>
         </button>
 
         <div className="flex flex-col gap-6 mb-28">
-          <div className="flex justify-between items-end border-b border-black/15 pb-4">
+          <div className="flex justify-between items-end border-b border-primary/15 pb-4">
             <div>
-              <span className="text-[#5F3D94] bg-black text-[7px] font-black uppercase tracking-[0.4em] px-2.5 py-1 mb-1.5 inline-block">SPECULATIVE PIPELINE //</span>
+              <span className="bg-primary text-white text-[7px] font-black uppercase tracking-[0.4em] px-2.5 py-1 mb-1.5 inline-block">SPECULATIVE PIPELINE //</span>
               <h3 className="text-2xl font-black uppercase tracking-tighter leading-none font-display">CHANNELS</h3>
             </div>
             <span className="text-[9px] font-black font-mono text-black/40">02 // 04</span>
           </div>
 
-          <div className="flex flex-col divide-y divide-black/15">
+          <div className="flex flex-col divide-y divide-primary/15">
             {features.map((f, i) => (
               <div
                 key={f.title}
@@ -146,10 +146,10 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') onNavigate?.(f.view);
                 }}
-                className={`group flex items-center justify-between py-6 transition-all duration-200 cursor-pointer ${activeFeature === i ? 'bg-black text-white px-4 border-l-4 border-[#5F3D94]' : 'bg-transparent hover:px-2'}`}
+                className={`group flex items-center justify-between py-6 transition-all duration-200 cursor-pointer ${activeFeature === i ? 'bg-primary text-white px-4 border-l-4 border-white/40' : 'bg-transparent hover:px-2'}`}
               >
                 <div className="flex items-center gap-6">
-                  <span className={`font-mono text-lg font-black ${activeFeature === i ? 'text-[#5F3D94]' : 'text-black/30'}`}>
+                  <span className={`font-mono text-lg font-black ${activeFeature === i ? 'text-white' : 'text-black/30'}`}>
                     0{i + 1}
                   </span>
                   <div>
@@ -158,7 +158,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className={`text-[7px] font-black uppercase tracking-widest px-2.5 py-0.5 border ${activeFeature === i ? 'border-[#5F3D94] text-[#5F3D94]' : 'border-black/10 text-black/60 bg-white/45'}`}>
+                  <span className={`text-[7px] font-black uppercase tracking-widest px-2.5 py-0.5 border ${activeFeature === i ? 'border-white/40 text-white' : 'border-primary/10 text-black/60 bg-white/45'}`}>
                     {f.stats}
                   </span>
                   <span className="material-icons-round text-sm transition-transform group-hover:translate-x-1.5">east</span>
@@ -168,12 +168,12 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
           </div>
         </div>
 
-        <footer className="border-t border-black/10 pt-10 pb-16 flex justify-between items-center text-black/50">
+        <footer className="border-t border-primary/10 pt-10 pb-16 flex justify-between items-center text-black/50">
           <span className="text-[8px] font-mono font-bold tracking-widest uppercase">Protocol V.2.1-AXON</span>
           <div className="flex gap-2">
-            <span className="w-1.5 h-1.5 bg-black/10 rounded-full"></span>
-            <span className="w-1.5 h-1.5 bg-black/10 rounded-full"></span>
-            <span className="w-1.5 h-1.5 bg-black rounded-full"></span>
+            <span className="w-1.5 h-1.5 bg-primary/10 rounded-full"></span>
+            <span className="w-1.5 h-1.5 bg-primary/10 rounded-full"></span>
+            <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
           </div>
         </footer>
       </div>

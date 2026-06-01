@@ -17,7 +17,7 @@ const Cart: React.FC<CartProps> = ({ items, onBack, onUpdateQty, onRemove, onDep
   const [deploying, setDeploying] = React.useState(false);
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-black p-6">
+    <div className="relative min-h-screen flex flex-col bg-primary text-white p-6">
       <header className="pt-12 flex justify-between items-center mb-10">
         <button 
           onClick={onBack}
@@ -26,7 +26,7 @@ const Cart: React.FC<CartProps> = ({ items, onBack, onUpdateQty, onRemove, onDep
           <span className="material-icons-round">west</span>
         </button>
         <div className="text-center">
-          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">购物摘要</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/70">购物摘要</p>
           <h2 className="text-2xl font-future font-black tracking-tighter uppercase">装备袋</h2>
         </div>
         <div className="w-12 h-12"></div> {/* Spacer */}

@@ -166,7 +166,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
             className="relative w-10 h-10 glass rounded-full flex items-center justify-center active:scale-90 transition-transform"
           >
             <span className="material-icons-round text-lg text-white">shopping_bag</span>
-            <div className="absolute top-2 right-2 w-2 h-2 bg-accent rounded-full border border-black animate-pulse"></div>
+            <div className="absolute top-2 right-2 w-2 h-2 bg-accent rounded-full border border-primary animate-pulse"></div>
           </button>
         </div>
       </header>
@@ -216,7 +216,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
         </div>
         <div className="flex justify-between items-center mb-4 relative z-10">
           <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">????</span>
-          <span className="bg-black text-primary px-3 py-1 rounded-full text-[9px] font-black uppercase flex items-center gap-1">
+          <span className="bg-primary text-white px-3 py-1 rounded-full text-[9px] font-black uppercase flex items-center gap-1">
             <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
             ????
           </span>
@@ -261,7 +261,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
                  className="w-full h-full object-cover"
                  referrerPolicy="no-referrer"
                />
-               <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+               <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-primary/50 via-transparent to-transparent" />
                <button className="absolute top-3 right-3 w-8 h-8 glass rounded-full flex items-center justify-center">
                  <span className="material-icons-round text-primary text-sm">favorite</span>
                </button>

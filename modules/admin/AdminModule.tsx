@@ -263,7 +263,7 @@ export default function AdminModule() {
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="w-full h-32 bg-black/50 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-primary/50 resize-none"
+            className="w-full h-32 bg-primary/50 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-primary/50 resize-none"
           />
           <button
             onClick={() => void handleGenerate()}

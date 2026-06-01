@@ -36,7 +36,7 @@ export const WardrobeVault: React.FC<WardrobeVaultProps> = ({
             <span className="material-icons-round text-sm">favorite_border</span>
             <span className="text-[10px] font-bold tracking-wider uppercase font-mono text-neutral-800 font-bold">WARDROBE ARCHIVE</span>
           </div>
-          <span className="bg-black text-white text-[8px] font-mono font-bold px-2 py-0.5 rounded-none">{myCyberCollection.length} SPEC-CARDS</span>
+          <span className="bg-primary text-white text-[8px] font-mono font-bold px-2 py-0.5 rounded-none">{myCyberCollection.length} SPEC-CARDS</span>
         </div>
 
         {/* Filter Tab & Search Specs Bar */}
@@ -44,7 +44,7 @@ export const WardrobeVault: React.FC<WardrobeVaultProps> = ({
           <button
             onClick={() => setActiveTab('All')}
             className={`flex-1 py-1 text-[8.5px] font-extrabold uppercase tracking-widest rounded-none transition-all ${
-              activeTab === 'All' ? 'bg-black text-white' : 'text-neutral-550 hover:text-black hover:bg-neutral-200'
+              activeTab === 'All' ? 'bg-primary text-white' : 'text-neutral-550 hover:text-black hover:bg-neutral-200'
             }`}
           >
             All SPEC
@@ -52,7 +52,7 @@ export const WardrobeVault: React.FC<WardrobeVaultProps> = ({
           <button
             onClick={() => setActiveTab('Liked')}
             className={`flex-1 py-1 text-[8.5px] font-extrabold uppercase tracking-widest rounded-none transition-all ${
-              activeTab === 'Liked' ? 'bg-black text-white' : 'text-neutral-550 hover:text-black hover:bg-neutral-200'
+              activeTab === 'Liked' ? 'bg-primary text-white' : 'text-neutral-550 hover:text-black hover:bg-neutral-200'
             }`}
           >
             LEGENDARY
@@ -67,7 +67,7 @@ export const WardrobeVault: React.FC<WardrobeVaultProps> = ({
             placeholder="SEARCH REGISTRY..."
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
-            className="w-full bg-white border border-neutral-300 rounded-none pl-9 pr-4 py-2 text-[9px] font-bold text-neutral-800 uppercase tracking-widest placeholder:text-neutral-300 focus:outline-none focus:border-black font-mono"
+            className="w-full bg-white border border-neutral-300 rounded-none pl-9 pr-4 py-2 text-[9px] font-bold text-neutral-800 uppercase tracking-widest placeholder:text-neutral-300 focus:outline-none focus:border-primary font-mono"
           />
         </div>
 
@@ -77,7 +77,7 @@ export const WardrobeVault: React.FC<WardrobeVaultProps> = ({
             filteredCollection.map((nft, index) => (
               <div 
                 key={nft.serialNumber || index}
-                className="group bg-white border border-neutral-205 rounded-none p-2 shadow-none hover:border-black transition-all relative flex flex-col justify-between"
+                className="group bg-white border border-neutral-205 rounded-none p-2 shadow-none hover:border-primary transition-all relative flex flex-col justify-between"
               >
                 {/* Visual Image container */}
                 <div className="relative aspect-[3/4] bg-neutral-100 rounded-none overflow-hidden mb-2">
@@ -88,7 +88,7 @@ export const WardrobeVault: React.FC<WardrobeVaultProps> = ({
                     referrerPolicy="no-referrer"
                   />
                   {/* Select button Overlay on hover */}
-                  <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-1 z-20">
+                  <div className="absolute inset-0 bg-primary/60 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-1 z-20">
                     <button
                       onClick={() => handleSelectSavedItem(nft)}
                       className="px-2.5 py-1.5 bg-[#5F3D94] hover:bg-white hover:text-black text-white rounded-none text-[8px] font-black uppercase tracking-widest transition-all scale-95 group-hover:scale-100"
@@ -105,7 +105,7 @@ export const WardrobeVault: React.FC<WardrobeVaultProps> = ({
                   </div>
 
                   {/* Serial Spec tag */}
-                  <div className="absolute top-2 right-2 bg-black/85 text-white text-[6px] font-mono font-bold px-1.5 py-0.5 rounded-none uppercase">
+                  <div className="absolute top-2 right-2 bg-primary/85 text-white text-[6px] font-mono font-bold px-1.5 py-0.5 rounded-none uppercase">
                     {nft.serialNumber || '#GEN-01'}
                   </div>
                 </div>
@@ -141,7 +141,7 @@ export const WardrobeVault: React.FC<WardrobeVaultProps> = ({
         <div className="flex gap-1.5">
           <button 
             onClick={() => triggerToast('WARDROBE VAULT SHIELD SYNCHRONIZED.')}
-            className="flex-1 py-2 rounded-none bg-black hover:bg-neutral-900 text-white font-extrabold text-[7.5px] uppercase tracking-widest transition-all flex items-center justify-center gap-1 active:scale-95"
+            className="flex-1 py-2 rounded-none bg-primary hover:bg-primary/90 text-white font-extrabold text-[7.5px] uppercase tracking-widest transition-all flex items-center justify-center gap-1 active:scale-95"
           >
             <span className="material-icons-round text-[9px]">sync</span>
             Sync Node

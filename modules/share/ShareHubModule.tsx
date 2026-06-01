@@ -119,7 +119,7 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
                     referrerPolicy="no-referrer"
                   />
                   {post.mediaUrls.length > 1 && (
-                    <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-full flex items-center gap-1">
+                    <div className="absolute top-2 right-2 bg-primary/60 backdrop-blur-md px-2 py-1 rounded-full flex items-center gap-1">
                       <span className="material-icons-round text-[10px]">collections</span>
                       <span className="text-[10px] font-bold">{post.mediaUrls.length}</span>
                     </div>

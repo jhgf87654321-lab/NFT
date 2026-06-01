@@ -122,7 +122,7 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
                   <button
                     type="button"
                     onClick={() => handleRemoveMedia(index)}
-                    className="absolute top-1 right-1 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 w-6 h-6 bg-primary/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <span className="material-icons-round text-[12px]">close</span>
                   </button>

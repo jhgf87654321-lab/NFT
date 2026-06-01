@@ -19,7 +19,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
         <div className="flex flex-col items-center">
           <div 
             onClick={() => onViewChange(View.HOME)}
-            className="w-10 h-10 bg-black rounded flex items-center justify-center cursor-pointer hover:rotate-90 transition-transform duration-500 shadow-sm"
+            className="w-10 h-10 bg-primary rounded flex items-center justify-center cursor-pointer hover:rotate-90 transition-transform duration-500 shadow-sm"
           >
             {/* White diamond outline */}
             <div className="w-5.5 h-5.5 border-[1.5px] border-white rotate-45 flex items-center justify-center">
@@ -33,7 +33,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
           {/* PORTAL (OH) */}
           <button 
             onClick={() => onViewChange(View.HOME)}
-            className={`group w-full flex flex-col items-center gap-0.5 transition-all relative py-1 focus:outline-none ${activeView === View.HOME ? 'text-black font-black' : 'text-neutral-400 hover:text-black'}`}
+            className={`group w-full flex flex-col items-center gap-0.5 transition-all relative py-1 focus:outline-none ${activeView === View.HOME ? 'text-primary font-black' : 'text-neutral-400 hover:text-primary'}`}
           >
             <span className="material-icons-round text-[19px]">home</span>
             <span className="text-[7px] font-mono tracking-widest font-black leading-none mt-1">OH</span>
@@ -42,7 +42,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
           {/* TRY_ON (3D) */}
           <button 
             onClick={() => onViewChange(View.TRY_ON)}
-            className={`group w-full flex flex-col items-center gap-0.5 transition-all relative py-1 focus:outline-none ${activeView === View.TRY_ON ? 'text-black font-black' : 'text-neutral-400 hover:text-black'}`}
+            className={`group w-full flex flex-col items-center gap-0.5 transition-all relative py-1 focus:outline-none ${activeView === View.TRY_ON ? 'text-primary font-black' : 'text-neutral-400 hover:text-primary'}`}
           >
             <span className="material-icons-round text-[19px]">layers</span>
             <span className="text-[7px] font-mono tracking-widest font-black leading-none mt-1">3D</span>
@@ -51,7 +51,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
           {/* CREATOR (VI) */}
           <button 
             onClick={() => onViewChange(View.CREATOR)}
-            className={`group w-full flex flex-col items-center gap-0.5 transition-all relative py-1 focus:outline-none ${activeView === View.CREATOR ? 'text-black font-black' : 'text-neutral-400 hover:text-black'}`}
+            className={`group w-full flex flex-col items-center gap-0.5 transition-all relative py-1 focus:outline-none ${activeView === View.CREATOR ? 'text-primary font-black' : 'text-neutral-400 hover:text-primary'}`}
           >
             <span className="material-icons-round text-[19px]">videocam</span>
             <span className="text-[7px] font-mono tracking-widest font-black leading-none mt-1">VI</span>
@@ -60,7 +60,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
           {/* STORE/SE (SE) */}
           <button 
             onClick={() => onViewChange(View.STORE)}
-            className={`group w-full flex flex-col items-center gap-0.5 transition-all relative py-1 focus:outline-none ${activeView === View.STORE ? 'text-black font-black' : 'text-neutral-400 hover:text-black'}`}
+            className={`group w-full flex flex-col items-center gap-0.5 transition-all relative py-1 focus:outline-none ${activeView === View.STORE ? 'text-primary font-black' : 'text-neutral-400 hover:text-primary'}`}
           >
             <span className="material-icons-round text-[19px]">settings</span>
             <span className="text-[7px] font-mono tracking-widest font-black leading-none mt-1">SE</span>
@@ -85,7 +85,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
           </div>
 
           {/* Custom Avatar "J" Block */}
-          <div className="w-10 h-10 bg-black rounded flex items-center justify-center text-white text-[15px] font-serif font-black select-none border border-black shadow-sm">
+          <div className="w-10 h-10 bg-primary rounded flex items-center justify-center text-white text-[15px] font-serif font-black select-none border border-primary shadow-sm">
             J
           </div>
         </div>
@@ -95,10 +95,10 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
         2. Mobile Bottom Pill Bar Layout 
         Styled as a beautiful float floating capsule.
       */}
-      <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-sm z-[150] shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-black/5 rounded-full bg-white/95 backdrop-blur-2xl px-2 py-1.5 flex items-center justify-around h-15">
+      <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-sm z-[150] shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-primary/5 rounded-full bg-white/95 backdrop-blur-2xl px-2 py-1.5 flex items-center justify-around h-15">
         <button 
           onClick={() => onViewChange(View.HOME)}
-          className={`flex flex-col items-center gap-0.5 transition-all ${activeView === View.HOME ? 'text-black scale-105 font-black' : 'text-black/35 hover:text-black/70'}`}
+          className={`flex flex-col items-center gap-0.5 transition-all ${activeView === View.HOME ? 'text-primary scale-105 font-black' : 'text-primary/35 hover:text-primary/70'}`}
         >
           <span className="material-icons-round text-[18px]">home</span>
           <span className="text-[6.5px] font-black uppercase tracking-wider font-space leading-none">PORTAL</span>
@@ -106,7 +106,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
 
         <button 
           onClick={() => onViewChange(View.STORE)}
-          className={`flex flex-col items-center gap-0.5 transition-all ${activeView === View.STORE ? 'text-black scale-105 font-black' : 'text-black/35 hover:text-black/70'}`}
+          className={`flex flex-col items-center gap-0.5 transition-all ${activeView === View.STORE ? 'text-primary scale-105 font-black' : 'text-primary/35 hover:text-primary/70'}`}
         >
           <span className="material-icons-round text-[18px]">shopping_bag</span>
           <span className="text-[6.5px] font-black uppercase tracking-wider font-space leading-none">STORE</span>
@@ -114,14 +114,14 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
 
         <button 
           onClick={() => onViewChange(View.TRY_ON)}
-          className="w-11 h-11 rounded-full bg-black text-white shadow-[0_8px_16px_rgba(0,0,0,0.15)] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform relative group"
+          className="w-11 h-11 rounded-full bg-primary text-white shadow-[0_8px_16px_rgba(0,0,0,0.15)] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform relative group"
         >
-          <span className="material-icons-round text-[20px] text-[#5F3D94]">view_in_ar</span>
+          <span className="material-icons-round text-[20px] text-white">view_in_ar</span>
         </button>
 
         <button 
           onClick={() => onViewChange(View.WARDROBE)}
-          className={`flex flex-col items-center gap-0.5 transition-all ${activeView === View.WARDROBE ? 'text-black scale-105 font-black' : 'text-black/35 hover:text-black/70'}`}
+          className={`flex flex-col items-center gap-0.5 transition-all ${activeView === View.WARDROBE ? 'text-primary scale-105 font-black' : 'text-primary/35 hover:text-primary/70'}`}
         >
           <span className="material-icons-round text-[18px]">checkroom</span>
           <span className="text-[6.5px] font-black uppercase tracking-wider font-space leading-none">VAULT</span>
@@ -129,7 +129,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
 
         <button 
           onClick={() => onViewChange(View.CREATOR)}
-          className={`flex flex-col items-center gap-0.5 transition-all ${activeView === View.CREATOR ? 'text-black scale-105 font-black' : 'text-black/35 hover:text-black/70'}`}
+          className={`flex flex-col items-center gap-0.5 transition-all ${activeView === View.CREATOR ? 'text-primary scale-105 font-black' : 'text-primary/35 hover:text-primary/70'}`}
         >
           <span className="material-icons-round text-[18px]">person_outline</span>
           <span className="text-[6.5px] font-black uppercase tracking-wider font-space leading-none">STUDIO</span>

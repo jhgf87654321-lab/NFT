@@ -17,7 +17,7 @@ const NewReleases: React.FC<NewReleasesProps> = ({ onBack, onAddToCart }) => {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-black">
+    <div className="relative min-h-screen flex flex-col bg-primary text-white">
       {/* Dynamic Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] right-[-20%] w-[100%] h-[50%] bg-primary/10 blur-[120px] rounded-full"></div>
@@ -57,7 +57,7 @@ const NewReleases: React.FC<NewReleasesProps> = ({ onBack, onAddToCart }) => {
           />
 
           <div className="absolute bottom-8 left-8">
-            <span className="bg-black text-white px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10">
+            <span className="bg-primary text-white px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10">
               ???{currentDrop.id}
             </span>
           </div>

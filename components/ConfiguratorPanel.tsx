@@ -111,7 +111,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
       {/* Mini Brand header resembling modcard.asia model record card style */}
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#E1E1E1]">
         <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-none bg-black"></div>
+          <div className="w-1.5 h-1.5 rounded-none bg-primary"></div>
           <span className="text-[10px] font-bold tracking-wider uppercase font-mono text-neutral-800">CONFIGURATOR</span>
         </div>
         <span className="text-[8px] font-mono text-neutral-400">MD.V2.0_SPEC</span>
@@ -125,7 +125,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
             onClick={() => setActiveCategory(cat)}
             className={`flex-1 py-1.5 text-[9px] font-extrabold uppercase tracking-widest rounded-none transition-all ${
               activeCategory === cat
-                ? 'bg-black text-white'
+                ? 'bg-primary text-white'
                 : 'text-neutral-500 hover:text-black hover:bg-neutral-200'
             }`}
           >
@@ -150,8 +150,8 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                     onClick={() => setGender(g)}
                     className={`py-2 text-[9px] font-black uppercase tracking-wider rounded-none border transition-all ${
                       gender === g
-                        ? 'border-black bg-black text-white'
-                        : 'border-neutral-300 bg-white text-neutral-850 hover:border-black'
+                        ? 'border-primary bg-primary text-white'
+                        : 'border-neutral-300 bg-white text-neutral-850 hover:border-primary'
                     } ${gender !== g && modcardDesc && g !== 'Creature' ? 'opacity-30 cursor-not-allowed' : ''}`}
                     disabled={!!modcardDesc && g !== 'Creature' && gender !== g}
                   >
@@ -169,7 +169,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
             {/* Creature Surface Specs */}
             {gender === 'Creature' && (
               <div className="space-y-2">
-                <label className="text-[9px] uppercase font-bold tracking-widest text-[#5F3D94] bg-black px-2 py-0.5 rounded-none font-mono">Creatures Surface Specs</label>
+                <label className="text-[9px] uppercase font-bold tracking-widest bg-primary text-white px-2 py-0.5 rounded-none font-mono">Creatures Surface Specs</label>
                 <div className="grid grid-cols-2 gap-1 mt-1">
                   {(['Hairy', 'Hairless'] as const).map((texture) => (
                     <button
@@ -177,8 +177,8 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                       onClick={() => setCreatureTexture(texture)}
                       className={`py-2 text-[9.5px] font-black uppercase tracking-wider rounded-none border transition-all ${
                         creatureTexture === texture
-                          ? 'border-black bg-black text-white'
-                          : 'border-neutral-300 bg-white text-neutral-800 hover:border-black'
+                          ? 'border-primary bg-primary text-white'
+                          : 'border-neutral-300 bg-white text-neutral-800 hover:border-primary'
                       }`}
                     >
                       {texture}
@@ -250,7 +250,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                     key={color.name}
                     onClick={() => setSelectedSkinColor(color.hex)}
                     className={`w-full aspect-square rounded-none border flex items-center justify-center transition-all relative ${
-                      selectedSkinColor === color.hex ? 'border-black scale-105 shadow-sm' : 'border-neutral-200 hover:border-black'
+                      selectedSkinColor === color.hex ? 'border-primary scale-105 shadow-sm' : 'border-neutral-200 hover:border-primary'
                     }`}
                     style={{ backgroundColor: color.hex }}
                     title={color.name}
@@ -284,7 +284,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                       <button
                         type="button"
                         onClick={handleClearModcard}
-                        className="absolute top-2 right-2 p-1.5 bg-black hover:bg-neutral-900 text-white rounded-none border border-black transition-all text-[8px] uppercase tracking-widest font-mono flex items-center gap-1"
+                        className="absolute top-2 right-2 p-1.5 bg-primary hover:bg-primary/90 text-white rounded-none border border-primary transition-all text-[8px] uppercase tracking-widest font-mono flex items-center gap-1"
                       >
                         <span className="material-icons-round text-xs">close</span>
                         <span>CLEAR</span>
@@ -327,7 +327,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                     <span className="material-icons-round text-2xl text-neutral-400 mb-2 font-light">contact_page</span>
                     <label
                       htmlFor="modcard-upload"
-                      className="cursor-pointer text-[9px] uppercase tracking-widest text-[#5F3D94] bg-black hover:bg-neutral-900 border border-black font-black py-2 px-4 rounded-none transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
+                      className="cursor-pointer text-[9px] uppercase tracking-widest bg-primary text-white hover:bg-neutral-900 border border-primary font-black py-2 px-4 rounded-none transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
                     >
                       <span className="material-icons-round text-xs">add_photo_alternate</span>
                       <span>INJECT MODCARD NODE</span>
@@ -359,7 +359,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                 <select
                   value={aestheticStyle}
                   onChange={(e) => setAestheticStyle(e.target.value)}
-                  className="w-full bg-white border border-neutral-350 rounded-none px-3 py-2 text-[10px] font-bold text-neutral-800 uppercase tracking-wider focus:outline-none focus:border-black"
+                  className="w-full bg-white border border-neutral-350 rounded-none px-3 py-2 text-[10px] font-bold text-neutral-800 uppercase tracking-wider focus:outline-none focus:border-primary"
                 >
                   <option value="Default">Default Tech-Fashion Vibe</option>
                   <option value="90s Haute Couture Runway">90&apos;s Haute Couture Runway</option>
@@ -382,7 +382,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                 <select
                   value={lightingStyle}
                   onChange={(e) => setLightingStyle(e.target.value)}
-                  className="w-full bg-white border border-neutral-350 rounded-none px-3 py-2 text-[10px] font-bold text-neutral-800 uppercase tracking-wider focus:outline-none focus:border-black"
+                  className="w-full bg-white border border-neutral-350 rounded-none px-3 py-2 text-[10px] font-bold text-neutral-800 uppercase tracking-wider focus:outline-none focus:border-primary"
                 >
                   {['杂志封面', '强对比侧光', '高级柔和环形灯', '暗黑废土剪影', '霓虹眩光光影'].map((l) => (
                     <option key={l} value={l}>{l}</option>
@@ -395,7 +395,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                 <select
                   value={backgroundTheme}
                   onChange={(e) => setBackgroundTheme(e.target.value)}
-                  className="w-full bg-white border border-neutral-350 rounded-none px-3 py-2 text-[10px] font-bold text-neutral-800 uppercase tracking-wider focus:outline-none focus:border-black"
+                  className="w-full bg-white border border-neutral-350 rounded-none px-3 py-2 text-[10px] font-bold text-neutral-800 uppercase tracking-wider focus:outline-none focus:border-primary"
                 >
                   {['赛博实验室', '高端摄影棚', '户外山系岩石', '废土都市沙砾', '美术馆简约展厅'].map((bg) => (
                     <option key={bg} value={bg}>{bg}</option>
@@ -408,7 +408,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                 <select
                   value={grainFilter}
                   onChange={(e) => setGrainFilter(e.target.value)}
-                  className="w-full bg-white border border-neutral-350 rounded-none px-3 py-2 text-[10px] font-bold text-neutral-800 uppercase tracking-wider focus:outline-none focus:border-black"
+                  className="w-full bg-white border border-neutral-350 rounded-none px-3 py-2 text-[10px] font-bold text-neutral-800 uppercase tracking-wider focus:outline-none focus:border-primary"
                 >
                   {['无噪点', '细微复古颗粒', '复古重度灰尘感', '漏光暖调滤镜', '暗黑冷调质感'].map((g) => (
                     <option key={g} value={g}>{g}</option>
@@ -508,8 +508,8 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                     onClick={() => setDesignMode(mode)}
                     className={`py-2 text-[9px] font-black uppercase tracking-wider rounded-none border transition-all ${
                       designMode === mode
-                        ? 'border-black bg-black text-white'
-                        : 'border-neutral-200 bg-white text-neutral-800 hover:border-black'
+                        ? 'border-primary bg-primary text-white'
+                        : 'border-neutral-200 bg-white text-neutral-800 hover:border-primary'
                     }`}
                   >
                     {mode === 'Random' ? 'Full Spec AI' : 'Hologram Try-On'}
@@ -637,7 +637,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="p-4 bg-black text-white rounded-none space-y-1">
+              <div className="p-4 bg-primary text-white rounded-none space-y-1">
                 <p className="text-[10px] uppercase font-mono font-bold tracking-widest text-[#5F3D94]">Full Generative Engine</p>
                 <p className="text-[7.5px] uppercase tracking-widest leading-relaxed text-neutral-450 font-mono">
                   GENERATING VIA FULL SPEC INSTRUCTIONS UTILISES ALL HUMAN BASE CHARACTERISTICS AND SCENE AMBIENT VALUES FOR THE ABSOLUTE BEST CHIC LOOKS.
@@ -652,7 +652,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                 value={clothingPrompt}
                 onChange={(e) => setClothingPrompt(e.target.value)}
                 placeholder="在此输入服装款式、剪裁、面料、图案等细节（中文）；生成图片时将自动译为英文 prompt。"
-                className="w-full bg-white border border-neutral-300 rounded-none p-3 text-[10px] font-medium text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:border-black min-h-[90px] leading-relaxed resize-none font-sans"
+                className="w-full bg-white border border-neutral-300 rounded-none p-3 text-[10px] font-medium text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:border-primary min-h-[90px] leading-relaxed resize-none font-sans"
               />
               
               {/* Expander form inside container */}
@@ -666,20 +666,20 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                   value={expandOccupation}
                   onChange={(e) => setExpandOccupation(e.target.value)}
                   placeholder="职业 / 角色（如：咖啡师、飞行员）"
-                  className="w-full bg-white border border-neutral-300 rounded-none px-2.5 py-1.5 text-[9px] font-medium text-neutral-800 focus:outline-none focus:border-black"
+                  className="w-full bg-white border border-neutral-300 rounded-none px-2.5 py-1.5 text-[9px] font-medium text-neutral-800 focus:outline-none focus:border-primary"
                 />
                 <input
                   type="text"
                   value={expandFeatures}
                   onChange={(e) => setExpandFeatures(e.target.value)}
                   placeholder="附加特征（可选，如：宽松剪裁、金属扣件）"
-                  className="w-full bg-white border border-neutral-300 rounded-none px-2.5 py-1.5 text-[9px] font-medium text-neutral-800 focus:outline-none focus:border-black"
+                  className="w-full bg-white border border-neutral-300 rounded-none px-2.5 py-1.5 text-[9px] font-medium text-neutral-800 focus:outline-none focus:border-primary"
                 />
                 <button
                   type="button"
                   onClick={handleExpandPrompt}
                   disabled={isExpanding}
-                  className="w-full bg-black hover:bg-neutral-900 text-[#5F3D94] py-1.5 rounded-none text-[8px] font-bold tracking-wide transition-all flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50"
+                  className="w-full bg-primary hover:bg-primary/90 text-white py-1.5 rounded-none text-[8px] font-bold tracking-wide transition-all flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50"
                 >
                   <span className="material-icons-round text-[9px]">{isExpanding ? 'sync' : 'auto_awesome'}</span>
                     {isExpanding ? '扩写中…' : '智能扩写'}
