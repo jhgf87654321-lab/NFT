@@ -30,28 +30,28 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
 
   const features = [
     {
-      title: '?????',
+      title: '形象生成器',
       desc: 'Biometric Identity Wardrobe Node',
       icon: 'biotech',
       stats: 'SYS.ACTIVE',
       view: View.CREATOR,
     },
     {
-      title: '????',
+      title: '模特捏脸',
       desc: 'Parameterized Facial Synthesizer',
       icon: 'face',
       stats: 'LIVE SYNC',
       view: View.MODEL_FACE_GEN,
     },
     {
-      title: '????',
+      title: '虚拟试穿',
       desc: 'AI Specimen Fit Accuracy',
       icon: 'view_in_ar',
       stats: 'SYS.ONLINE',
       view: View.TRY_ON,
     },
     {
-      title: '????',
+      title: '数字衣橱',
       desc: 'Secured Digital Wardrobe System',
       icon: 'grid_view',
       stats: 'ARCHIVE',
@@ -119,7 +119,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
           onClick={onEnter}
           className="group relative w-full bg-primary text-white hover:bg-[#5F3D94] hover:text-white hover:border-primary p-5 rounded-full border border-primary flex items-center justify-between px-8 overflow-hidden active:scale-98 transition-all mb-12 shadow-sm"
         >
-          <span className="font-black uppercase tracking-[0.25em] text-[10px]">??????</span>
+          <span className="font-black uppercase tracking-[0.25em] text-[10px]">进入社区动态</span>
           <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
             <span className="material-icons-round text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
           </div>
