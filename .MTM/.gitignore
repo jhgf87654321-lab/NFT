@@ -1,0 +1,11 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# 已并入主应用的 PAGE2 原型，不纳入版本库
+PAGE2/

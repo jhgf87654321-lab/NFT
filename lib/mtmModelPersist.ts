@@ -1,0 +1,50 @@
+import { apiUrl, throwIfApiRouteMissing } from './apiBase';
+import { ensureHmrsProfile, prependHmrsModelImageUrl } from './hmrsDb';
+import { addModelFileRecord } from './modelFileDb';
+
+type UploadJson = { ok?: boolean; url?: string; seq?: number; error?: string };
+
+export type PersistMtmOptions = {
+  publishToPublic?: boolean;
+};
+
+export async function persistMtmGeneration(
+  dataUrl: string,
+  keywords: string,
+  uid: string,
+  options?: PersistMtmOptions,
+) {
+  const publishToPublic = options?.publishToPublic === true;
+  const res = await fetch(apiUrl('/api/mtm-modelcard-upload'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dataUrl, publishToPublic }),
+  });
+  const text = await res.text();
+  throwIfApiRouteMissing(res, text, '/api/mtm-modelcard-upload');
+  let data: UploadJson = {};
+  try {
+    data = text ? (JSON.parse(text) as UploadJson) : {};
+  } catch {
+    throw new Error(res.ok ? '上传响应无效' : text.slice(0, 120));
+  }
+  if (!res.ok || data.error) throw new Error(data.error || 'MODELCARD 上传失败');
+  const url = data.url;
+  const seq = typeof data.seq === 'number' ? data.seq : -1;
+  if (!url) throw new Error('未返回 COS 地址');
+
+  await ensureHmrsProfile(uid);
+  await prependHmrsModelImageUrl(uid, url);
+  try {
+    await addModelFileRecord({
+      seq,
+      cosUrl: url,
+      keywords,
+      uid,
+      isPublic: options?.publishToPublic === true,
+    });
+  } catch (e) {
+    console.warn('[MODELFILE] 元数据写入失败（HMRS 已更新，个人预览仍可显示图片）', e);
+  }
+  return { url, seq };
+}

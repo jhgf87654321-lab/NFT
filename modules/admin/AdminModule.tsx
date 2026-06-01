@@ -1,0 +1,323 @@
+import React, { useEffect, useState } from 'react';
+import { generateGeminiImage } from '../../lib/geminiClient';
+import {
+  getMe,
+  saveAestheticReference,
+  signIn,
+  signOut,
+  signUp,
+  uploadImageToCloudBase,
+  type SessionUser,
+} from '../../lib/apiClient';
+
+export default function AdminModule() {
+  const [user, setUser] = useState<SessionUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authMode, setAuthMode] = useState<'signIn' | 'signUp'>('signIn');
+
+  const [prompt, setPrompt] = useState('');
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStage, setSaveStage] = useState<'idle' | 'uploading' | 'saving'>('idle');
+
+  async function compressDataUrlIfNeeded(dataUrl: string) {
+    if (!dataUrl.startsWith('data:')) return dataUrl;
+    // quick size heuristic: base64 chars ~ bytes * 1.37, so length is a rough proxy
+    if (dataUrl.length < 1_200_000) return dataUrl; // ~< 0.9MB
+
+    const img = new Image();
+    img.src = dataUrl;
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('Failed to load image for compression'));
+    });
+
+    const maxDim = 1024;
+    const scale = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1));
+    const w = Math.max(1, Math.round((img.width || 1) * scale));
+    const h = Math.max(1, Math.round((img.height || 1) * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return dataUrl;
+    ctx.drawImage(img, 0, 0, w, h);
+
+    // Prefer WebP for size; fall back to JPEG
+    try {
+      const webp = canvas.toDataURL('image/webp', 0.85);
+      if (webp && webp.length < dataUrl.length) return webp;
+    } catch {
+      // ignore
+    }
+    try {
+      const jpg = canvas.toDataURL('image/jpeg', 0.85);
+      if (jpg && jpg.length < dataUrl.length) return jpg;
+    } catch {
+      // ignore
+    }
+    return dataUrl;
+  }
+
+  useEffect(() => {
+    let mounted = true;
+    const run = async () => {
+      const me = await getMe();
+      if (!mounted) return;
+      setUser(me);
+      setIsLoading(false);
+    };
+    void run();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Load latest Creator prompt and image so test images use identical parameters
+  useEffect(() => {
+    const loadFromCreator = (useFallback: boolean) => {
+      let hasAvatarPrompt = false;
+      try {
+        const stored = localStorage.getItem('generatedNFTData');
+        if (stored) {
+          const parsed = JSON.parse(stored) as { prompt?: string } | null;
+          if (parsed && typeof parsed.prompt === 'string' && parsed.prompt.trim()) {
+            hasAvatarPrompt = true;
+            setPrompt(parsed.prompt);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to read generatedNFTData for admin prompt', e);
+      }
+
+      try {
+        const storedImage = localStorage.getItem('generatedNFT');
+        if (storedImage) {
+          setGeneratedImage(storedImage);
+        }
+      } catch (e) {
+        console.error('Failed to read generatedNFT for admin cover', e);
+      }
+
+      // Fallback prompt only when no avatar has been generated yet
+      if (useFallback && !hasAvatarPrompt) {
+        setPrompt(
+          'A high-end avant-garde fashion editorial shot of a model wearing futuristic streetwear. Cinematic lighting, 8k, photorealistic.',
+        );
+      }
+    };
+
+    loadFromCreator(true);
+    const onUpdated = () => loadFromCreator(false);
+    window.addEventListener('axon:generated-nft-updated', onUpdated);
+    return () => window.removeEventListener('axon:generated-nft-updated', onUpdated);
+  }, []);
+
+  const handleAuth = async () => {
+    try {
+      if (authMode === 'signUp') {
+        const u = await signUp(authEmail, authPassword);
+        setUser(u);
+      } else {
+        const u = await signIn(authEmail, authPassword);
+        setUser(u);
+      }
+    } catch (error) {
+      console.error('Auth failed', error);
+      alert(error instanceof Error ? error.message : '认证失败');
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) return;
+
+    setIsGenerating(true);
+    setGeneratedImage(null);
+
+    try {
+      const img = await generateGeminiImage({ prompt: prompt.trim() });
+      setGeneratedImage(img);
+    } catch (error) {
+      console.error('Generation error', error);
+      alert('生成失败。');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleRate = async (rating: number) => {
+    if (!generatedImage || rating !== 5) {
+      if (rating !== 5) {
+        alert('仅 5 星图片会保存到参考库。');
+        setGeneratedImage(null);
+      }
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      setSaveStage('uploading');
+      const prepared = await compressDataUrlIfNeeded(generatedImage);
+      const imageUrl = prepared.startsWith('data:')
+        ? await uploadImageToCloudBase(prepared, { prefix: 'REF/' })
+        : prepared;
+      setSaveStage('saving');
+      await saveAestheticReference({ imageUrl, prompt });
+      alert('已保存到审美参考库！');
+      setGeneratedImage(null);
+    } catch (error) {
+      console.error('Error saving reference', error);
+      alert('保存失败。');
+    } finally {
+      setSaveStage('idle');
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-background-dark text-white flex items-center justify-center">加载中…</div>;
+  }
+
+  if (!user || user.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-background-dark text-white p-8 flex flex-col items-center justify-center">
+        <h1 className="text-3xl font-display font-black mb-4">需要管理员权限</h1>
+        <p className="text-white/60 mb-8 text-center">
+          你需要以管理员身份登录，才能访问审美训练系统。
+        </p>
+
+        {user ? (
+          <div className="flex flex-col items-center gap-4">
+            <p className="text-sm text-primary">当前登录：{user.email}（非管理员）</p>
+            <button onClick={() => void signOut()} className="px-6 py-2 bg-white/10 rounded-full hover:bg-white/20">
+              退出登录
+            </button>
+          </div>
+        ) : (
+          <div className="w-full max-w-sm space-y-4">
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={() => setAuthMode('signIn')}
+                className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                  authMode === 'signIn' ? 'bg-primary text-black' : 'bg-white/10 text-white/60'
+                }`}
+              >
+                登录
+              </button>
+              <button
+                onClick={() => setAuthMode('signUp')}
+                className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                  authMode === 'signUp' ? 'bg-primary text-black' : 'bg-white/10 text-white/60'
+                }`}
+              >
+                注册
+              </button>
+            </div>
+
+            <input
+              value={authEmail}
+              onChange={(e) => setAuthEmail(e.target.value)}
+              type="email"
+              placeholder="邮箱"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50"
+            />
+            <input
+              value={authPassword}
+              onChange={(e) => setAuthPassword(e.target.value)}
+              type="password"
+              placeholder="密码（至少 8 位）"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary/50"
+            />
+            <button
+              onClick={() => void handleAuth()}
+              className="w-full px-8 py-3 bg-primary text-black font-bold rounded-full uppercase tracking-widest"
+              disabled={!authEmail || !authPassword}
+            >
+              {authMode === 'signUp' ? '创建账号' : '登录'}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background-dark text-white p-6 overflow-y-auto pb-24">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-2xl font-display font-black uppercase tracking-tighter text-primary">审美训练</h1>
+          <p className="text-[10px] text-white/40 uppercase tracking-widest">管理测试节点</p>
+        </div>
+        <button onClick={() => void signOut()} className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white">
+          退出
+        </button>
+      </div>
+
+      <div className="space-y-6">
+        <div className="glass p-4 rounded-2xl border border-white/10">
+          <label className="block text-xs font-bold uppercase tracking-widest text-white/60 mb-2">测试提示词</label>
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            className="w-full h-32 bg-black/50 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-primary/50 resize-none"
+          />
+          <button
+            onClick={() => void handleGenerate()}
+            disabled={isGenerating || !prompt.trim()}
+            className="w-full mt-4 py-3 bg-primary text-black font-bold uppercase tracking-widest rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isGenerating ? (
+              <>
+                <span className="material-icons-round animate-spin">sync</span> 生成中…
+              </>
+            ) : (
+              <>
+                <span className="material-icons-round">auto_awesome</span> 生成测试图片
+              </>
+            )}
+          </button>
+        </div>
+
+        {generatedImage && (
+          <div className="glass p-4 rounded-2xl border border-primary/30 animate-in fade-in slide-in-from-bottom-4">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-center mb-4">结果评估</h2>
+            <div className="aspect-[3/4] rounded-xl overflow-hidden mb-4 border border-white/10">
+              <img src={generatedImage} alt="测试生成图" className="w-full h-full object-cover" />
+            </div>
+
+            <p className="text-xs text-center text-white/60 mb-4">为图片打分。只有 5 星会保存到参考库。</p>
+
+            <div className="flex justify-center gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => void handleRate(star)}
+                  disabled={isSaving}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
+                    star === 5
+                      ? 'bg-primary/20 text-primary border border-primary/50 hover:bg-primary hover:text-black shadow-[0_0_15px_rgba(212,255,0,0.2)]'
+                      : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <span className="material-icons-round">{star === 5 ? 'star' : 'star_border'}</span>
+                </button>
+              ))}
+            </div>
+
+            {isSaving && (
+              <div className="mt-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/60">
+                <span className="material-icons-round animate-spin text-sm">sync</span>
+                {saveStage === 'uploading' ? '上传到 COS…' : saveStage === 'saving' ? '保存参考…' : '处理中…'}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+

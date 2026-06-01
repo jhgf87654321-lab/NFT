@@ -1,0 +1,10 @@
+node_modules/
+.env
+.env.local
+dist/
+.MTM/.env
+.upgrade*/
+everything-claude-code/
+
+
+.vercel

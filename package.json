@@ -1,0 +1,29 @@
+{
+  "name": "axon-future-fashion",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:api": "vercel dev --listen 127.0.0.1:3000",
+    "dev:mtm": "npm --prefix .MTM run dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cloudbase/js-sdk": "^2.25.11",
+    "@google/genai": "^1.43.0",
+    "cos-nodejs-sdk-v5": "^2.15.4",
+    "firebase-admin": "^13.5.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vercel/node": "^5.6.11",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}

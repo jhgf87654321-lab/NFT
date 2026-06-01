@@ -1,0 +1,128 @@
+import crypto from 'node:crypto';
+
+import { handleCorsPreflightIfNeeded } from '../lib/api-cors.js';
+import { getAdminDb } from '../lib/firebaseAdmin.js';
+import { getSessionFromRequest } from '../lib/api-session.js';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isHashtag(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  const s = value.trim();
+  if (!s.startsWith('#')) return false;
+  if (s.length < 2 || s.length > 40) return false;
+  return true;
+}
+
+function sanitizeAuthorName(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const s = value.trim();
+  if (!s) return null;
+  // Allow Chinese/emoji/etc, just cap length to keep UI stable.
+  if (s.length > 32) return s.slice(0, 32);
+  return s;
+}
+
+type Req = {
+  method?: string;
+  url?: string;
+  query?: Record<string, string | string[] | undefined>;
+  body?: unknown;
+  headers?: Record<string, string | string[] | undefined>;
+};
+type Res = {
+  setHeader: (name: string, value: string) => void;
+  status: (code: number) => { json: (data: object) => void; end: () => void };
+};
+
+function getPath(req: Req): string {
+  const q = req.query?.__path;
+  if (typeof q === 'string') return q;
+  if (Array.isArray(q) && q[0]) return q[0];
+  const u = req.url || '';
+  const m = u.match(/\/api\/posts\/([^/?]+)/);
+  return m ? m[1]! : '';
+}
+
+export default async function handler(req: Req, res: Res) {
+  if (handleCorsPreflightIfNeeded(req, res)) return;
+
+  const path = getPath(req);
+  const db = getAdminDb();
+
+  if (path === 'like') {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    const session = getSessionFromRequest(req);
+    if (!session) return res.status(401).json({ error: 'Unauthorized' });
+    if (!isRecord(req.body)) return res.status(400).json({ error: 'Invalid JSON body' });
+    const postId = req.body.postId;
+    if (!isNonEmptyString(postId)) return res.status(400).json({ error: 'Invalid postId' });
+    try {
+      const ref = db.collection('posts').doc(postId);
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists) throw new Error('Post not found');
+        const likes = (snap.data()?.likesCount ?? 0) as number;
+        tx.update(ref, { likesCount: likes + 1 });
+      });
+      return res.status(200).json({ ok: true });
+    } catch (e) {
+      console.error('Like failed', e);
+      return res.status(500).json({ error: 'Failed to like post' });
+    }
+  }
+
+  if (path === '' || !path) {
+    if (req.method === 'GET') {
+      try {
+        const snap = await db.collection('posts').orderBy('createdAt', 'desc').limit(20).get();
+        const posts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        return res.status(200).json({ ok: true, posts });
+      } catch (e) {
+        console.error('List posts failed', e);
+        return res.status(500).json({ error: 'Failed to load posts' });
+      }
+    }
+    if (req.method === 'POST') {
+      const session = getSessionFromRequest(req);
+      if (!session) return res.status(401).json({ error: 'Unauthorized' });
+      if (!isRecord(req.body)) return res.status(400).json({ error: 'Invalid JSON body' });
+      const mediaUrls = req.body.mediaUrls;
+      const title = req.body.title;
+      const content = req.body.content;
+      const hashtagsRaw = (req.body as any).hashtags;
+      const authorNameRaw = (req.body as any).authorName;
+      if (!Array.isArray(mediaUrls) || mediaUrls.length === 0 || mediaUrls.length > 10) return res.status(400).json({ error: 'mediaUrls must be 1-10 items' });
+      if (!mediaUrls.every((u) => typeof u === 'string' && u.length > 0 && u.length < 5_000_000)) return res.status(400).json({ error: 'Invalid mediaUrls' });
+      if (!isNonEmptyString(title) || title.length > 100) return res.status(400).json({ error: 'Invalid title' });
+      if (!isNonEmptyString(content) || content.length > 5000) return res.status(400).json({ error: 'Invalid content' });
+      const hashtags = Array.isArray(hashtagsRaw)
+        ? hashtagsRaw
+            .filter(isHashtag)
+            .map((s: string) => s.trim())
+            .slice(0, 10)
+        : [];
+      try {
+        const authorName = sanitizeAuthorName(authorNameRaw) || session.email.split('@')[0] || 'Anonymous';
+        const authorAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.uid}`;
+        const postId = crypto.randomUUID();
+        await db.collection('posts').doc(postId).set({
+          id: postId, authorUid: session.uid, authorName, authorAvatar,
+          mediaUrls, title: title.trim(), content: content.trim(), hashtags, likesCount: 0, createdAt: new Date(),
+        });
+        return res.status(200).json({ ok: true, id: postId });
+      } catch (e) {
+        console.error('Create post failed', e);
+        return res.status(500).json({ error: 'Failed to create post' });
+      }
+    }
+  }
+
+  return res.status(405).json({ error: 'Method not allowed' });
+}
