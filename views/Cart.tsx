@@ -115,7 +115,7 @@ const Cart: React.FC<CartProps> = ({ items, onBack, onUpdateQty, onRemove, onDep
             <div className="absolute inset-0 bg-primary/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
           )}
           <span className="relative z-10 text-lg font-black uppercase tracking-widest">{deploying ? '处理中…' : '确认购买'}</span>
-          <div className={`relative z-10 p-2 rounded-xl flex items-center justify-center ${items.length === 0 ? 'bg-white/5 text-white/10' : 'bg-primary text-black'}`}>
+          <div className={`relative z-10 p-2 rounded-xl flex items-center justify-center ${items.length === 0 ? 'bg-white/5 text-white/10' : 'bg-primary text-white'}`}>
             <span className="material-icons-round">{deploying ? 'hourglass_top' : 'near_me'}</span>
           </div>
         </button>

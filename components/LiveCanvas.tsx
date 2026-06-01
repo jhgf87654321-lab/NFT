@@ -22,7 +22,7 @@ export const LiveCanvas: React.FC<LiveCanvasProps> = ({
       {/* Top Details Panel */}
       <div className="shrink-0 flex items-center justify-between pb-3 border-b border-[#E5E5E5] mb-4">
         <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 bg-[#D4FF00] border border-black"></span>
+          <span className="w-1.5 h-1.5 bg-[#5F3D94] border border-black"></span>
           <span className="text-[10px] font-bold tracking-wider uppercase font-mono text-neutral-800">PREVIEW RENDERER</span>
         </div>
         <div className="flex items-center gap-1.5 bg-neutral-100 border border-neutral-300 py-0.5 px-3 rounded-none">
@@ -51,7 +51,7 @@ export const LiveCanvas: React.FC<LiveCanvasProps> = ({
               />
               {/* Dynamic fashion specs overlay on hover */}
               <div className="absolute inset-x-0 bottom-0 bg-black/85 backdrop-blur-sm p-4 text-white z-20 translate-y-full group-hover:translate-y-0 transition-all duration-300 rounded-none">
-                <div className="flex justify-between items-center text-[7.5px] font-black uppercase tracking-wider text-[#D4FF00] mb-1">
+                <div className="flex justify-between items-center text-[7.5px] font-black uppercase tracking-wider text-[#5F3D94] mb-1">
                   <span>MINT ENGINE // ACTIVE</span>
                   <span>{nftMetadata?.rarity || 'COMMON'}</span>
                 </div>
@@ -117,7 +117,7 @@ export const LiveCanvas: React.FC<LiveCanvasProps> = ({
           className={`w-full py-4 rounded-none font-black uppercase text-[10.5px] tracking-[0.2em] transition-all flex items-center justify-center gap-2 shadow-none relative overflow-hidden active:scale-95 disabled:opacity-50 ${
             isGenerating
               ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
-              : 'bg-black text-[#D4FF00] hover:bg-neutral-900'
+              : 'bg-black text-[#5F3D94] hover:bg-neutral-900'
           }`}
         >
           {isGenerating ? (

@@ -138,7 +138,7 @@ const ModelFaceGen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           onClick={() => setLiveSync(!liveSync)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-colors ${
             liveSync
-              ? 'bg-primary/20 border-primary text-primary shadow-[0_0_10px_rgba(212,255,0,0.2)]'
+              ? 'bg-primary/20 border-primary text-primary shadow-[0_0_10px_rgba(95,61,148,0.2)]'
               : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'
           }`}
         >
@@ -175,7 +175,7 @@ const ModelFaceGen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               isGenerating
                 ? 'bg-white/10 text-white/50 cursor-not-allowed'
                 : hasChanges
-                  ? 'bg-primary text-black shadow-[0_0_15px_rgba(212,255,0,0.3)] hover:scale-[1.02]'
+                  ? 'bg-primary text-white shadow-[0_0_15px_rgba(95,61,148,0.3)] hover:scale-[1.02]'
                   : 'bg-white/5 text-white/30 cursor-not-allowed'
             }`}
           >
@@ -201,7 +201,7 @@ const ModelFaceGen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                activeTab === tab.id ? 'bg-primary text-black' : 'bg-white/10 text-white hover:bg-white/20'
+                activeTab === tab.id ? 'bg-primary text-white' : 'bg-white/10 text-white hover:bg-white/20'
               }`}
             >
               <span className="material-icons-round text-sm">{tab.icon}</span>

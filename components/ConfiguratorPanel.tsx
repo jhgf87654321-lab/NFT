@@ -160,7 +160,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                 ))}
               </div>
               {modcardDesc && (
-                <div className="mt-2 p-2.5 bg-[#D4FF00]/20 border border-neutral-305 text-[8px] font-mono text-neutral-800 uppercase tracking-wider leading-relaxed">
+                <div className="mt-2 p-2.5 bg-[#5F3D94]/20 border border-neutral-305 text-[8px] font-mono text-neutral-800 uppercase tracking-wider leading-relaxed">
                   ⚠️ ACTIVE MODCARD DETECTED: THE SYSTEM IS MANDATING AND ENFORCING THE DETAILED MODCARD IDENTITY OVER STANDARD TRAITS.
                 </div>
               )}
@@ -169,7 +169,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
             {/* Creature Surface Specs */}
             {gender === 'Creature' && (
               <div className="space-y-2">
-                <label className="text-[9px] uppercase font-bold tracking-widest text-[#D4FF00] bg-black px-2 py-0.5 rounded-none font-mono">Creatures Surface Specs</label>
+                <label className="text-[9px] uppercase font-bold tracking-widest text-[#5F3D94] bg-black px-2 py-0.5 rounded-none font-mono">Creatures Surface Specs</label>
                 <div className="grid grid-cols-2 gap-1 mt-1">
                   {(['Hairy', 'Hairless'] as const).map((texture) => (
                     <button
@@ -266,7 +266,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
             {/* Modcard Recognition Module */}
             <div className="space-y-3 pt-4 border-t border-neutral-200">
               <div className="flex justify-between items-center">
-                <label className="text-[9px] uppercase font-bold tracking-widest text-black bg-[#D4FF00] px-2 py-0.5 rounded-none font-mono">
+                <label className="text-[9px] uppercase font-bold tracking-widest text-white bg-[#5F3D94] px-2 py-0.5 rounded-none font-mono">
                   MODCARD IDENTIFY
                 </label>
                 <span className="text-[8px] font-mono text-neutral-400">MD.REC_AI</span>
@@ -327,7 +327,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                     <span className="material-icons-round text-2xl text-neutral-400 mb-2 font-light">contact_page</span>
                     <label
                       htmlFor="modcard-upload"
-                      className="cursor-pointer text-[9px] uppercase tracking-widest text-[#D4FF00] bg-black hover:bg-neutral-900 border border-black font-black py-2 px-4 rounded-none transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
+                      className="cursor-pointer text-[9px] uppercase tracking-widest text-[#5F3D94] bg-black hover:bg-neutral-900 border border-black font-black py-2 px-4 rounded-none transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
                     >
                       <span className="material-icons-round text-xs">add_photo_alternate</span>
                       <span>INJECT MODCARD NODE</span>
@@ -372,7 +372,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
               </div>
 
               {aestheticStyle === 'Workwear' && workwearPreviewPrompt ? (
-                <div className="p-2.5 bg-[#D4FF00]/15 border border-neutral-300 text-[7.5px] font-mono text-neutral-800 uppercase tracking-wider leading-relaxed max-h-24 overflow-y-auto no-scrollbar">
+                <div className="p-2.5 bg-[#5F3D94]/15 border border-neutral-300 text-[7.5px] font-mono text-neutral-800 uppercase tracking-wider leading-relaxed max-h-24 overflow-y-auto no-scrollbar">
                   {workwearPreviewPrompt}
                 </div>
               ) : null}
@@ -638,7 +638,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
               </div>
             ) : (
               <div className="p-4 bg-black text-white rounded-none space-y-1">
-                <p className="text-[10px] uppercase font-mono font-bold tracking-widest text-[#D4FF00]">Full Generative Engine</p>
+                <p className="text-[10px] uppercase font-mono font-bold tracking-widest text-[#5F3D94]">Full Generative Engine</p>
                 <p className="text-[7.5px] uppercase tracking-widest leading-relaxed text-neutral-450 font-mono">
                   GENERATING VIA FULL SPEC INSTRUCTIONS UTILISES ALL HUMAN BASE CHARACTERISTICS AND SCENE AMBIENT VALUES FOR THE ABSOLUTE BEST CHIC LOOKS.
                 </p>
@@ -679,7 +679,7 @@ export const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
                   type="button"
                   onClick={handleExpandPrompt}
                   disabled={isExpanding}
-                  className="w-full bg-black hover:bg-neutral-900 text-[#D4FF00] py-1.5 rounded-none text-[8px] font-bold tracking-wide transition-all flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50"
+                  className="w-full bg-black hover:bg-neutral-900 text-[#5F3D94] py-1.5 rounded-none text-[8px] font-bold tracking-wide transition-all flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50"
                 >
                   <span className="material-icons-round text-[9px]">{isExpanding ? 'sync' : 'auto_awesome'}</span>
                     {isExpanding ? '扩写中…' : '智能扩写'}

@@ -30,28 +30,28 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
 
   const features = [
     {
-      title: '形象生成器',
+      title: '?????',
       desc: 'Biometric Identity Wardrobe Node',
       icon: 'biotech',
       stats: 'SYS.ACTIVE',
       view: View.CREATOR,
     },
     {
-      title: '模特捏脸',
+      title: '????',
       desc: 'Parameterized Facial Synthesizer',
       icon: 'face',
       stats: 'LIVE SYNC',
       view: View.MODEL_FACE_GEN,
     },
     {
-      title: '虚拟试穿',
+      title: '????',
       desc: 'AI Specimen Fit Accuracy',
       icon: 'view_in_ar',
       stats: 'SYS.ONLINE',
       view: View.TRY_ON,
     },
     {
-      title: '数字衣橱',
+      title: '????',
       desc: 'Secured Digital Wardrobe System',
       icon: 'grid_view',
       stats: 'ARCHIVE',
@@ -69,7 +69,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
             <span className="text-black/50 text-[8px] font-black uppercase tracking-[0.5em] block">SPECULATIVE MATRIX</span>
             <div className="flex items-center gap-2">
               <span className="text-xl font-black uppercase tracking-tight">AXON FUTURE_</span>
-              <span className="bg-black text-[#D4FF00] text-[6.5px] font-black uppercase px-2 py-0.5 rounded tracking-widest">PRO.NODE</span>
+              <span className="bg-black text-[#5F3D94] text-[6.5px] font-black uppercase px-2 py-0.5 rounded tracking-widest">PRO.NODE</span>
             </div>
           </div>
 
@@ -101,15 +101,15 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
             alt="LOKADA Editorial"
             className="absolute inset-0 w-full h-full object-cover object-[center_35%] group-hover:brightness-105 transition-[filter] duration-500"
           />
-          <div className="absolute top-0 left-0 w-2 h-16 bg-[#D4FF00]"></div>
+          <div className="absolute top-0 left-0 w-2 h-16 bg-[#5F3D94]"></div>
           <div className="absolute top-6 right-6 z-10 flex flex-col items-end gap-1">
             <span className="text-[10px] font-mono font-black tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">01 // 04</span>
             <div className="w-20 h-0.5 bg-white/40 relative overflow-hidden">
-              <div className="absolute top-0 left-0 h-full w-[45%] bg-[#D4FF00]"></div>
+              <div className="absolute top-0 left-0 h-full w-[45%] bg-[#5F3D94]"></div>
             </div>
             <span className="text-[8px] font-black tracking-widest uppercase text-white/90 drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)] font-space">EDITORIAL NODE</span>
           </div>
-          <div className="absolute bottom-5 right-5 w-12 h-12 bg-[#D4FF00] rounded-full border border-black flex items-center justify-center shadow-lg transform group-hover:scale-110 active:scale-95 transition-transform">
+          <div className="absolute bottom-5 right-5 w-12 h-12 bg-[#5F3D94] rounded-full border border-black flex items-center justify-center shadow-lg transform group-hover:scale-110 active:scale-95 transition-transform text-white">
             <span className="material-icons-round text-black text-lg animate-pulse">north_east</span>
           </div>
         </div>
@@ -117,9 +117,9 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
         <button
           type="button"
           onClick={onEnter}
-          className="group relative w-full bg-black text-white hover:bg-[#D4FF00] hover:text-black hover:border-black p-5 rounded-full border border-black flex items-center justify-between px-8 overflow-hidden active:scale-98 transition-all mb-12 shadow-sm"
+          className="group relative w-full bg-black text-white hover:bg-[#5F3D94] hover:text-white hover:border-black p-5 rounded-full border border-black flex items-center justify-between px-8 overflow-hidden active:scale-98 transition-all mb-12 shadow-sm"
         >
-          <span className="font-black uppercase tracking-[0.25em] text-[10px]">进入社区动态</span>
+          <span className="font-black uppercase tracking-[0.25em] text-[10px]">??????</span>
           <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors">
             <span className="material-icons-round text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
           </div>
@@ -128,7 +128,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
         <div className="flex flex-col gap-6 mb-28">
           <div className="flex justify-between items-end border-b border-black/15 pb-4">
             <div>
-              <span className="text-[#D4FF00] bg-black text-[7px] font-black uppercase tracking-[0.4em] px-2.5 py-1 mb-1.5 inline-block">SPECULATIVE PIPELINE //</span>
+              <span className="text-[#5F3D94] bg-black text-[7px] font-black uppercase tracking-[0.4em] px-2.5 py-1 mb-1.5 inline-block">SPECULATIVE PIPELINE //</span>
               <h3 className="text-2xl font-black uppercase tracking-tighter leading-none font-display">CHANNELS</h3>
             </div>
             <span className="text-[9px] font-black font-mono text-black/40">02 // 04</span>
@@ -146,10 +146,10 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') onNavigate?.(f.view);
                 }}
-                className={`group flex items-center justify-between py-6 transition-all duration-200 cursor-pointer ${activeFeature === i ? 'bg-black text-white px-4 border-l-4 border-[#D4FF00]' : 'bg-transparent hover:px-2'}`}
+                className={`group flex items-center justify-between py-6 transition-all duration-200 cursor-pointer ${activeFeature === i ? 'bg-black text-white px-4 border-l-4 border-[#5F3D94]' : 'bg-transparent hover:px-2'}`}
               >
                 <div className="flex items-center gap-6">
-                  <span className={`font-mono text-lg font-black ${activeFeature === i ? 'text-[#D4FF00]' : 'text-black/30'}`}>
+                  <span className={`font-mono text-lg font-black ${activeFeature === i ? 'text-[#5F3D94]' : 'text-black/30'}`}>
                     0{i + 1}
                   </span>
                   <div>
@@ -158,7 +158,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className={`text-[7px] font-black uppercase tracking-widest px-2.5 py-0.5 border ${activeFeature === i ? 'border-[#D4FF00] text-[#D4FF00]' : 'border-black/10 text-black/60 bg-white/45'}`}>
+                  <span className={`text-[7px] font-black uppercase tracking-widest px-2.5 py-0.5 border ${activeFeature === i ? 'border-[#5F3D94] text-[#5F3D94]' : 'border-black/10 text-black/60 bg-white/45'}`}>
                     {f.stats}
                   </span>
                   <span className="material-icons-round text-sm transition-transform group-hover:translate-x-1.5">east</span>

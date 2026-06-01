@@ -91,7 +91,7 @@ export const WardrobeVault: React.FC<WardrobeVaultProps> = ({
                   <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-1 z-20">
                     <button
                       onClick={() => handleSelectSavedItem(nft)}
-                      className="px-2.5 py-1.5 bg-[#D4FF00] hover:bg-white text-black rounded-none text-[8px] font-black uppercase tracking-widest transition-all scale-95 group-hover:scale-100"
+                      className="px-2.5 py-1.5 bg-[#5F3D94] hover:bg-white hover:text-black text-white rounded-none text-[8px] font-black uppercase tracking-widest transition-all scale-95 group-hover:scale-100"
                     >
                       Retrieve
                     </button>

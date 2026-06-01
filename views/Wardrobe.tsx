@@ -261,7 +261,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
   ]);
 
   const colorOptions = [
-    { name: 'Default', filter: 'none', hex: '#D4FF00' },
+    { name: 'Default', filter: 'none', hex: '#5F3D94' },
     { name: 'Crimson', filter: 'hue-rotate(240deg) brightness(0.8)', hex: '#FF4D00' },
     { name: 'Cobalt', filter: 'hue-rotate(150deg)', hex: '#0066FF' },
     { name: 'Phantom', filter: 'grayscale(1) brightness(1.2)', hex: '#FFFFFF' }
@@ -302,7 +302,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
               src={selectedItem.image} 
               alt={selectedItem.name} 
               style={{ filter: selectedItem.color || 'none' }}
-              className="max-h-64 object-contain drop-shadow-[0_0_40px_rgba(212,255,0,0.2)]"
+              className="max-h-64 object-contain drop-shadow-[0_0_40px_rgba(95,61,148,0.2)]"
             />
           </div>
 
@@ -340,7 +340,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                   {selectedItem.priceHistory.map((history, idx) => (
                     <div key={idx} className="flex justify_between items-center group">
                       <div className="flex items-center gap-3">
-                        <div className={`w-1.5 h-1.5 rounded-full ${idx === 0 ? 'bg-primary shadow-[0_0_8px_#D4FF00]' : 'bg-white/20'}`}></div>
+                        <div className={`w-1.5 h-1.5 rounded-full ${idx === 0 ? 'bg-primary shadow-[0_0_8px_#5F3D94]' : 'bg-white/20'}`}></div>
                         <span className={`text-xs font-bold font-space ${idx === 0 ? 'text-white' : 'text-white/40'}`}>{history.date}</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -454,7 +454,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                         alt={item.theme || 'NFT'}
                         className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
                       />
-                      <div className="absolute top-2 right-2 bg-primary text-black text-[8px] font-bold px-2 py-1 rounded-full uppercase">
+                      <div className="absolute top-2 right-2 bg-primary text-white text-[8px] font-bold px-2 py-1 rounded-full uppercase">
                         {item.isSpecial ? '特别' : '已铸造'}
                       </div>
                     </button>
@@ -555,7 +555,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                       window.open(url, '_blank');
                     }
                   }}
-                  className="flex-1 py-3 rounded-2xl bg-primary/20 hover:bg-primary hover:text-black text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1 border border-primary/40"
+                  className="flex-1 py-3 rounded-2xl bg-primary/20 hover:bg-primary hover:text-white text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1 border border-primary/40"
                 >
                   <span className="material-icons-round text-sm">download</span>
                   保存
@@ -619,7 +619,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                       alert('生成 2K 失败。');
                     }
                   }}
-                  className="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-primary hover:text-black text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1 border border-white/20"
+                  className="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-primary hover:text-white text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1 border border-white/20"
                 >
                   <span className="material-icons-round text-sm">high_quality</span>
                   生成 2K
@@ -633,7 +633,7 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                     }
                     alert('已上传到分享平台！');
                   }}
-                  className="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-primary hover:text-black text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1"
+                  className="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-primary hover:text-white text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1"
                 >
                   <span className="material-icons-round text-sm">public</span>
                   分享

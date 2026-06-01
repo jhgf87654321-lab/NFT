@@ -116,7 +116,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
           onClick={() => onViewChange(View.TRY_ON)}
           className="w-11 h-11 rounded-full bg-black text-white shadow-[0_8px_16px_rgba(0,0,0,0.15)] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform relative group"
         >
-          <span className="material-icons-round text-[20px] text-[#D4FF00]">view_in_ar</span>
+          <span className="material-icons-round text-[20px] text-[#5F3D94]">view_in_ar</span>
         </button>
 
         <button 

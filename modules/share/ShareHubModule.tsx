@@ -172,7 +172,7 @@ export default function ShareHubModule({ onNavigate }: ShareHubProps) {
 
       <button
         onClick={() => onNavigate(View.WARDROBE)}
-        className="fixed bottom-24 left-1/2 -translate-x-1/2 w-14 h-14 bg-primary text-black rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(212,255,0,0.3)] z-50 hover:scale-105 transition-transform"
+        className="fixed bottom-24 left-1/2 -translate-x-1/2 w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(95,61,148,0.3)] z-50 hover:scale-105 transition-transform"
       >
         <span className="material-icons-round text-3xl">add</span>
       </button>

@@ -99,7 +99,7 @@ export default function CreatePostModule({ initialMedia = [], onBack, onSuccess 
         <button
           onClick={() => void submitPost()}
           disabled={isSubmitting || mediaUrls.length === 0 || !title.trim() || !content.trim()}
-          className="px-4 py-2 bg-primary text-black font-bold uppercase tracking-widest text-[10px] rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-primary text-white font-bold uppercase tracking-widest text-[10px] rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? '发布中…' : '发布'}
         </button>

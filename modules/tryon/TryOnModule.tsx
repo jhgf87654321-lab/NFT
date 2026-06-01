@@ -281,7 +281,7 @@ export default function TryOnModule() {
           </div>
           <span className="text-2xl font-display font-black tracking-tighter">试穿</span>
         </div>
-        <div className="bg-primary text-black px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase animate-pulse-fast">
+        <div className="bg-primary text-white px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase animate-pulse-fast">
           AI Active
         </div>
       </header>
@@ -319,7 +319,7 @@ export default function TryOnModule() {
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-          <div className="absolute left-0 right-0 h-[2px] bg-primary shadow-[0_0_20px_#D4FF00] animate-scan z-20"></div>
+          <div className="absolute left-0 right-0 h-[2px] bg-primary shadow-[0_0_20px_#5F3D94] animate-scan z-20"></div>
           {!uploadedImage && cameraMode === 'off' && (
             <div className="absolute bottom-10 left-0 right-0 text-center pointer-events-none">
               <div className="text-6xl font-display font-black text-white/20 leading-none">
@@ -365,7 +365,7 @@ export default function TryOnModule() {
           </button>
           <button
             className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-              cameraMode === 'rear' ? 'bg-primary text-black' : 'text-white/50'
+              cameraMode === 'rear' ? 'bg-primary text-white' : 'text-white/50'
             }`}
             onClick={() => setCameraMode(cameraMode === 'rear' ? 'off' : 'rear')}
           >
@@ -422,7 +422,7 @@ export default function TryOnModule() {
         <button
           onClick={() => void handleApplyStyle()}
           disabled={isApplying || (cooldownUntil !== null && Date.now() < cooldownUntil)}
-          className="w-full max-w-xs bg-primary/10 border border-primary/50 text-primary py-4 rounded-[2rem] flex items-center justify-center gap-3 group active:scale-95 transition-all shadow-[0_0_20px_rgba(212,255,0,0.2)] hover:bg-primary/20 backdrop-blur-md disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full max-w-xs bg-primary/10 border border-primary/50 text-primary py-4 rounded-[2rem] flex items-center justify-center gap-3 group active:scale-95 transition-all shadow-[0_0_20px_rgba(95,61,148,0.2)] hover:bg-primary/20 backdrop-blur-md disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span className={`material-icons-round text-xl ${isApplying ? 'animate-spin' : ''}`}>{isApplying ? 'sync' : 'auto_awesome'}</span>
           <span className="text-[10px] font-bold uppercase tracking-widest">

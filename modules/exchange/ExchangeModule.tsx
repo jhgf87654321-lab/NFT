@@ -159,7 +159,7 @@ export default function ExchangeModule(props?: { onBackToExplore?: () => void })
 
       {/* Publish button */}
       <button
-        className="fixed bottom-24 left-1/2 -translate-x-1/2 w-32 h-10 bg-primary text-black rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(212,255,0,0.3)] z-50 text-[11px] font-black uppercase tracking-[0.2em]"
+        className="fixed bottom-24 left-1/2 -translate-x-1/2 w-32 h-10 bg-primary text-white rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(95,61,148,0.3)] z-50 text-[11px] font-black uppercase tracking-[0.2em]"
         type="button"
       >
         发布交换

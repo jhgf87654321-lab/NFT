@@ -296,7 +296,7 @@ ${userContext}`;
     { name: 'Deep Bio', hex: '#3B2219' },
     { name: 'Phantom', hex: '#E2E2E2' },
     { name: 'Obsidian', hex: '#1A1A1A' },
-    { name: 'Neon Puls', hex: '#D4FF00' },
+    { name: 'Neon Puls', hex: '#5F3D94' },
   ];
 
   const defaultCreatorState = useMemo<CreatorStateV1>(
@@ -1333,15 +1333,15 @@ ${userContext}`;
 
 
   return (
-    <div className="relative min-h-screen bg-[#FAF9F6] text-black selection:bg-primary selection:text-black">
+    <div className="relative min-h-screen bg-[#FAF9F6] text-black selection:bg-primary selection:text-white">
       <div className="fixed inset-0 pointer-events-none -z-20 overflow-hidden">
-        <div className="absolute top-[10%] right-[20%] w-[50%] h-[50%] bg-[#D4FF00]/5 blur-[150px] rounded-full"></div>
+        <div className="absolute top-[10%] right-[20%] w-[50%] h-[50%] bg-[#5F3D94]/5 blur-[150px] rounded-full"></div>
       </div>
 
       <header className="relative z-50 px-8 lg:px-16 pt-10 flex justify-between items-center mb-10 select-none">
         <div className="flex items-baseline gap-6 font-sans">
           <div>
-            <span className="text-[10px] font-black uppercase text-[#D4FF00] bg-black px-2.5 py-0.5 rounded tracking-[0.35rem] block leading-none">AXON LABS</span>
+            <span className="text-[10px] font-black uppercase text-[#5F3D94] bg-black px-2.5 py-0.5 rounded tracking-[0.35rem] block leading-none">AXON LABS</span>
             <h1 className="font-future font-black text-2xl leading-none text-black tracking-widest uppercase mt-2 font-display">NFT 铸造</h1>
           </div>
           <div className="h-6 w-px bg-black/15 hidden md:block"></div>
@@ -1441,8 +1441,8 @@ ${userContext}`;
       </main>
 
       {toastMessage && (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[250] bg-black text-[#D4FF00] text-[9.5px] font-black uppercase tracking-[0.3em] px-8 py-4 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-white/10 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 pointer-events-none">
-          <span className="w-1.5 h-1.5 bg-[#D4FF00] rounded-full animate-ping"></span>
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[250] bg-black text-[#5F3D94] text-[9.5px] font-black uppercase tracking-[0.3em] px-8 py-4 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-white/10 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 pointer-events-none">
+          <span className="w-1.5 h-1.5 bg-[#5F3D94] rounded-full animate-ping"></span>
           <span>{toastMessage}</span>
         </div>
       )}

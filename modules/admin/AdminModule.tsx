@@ -203,7 +203,7 @@ export default function AdminModule() {
               <button
                 onClick={() => setAuthMode('signIn')}
                 className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                  authMode === 'signIn' ? 'bg-primary text-black' : 'bg-white/10 text-white/60'
+                  authMode === 'signIn' ? 'bg-primary text-white' : 'bg-white/10 text-white/60'
                 }`}
               >
                 登录
@@ -211,7 +211,7 @@ export default function AdminModule() {
               <button
                 onClick={() => setAuthMode('signUp')}
                 className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                  authMode === 'signUp' ? 'bg-primary text-black' : 'bg-white/10 text-white/60'
+                  authMode === 'signUp' ? 'bg-primary text-white' : 'bg-white/10 text-white/60'
                 }`}
               >
                 注册
@@ -234,7 +234,7 @@ export default function AdminModule() {
             />
             <button
               onClick={() => void handleAuth()}
-              className="w-full px-8 py-3 bg-primary text-black font-bold rounded-full uppercase tracking-widest"
+              className="w-full px-8 py-3 bg-primary text-white font-bold rounded-full uppercase tracking-widest"
               disabled={!authEmail || !authPassword}
             >
               {authMode === 'signUp' ? '创建账号' : '登录'}
@@ -268,7 +268,7 @@ export default function AdminModule() {
           <button
             onClick={() => void handleGenerate()}
             disabled={isGenerating || !prompt.trim()}
-            className="w-full mt-4 py-3 bg-primary text-black font-bold uppercase tracking-widest rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full mt-4 py-3 bg-primary text-white font-bold uppercase tracking-widest rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isGenerating ? (
               <>
@@ -299,7 +299,7 @@ export default function AdminModule() {
                   disabled={isSaving}
                   className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all ${
                     star === 5
-                      ? 'bg-primary/20 text-primary border border-primary/50 hover:bg-primary hover:text-black shadow-[0_0_15px_rgba(212,255,0,0.2)]'
+                      ? 'bg-primary/20 text-primary border border-primary/50 hover:bg-primary hover:text-white shadow-[0_0_15px_rgba(95,61,148,0.2)]'
                       : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 hover:text-white'
                   }`}
                 >
