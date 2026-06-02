@@ -5,7 +5,10 @@ export function buildCosPublicUrl(bucket: string, region: string, key: string): 
 }
 
 const DEFAULT_COS_COVER_KEY = 'NEW VERSION TRY ON/封面.mp4';
+const LOCAL_COVER_FALLBACK = '/cover.mp4';
 
 export const COVER_VIDEO_SRC =
   import.meta.env.VITE_COVER_VIDEO_URL ||
   buildCosPublicUrl('lokada-1254090729', 'ap-shanghai', DEFAULT_COS_COVER_KEY);
+
+export const COVER_VIDEO_FALLBACK = LOCAL_COVER_FALLBACK;

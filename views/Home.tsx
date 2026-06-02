@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from '../types';
-import { COVER_VIDEO_SRC } from '../lib/coverVideo';
+import { COVER_VIDEO_FALLBACK, COVER_VIDEO_SRC } from '../lib/coverVideo';
 import HomeHeroPoster from '../assets/home-hero.png';
 import LogoImg from '../assets/LOGO-02.png';
+
 const SEGMENT_COUNT = 4;
 const SEGMENT_DURATION = 3;
 const WHEEL_STEP_THRESHOLD = 48;
@@ -22,7 +23,6 @@ function revealClass(visible: boolean) {
 const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
   const [activeFeature, setActiveFeature] = useState<number | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  /** 0 = 初始；1–4 = 四段视频，每段 3 秒，对应四次滚轮 */
   const [segment, setSegment] = useState(0);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [scrubReady, setScrubReady] = useState(false);
@@ -35,7 +35,9 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
   const wheelAccumRef = useRef(0);
   const wheelLockedRef = useRef(false);
   const segmentStopRef = useRef<number | null>(null);
-  const pendingWheelRef = useRef<1 | -1 | null>(null);
+  const pendingSegmentRef = useRef<number | null>(null);
+  const videoSrcRef = useRef<string | null>(null);
+  const triedFallbackRef = useRef(false);
 
   const clearSegmentStop = useCallback(() => {
     if (segmentStopRef.current !== null) {
@@ -44,6 +46,20 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
     }
   }, []);
 
+  const startVideoLoad = useCallback((url: string) => {
+    if (videoSrcRef.current === url) return;
+    videoSrcRef.current = url;
+    setVideoSrc(url);
+    setScrubReady(false);
+    setBufferPct(0);
+  }, []);
+
+  const tryFallbackVideo = useCallback(() => {
+    if (triedFallbackRef.current || videoSrcRef.current === COVER_VIDEO_FALLBACK) return;
+    triedFallbackRef.current = true;
+    startVideoLoad(COVER_VIDEO_FALLBACK);
+  }, [startVideoLoad]);
+
   const playSegment = useCallback(
     (seg: number) => {
       segmentRef.current = seg;
@@ -51,16 +67,8 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
 
       const video = videoRef.current;
       clearSegmentStop();
-
-      if (!video) return;
-
-      if (seg <= 0) {
-        video.pause();
-        try {
-          video.currentTime = 0;
-        } catch {
-          // ignore
-        }
+      if (!video || seg <= 0) {
+        video?.pause();
         return;
       }
 
@@ -74,13 +82,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
         } catch {
           // ignore
         }
-        const playPromise = video.play();
-        if (playPromise && typeof playPromise.catch === 'function') {
-          playPromise.catch(() => {
-            video.pause();
-          });
-        }
-
+        void video.play().catch(() => video.pause());
         segmentStopRef.current = window.setTimeout(() => {
           video.pause();
           try {
@@ -100,13 +102,29 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
     [clearSegmentStop],
   );
 
+  const goToSegment = useCallback(
+    (next: number) => {
+      const clamped = Math.min(SEGMENT_COUNT, Math.max(0, next));
+      if (clamped === segmentRef.current) return;
+
+      if (!videoSrcRef.current) {
+        pendingSegmentRef.current = clamped;
+        startVideoLoad(COVER_VIDEO_SRC);
+        segmentRef.current = clamped;
+        setSegment(clamped);
+        return;
+      }
+
+      playSegment(clamped);
+    },
+    [playSegment, startVideoLoad],
+  );
+
   const stepSegment = useCallback(
     (direction: 1 | -1) => {
-      const next = Math.min(SEGMENT_COUNT, Math.max(0, segmentRef.current + direction));
-      if (next === segmentRef.current) return;
-      playSegment(next);
+      goToSegment(segmentRef.current + direction);
     },
-    [playSegment],
+    [goToSegment],
   );
 
   useEffect(() => {
@@ -137,6 +155,9 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
     const video = videoRef.current;
     if (!video || !videoSrc) return;
 
+    video.preload = 'auto';
+    video.load();
+
     const updateBuffer = () => {
       if (!Number.isFinite(video.duration) || video.duration <= 0) return;
       if (video.buffered.length === 0) return;
@@ -147,7 +168,6 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
     const onLoadedMetadata = () => {
       if (Number.isFinite(video.duration) && video.duration > 0) {
         durationRef.current = video.duration;
-        video.currentTime = 0;
         setScrubReady(true);
       }
       updateBuffer();
@@ -156,15 +176,16 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
     const onCanPlay = () => {
       setScrubReady(true);
       updateBuffer();
-      const pending = pendingWheelRef.current;
+      const pending = pendingSegmentRef.current;
       if (pending !== null) {
-        pendingWheelRef.current = null;
-        const next = Math.min(SEGMENT_COUNT, Math.max(0, segmentRef.current + pending));
-        if (next !== segmentRef.current) playSegment(next);
+        pendingSegmentRef.current = null;
+        playSegment(pending);
       }
     };
 
-    const onError = () => setScrubReady(true);
+    const onError = () => {
+      tryFallbackVideo();
+    };
 
     video.addEventListener('loadedmetadata', onLoadedMetadata);
     video.addEventListener('canplay', onCanPlay);
@@ -174,22 +195,13 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
     if (video.readyState >= 1) onLoadedMetadata();
     if (video.readyState >= 3) onCanPlay();
 
-    const fallback = window.setTimeout(() => setScrubReady(true), 4000);
-
     return () => {
-      window.clearTimeout(fallback);
       video.removeEventListener('loadedmetadata', onLoadedMetadata);
       video.removeEventListener('canplay', onCanPlay);
       video.removeEventListener('progress', updateBuffer);
       video.removeEventListener('error', onError);
     };
-  }, [videoSrc, playSegment]);
-
-  const ensureVideoLoading = useCallback(() => {
-    if (videoSrc) return true;
-    setVideoSrc(COVER_VIDEO_SRC);
-    return false;
-  }, [videoSrc]);
+  }, [videoSrc, playSegment, tryFallbackVideo]);
 
   useEffect(() => {
     const el = rootRef.current;
@@ -198,7 +210,6 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       e.stopPropagation();
-
       if (wheelLockedRef.current) return;
 
       wheelAccumRef.current += e.deltaY;
@@ -211,52 +222,26 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
         wheelLockedRef.current = false;
       }, WHEEL_COOLDOWN_MS);
 
-      if (!ensureVideoLoading()) {
-        pendingWheelRef.current = direction;
-        return;
-      }
       stepSegment(direction);
     };
 
     el.addEventListener('wheel', onWheel, { passive: false, capture: true });
-    return () => {
-      el.removeEventListener('wheel', onWheel, { capture: true });
-    };
-  }, [stepSegment, ensureVideoLoading]);
+    return () => el.removeEventListener('wheel', onWheel, { capture: true });
+  }, [stepSegment]);
 
   useEffect(() => clearSegmentStop, [clearSegmentStop]);
 
   const features = [
-    {
-      title: '模特捏脸',
-      desc: 'Parameterized Facial Synthesizer',
-      stats: 'LIVE SYNC',
-      view: View.CREATOR,
-    },
-    {
-      title: '形象生成器',
-      desc: 'Biometric Identity Wardrobe Node',
-      stats: 'SYS.ACTIVE',
-      view: View.MODEL_FACE_GEN,
-    },
-    {
-      title: '虚拟试穿',
-      desc: 'AI Specimen Fit Accuracy',
-      stats: 'SYS.ONLINE',
-      view: View.TRY_ON,
-    },
-    {
-      title: '数字衣橱',
-      desc: 'Secured Digital Wardrobe System',
-      stats: 'ARCHIVE',
-      view: View.WARDROBE,
-    },
+    { title: '模特捏脸', desc: 'Parameterized Facial Synthesizer', stats: 'LIVE SYNC', view: View.CREATOR },
+    { title: '形象生成器', desc: 'Biometric Identity Wardrobe Node', stats: 'SYS.ACTIVE', view: View.MODEL_FACE_GEN },
+    { title: '虚拟试穿', desc: 'AI Specimen Fit Accuracy', stats: 'SYS.ONLINE', view: View.TRY_ON },
+    { title: '数字衣橱', desc: 'Secured Digital Wardrobe System', stats: 'ARCHIVE', view: View.WARDROBE },
   ];
 
   const progressPct = (segment / SEGMENT_COUNT) * 100;
-  const revealedFeatures =
-    segment <= 1 ? 0 : segment >= SEGMENT_COUNT ? 4 : segment - 1;
-  const showBufferHint = videoSrc && !scrubReady && bufferPct < 100;
+  const revealedFeatures = segment <= 1 ? 0 : segment >= SEGMENT_COUNT ? 4 : segment - 1;
+  const showBufferHint = videoSrc && !scrubReady;
+  const showPoster = segment === 0 && !scrubReady;
 
   const isFeatureVisible = (index: number) => {
     if (index < 3) return segment >= index + 2;
@@ -270,7 +255,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
           src={HomeHeroPoster}
           alt=""
           aria-hidden
-          className="absolute inset-0 w-full h-full object-cover object-[center_35%]"
+          className={`absolute inset-0 w-full h-full object-cover object-[center_35%] transition-opacity duration-300 ${showPoster ? 'opacity-100' : 'opacity-0'}`}
         />
         <video
           ref={videoRef}
@@ -279,11 +264,11 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
           poster={HomeHeroPoster}
           muted
           playsInline
-          preload="none"
+          preload={videoSrc ? 'auto' : 'none'}
           disablePictureInPicture
-          className={`absolute inset-0 w-full h-full object-cover object-[center_35%] transition-opacity duration-300 ${videoSrc ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 z-[1] w-full h-full object-cover object-[center_35%] ${segment > 0 || scrubReady ? 'opacity-100' : 'opacity-0'}`}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/10 to-black/80 pointer-events-none"></div>
+        <div className="absolute inset-0 z-[2] bg-gradient-to-b from-black/55 via-black/10 to-black/80 pointer-events-none"></div>
       </div>
 
       <div className="relative z-10 h-full flex flex-col pointer-events-none">
@@ -291,7 +276,6 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
           <div className="flex items-center">
             <img src={LogoImg} alt="LOKADA" className="h-14 sm:h-16 md:h-[4.5rem] w-auto object-contain" />
           </div>
-
           <button
             type="button"
             onClick={() => onNavigate?.(View.AUTH)}
@@ -311,13 +295,10 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
             {String(revealedFeatures).padStart(2, '0')} // 04
           </span>
           <div className="w-20 h-0.5 bg-white/40 relative overflow-hidden">
-            <div
-              className="absolute top-0 left-0 h-full bg-[#5F3D94] transition-[width] duration-300"
-              style={{ width: `${progressPct}%` }}
-            />
+            <div className="absolute top-0 left-0 h-full bg-[#5F3D94] transition-[width] duration-300" style={{ width: `${progressPct}%` }} />
           </div>
           <span className="text-[8px] font-black tracking-widest uppercase text-white/90 drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)] font-space">
-            SEG {segment || 0} / {SEGMENT_COUNT}
+            SEG {segment} / {SEGMENT_COUNT}
           </span>
         </div>
 
@@ -368,28 +349,18 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
                     if (e.key === 'Enter' || e.key === ' ') onNavigate?.(f.view);
                   }}
                   className={`pointer-events-auto group flex items-center justify-between py-4 px-4 rounded-2xl border backdrop-blur-md transition-colors duration-200 cursor-pointer ${
-                    activeFeature === i
-                      ? 'bg-primary border-white/30 text-white'
-                      : 'bg-black/40 border-white/10 text-white hover:bg-black/55'
+                    activeFeature === i ? 'bg-primary border-white/30 text-white' : 'bg-black/40 border-white/10 text-white hover:bg-black/55'
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <span className={`font-mono text-base font-black ${activeFeature === i ? 'text-white' : 'text-white/35'}`}>
-                      0{i + 1}
-                    </span>
+                    <span className={`font-mono text-base font-black ${activeFeature === i ? 'text-white' : 'text-white/35'}`}>0{i + 1}</span>
                     <div>
                       <h4 className="font-black uppercase tracking-tight text-sm">{f.title}</h4>
-                      <p className={`text-[8px] font-bold uppercase tracking-wider ${activeFeature === i ? 'text-white/60' : 'text-white/45'}`}>
-                        {f.desc}
-                      </p>
+                      <p className={`text-[8px] font-bold uppercase tracking-wider ${activeFeature === i ? 'text-white/60' : 'text-white/45'}`}>{f.desc}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span
-                      className={`text-[7px] font-black uppercase tracking-widest px-2 py-0.5 border ${
-                        activeFeature === i ? 'border-white/40 text-white' : 'border-white/15 text-white/70 bg-white/10'
-                      }`}
-                    >
+                    <span className={`text-[7px] font-black uppercase tracking-widest px-2 py-0.5 border ${activeFeature === i ? 'border-white/40 text-white' : 'border-white/15 text-white/70 bg-white/10'}`}>
                       {f.stats}
                     </span>
                     <span className="material-icons-round text-sm transition-transform group-hover:translate-x-1.5">east</span>
