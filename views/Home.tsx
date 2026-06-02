@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from '../types';
-import { ensureUserProfile } from '../lib/userProfile';
+import { COVER_VIDEO_SRC } from '../lib/coverVideo';
 import HomeHeroPoster from '../assets/home-hero.png';
 import LogoImg from '../assets/LOGO-02.png';
-
-const COVER_VIDEO_SRC = '/cover.mp4';
 const SEGMENT_COUNT = 4;
 const SEGMENT_DURATION = 3;
 const WHEEL_STEP_THRESHOLD = 48;
@@ -37,6 +35,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
   const wheelAccumRef = useRef(0);
   const wheelLockedRef = useRef(false);
   const segmentStopRef = useRef<number | null>(null);
+  const pendingWheelRef = useRef<1 | -1 | null>(null);
 
   const clearSegmentStop = useCallback(() => {
     if (segmentStopRef.current !== null) {
@@ -111,23 +110,26 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
   );
 
   useEffect(() => {
-    const id = window.requestAnimationFrame(() => setVideoSrc(COVER_VIDEO_SRC));
-    return () => window.cancelAnimationFrame(id);
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    ensureUserProfile()
-      .then((doc) => {
-        if (!mounted) return;
-        const url = doc?.avatarUrl ? String(doc.avatarUrl).trim() : '';
-        setAvatarUrl(url || null);
-      })
-      .catch(() => {
-        if (mounted) setAvatarUrl(null);
-      });
+    const run = () => {
+      void import('../lib/userProfile').then(({ ensureUserProfile }) =>
+        ensureUserProfile()
+          .then((doc) => {
+            const url = doc?.avatarUrl ? String(doc.avatarUrl).trim() : '';
+            setAvatarUrl(url || null);
+          })
+          .catch(() => setAvatarUrl(null)),
+      );
+    };
+    const id =
+      typeof window.requestIdleCallback === 'function'
+        ? window.requestIdleCallback(run, { timeout: 2500 })
+        : window.setTimeout(run, 1500);
     return () => {
-      mounted = false;
+      if (typeof window.cancelIdleCallback === 'function' && typeof id === 'number') {
+        window.cancelIdleCallback(id);
+      } else {
+        window.clearTimeout(id as number);
+      }
     };
   }, []);
 
@@ -154,6 +156,12 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
     const onCanPlay = () => {
       setScrubReady(true);
       updateBuffer();
+      const pending = pendingWheelRef.current;
+      if (pending !== null) {
+        pendingWheelRef.current = null;
+        const next = Math.min(SEGMENT_COUNT, Math.max(0, segmentRef.current + pending));
+        if (next !== segmentRef.current) playSegment(next);
+      }
     };
 
     const onError = () => setScrubReady(true);
@@ -175,6 +183,12 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       video.removeEventListener('progress', updateBuffer);
       video.removeEventListener('error', onError);
     };
+  }, [videoSrc, playSegment]);
+
+  const ensureVideoLoading = useCallback(() => {
+    if (videoSrc) return true;
+    setVideoSrc(COVER_VIDEO_SRC);
+    return false;
   }, [videoSrc]);
 
   useEffect(() => {
@@ -197,6 +211,10 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
         wheelLockedRef.current = false;
       }, WHEEL_COOLDOWN_MS);
 
+      if (!ensureVideoLoading()) {
+        pendingWheelRef.current = direction;
+        return;
+      }
       stepSegment(direction);
     };
 
@@ -204,7 +222,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
     return () => {
       el.removeEventListener('wheel', onWheel, { capture: true });
     };
-  }, [stepSegment]);
+  }, [stepSegment, ensureVideoLoading]);
 
   useEffect(() => clearSegmentStop, [clearSegmentStop]);
 
@@ -261,9 +279,9 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
           poster={HomeHeroPoster}
           muted
           playsInline
-          preload="metadata"
+          preload="none"
           disablePictureInPicture
-          className="absolute inset-0 w-full h-full object-cover object-[center_35%]"
+          className={`absolute inset-0 w-full h-full object-cover object-[center_35%] transition-opacity duration-300 ${videoSrc ? 'opacity-100' : 'opacity-0'}`}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/10 to-black/80 pointer-events-none"></div>
       </div>
