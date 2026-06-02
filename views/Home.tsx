@@ -31,7 +31,8 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
   const [activeFeature, setActiveFeature] = useState<number | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [motionPct, setMotionPct] = useState(0);
-  const [videoReady, setVideoReady] = useState(false);
+  const [videoSrc, setVideoSrc] = useState<string | null>(null);
+  const [scrubReady, setScrubReady] = useState(false);
   const [bufferPct, setBufferPct] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -41,20 +42,21 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
   const wheelAccumRef = useRef(0);
   const wheelRafRef = useRef(0);
 
-  const syncPctFromVideo = useCallback(() => {
-    const video = videoRef.current;
-    const duration = durationRef.current;
-    if (!video || duration <= 0) return;
-    const pct = (video.currentTime / duration) * 100;
-    motionPctRef.current = pct;
-    setMotionPct(pct);
+  const setPct = useCallback((pct: number) => {
+    const clamped = Math.min(100, Math.max(0, pct));
+    motionPctRef.current = clamped;
+    setMotionPct(clamped);
   }, []);
 
   const seekToTime = useCallback(
     (time: number) => {
       const video = videoRef.current;
       const duration = durationRef.current;
-      if (!video || duration <= 0) return false;
+
+      if (!video || duration <= 0) {
+        setPct((time / Math.max(duration, 1)) * 100);
+        return false;
+      }
 
       const t = Math.min(duration, Math.max(0, time));
       try {
@@ -67,12 +69,10 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
         video.currentTime = t;
       }
 
-      const pct = (t / duration) * 100;
-      motionPctRef.current = pct;
-      setMotionPct(pct);
+      setPct((t / duration) * 100);
       return true;
     },
-    [],
+    [setPct],
   );
 
   const applyWheelDelta = useCallback(() => {
@@ -83,12 +83,22 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
 
     const video = videoRef.current;
     const duration = durationRef.current;
-    if (!video || duration <= 0) return;
 
-    // 滚轮位移映射为视频时间轴位移（整段时长约 0.35 屏高）
+    if (!video || duration <= 0) {
+      const step = (deltaY / Math.max(window.innerHeight, 400)) * 14;
+      setPct(motionPctRef.current + step);
+      return;
+    }
+
     const timeDelta = (deltaY / Math.max(window.innerHeight, 400)) * duration * 0.42;
     seekToTime(video.currentTime + timeDelta);
-  }, [seekToTime]);
+  }, [seekToTime, setPct]);
+
+  // 首屏先渲染静态封面，下一帧再开始拉视频，避免阻塞 React 挂载
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => setVideoSrc(COVER_VIDEO_SRC));
+    return () => window.cancelAnimationFrame(id);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -108,7 +118,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !videoSrc) return;
 
     const updateBuffer = () => {
       if (!Number.isFinite(video.duration) || video.duration <= 0) return;
@@ -123,34 +133,38 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
         video.currentTime = 0;
         motionPctRef.current = 0;
         setMotionPct(0);
+        setScrubReady(true);
       }
       updateBuffer();
     };
 
     const onCanPlay = () => {
-      setVideoReady(true);
+      setScrubReady(true);
       updateBuffer();
     };
 
-    const onProgress = () => updateBuffer();
-
-    const onTimeUpdate = () => syncPctFromVideo();
+    const onError = () => {
+      setScrubReady(true);
+    };
 
     video.addEventListener('loadedmetadata', onLoadedMetadata);
     video.addEventListener('canplay', onCanPlay);
-    video.addEventListener('progress', onProgress);
-    video.addEventListener('timeupdate', onTimeUpdate);
+    video.addEventListener('progress', updateBuffer);
+    video.addEventListener('error', onError);
 
     if (video.readyState >= 1) onLoadedMetadata();
     if (video.readyState >= 3) onCanPlay();
 
+    const fallback = window.setTimeout(() => setScrubReady(true), 4000);
+
     return () => {
+      window.clearTimeout(fallback);
       video.removeEventListener('loadedmetadata', onLoadedMetadata);
       video.removeEventListener('canplay', onCanPlay);
-      video.removeEventListener('progress', onProgress);
-      video.removeEventListener('timeupdate', onTimeUpdate);
+      video.removeEventListener('progress', updateBuffer);
+      video.removeEventListener('error', onError);
     };
-  }, [syncPctFromVideo]);
+  }, [videoSrc]);
 
   useEffect(() => {
     const el = rootRef.current;
@@ -159,14 +173,6 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       e.stopPropagation();
-
-      const video = videoRef.current;
-      if (!video) return;
-
-      if (!videoReady || durationRef.current <= 0) {
-        video.load();
-        return;
-      }
 
       wheelAccumRef.current += e.deltaY;
       if (!wheelRafRef.current) {
@@ -179,7 +185,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       el.removeEventListener('wheel', onWheel, { capture: true });
       if (wheelRafRef.current) cancelAnimationFrame(wheelRafRef.current);
     };
-  }, [applyWheelDelta, videoReady]);
+  }, [applyWheelDelta]);
 
   const features = [
     {
@@ -213,46 +219,35 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
   ];
 
   const revealedFeatures = features.filter((f) => motionPct >= f.threshold).length;
+  const showBufferHint = videoSrc && !scrubReady && bufferPct < 100;
 
   return (
-    <div ref={rootRef} className="relative h-full w-full overflow-hidden bg-black text-white font-sans">
+    <div ref={rootRef} className="absolute inset-0 overflow-hidden bg-black text-white font-sans">
       <div className="absolute inset-0 z-0">
+        <img
+          src={HomeHeroPoster}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover object-[center_35%]"
+        />
         <video
           ref={videoRef}
           id="garment-video"
-          src={COVER_VIDEO_SRC}
+          src={videoSrc ?? undefined}
           poster={HomeHeroPoster}
           muted
           playsInline
-          preload="auto"
+          preload="metadata"
           disablePictureInPicture
           className="absolute inset-0 w-full h-full object-cover object-[center_35%]"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/10 to-black/80 pointer-events-none"></div>
-
-        {!videoReady && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px] pointer-events-none z-[1]">
-            <div className="w-28 h-0.5 bg-white/20 rounded-full overflow-hidden mb-3">
-              <div
-                className="h-full bg-primary transition-[width] duration-300"
-                style={{ width: `${Math.max(bufferPct, 8)}%` }}
-              />
-            </div>
-            <span className="text-[8px] font-black uppercase tracking-[0.3em] text-white/60">
-              {bufferPct > 0 ? `缓冲中 ${bufferPct}%` : '加载视频…'}
-            </span>
-          </div>
-        )}
       </div>
 
       <div className="relative z-10 h-full flex flex-col pointer-events-none">
         <header className="shrink-0 flex justify-between items-start px-6 md:px-10 pt-6 md:pt-8 pb-4 pointer-events-auto">
           <div className="flex items-center">
-            <img
-              src={LogoImg}
-              alt="LOKADA"
-              className="h-9 md:h-10 w-auto object-contain"
-            />
+            <img src={LogoImg} alt="LOKADA" className="h-9 md:h-10 w-auto object-contain" />
           </div>
 
           <button
@@ -279,20 +274,25 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
           <span className="text-[8px] font-black tracking-widest uppercase text-white/90 drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)] font-space">EDITORIAL NODE</span>
         </div>
 
-        <div className="flex-1 min-h-0 flex items-center justify-center pointer-events-none">
-          {videoReady && motionPct < REVEAL.enter && (
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center pointer-events-none gap-3">
+          {motionPct < REVEAL.enter && (
             <span className="text-[8px] font-black uppercase tracking-[0.35em] text-white/45 select-none animate-pulse">
               滚动滚轮拖动播放
             </span>
           )}
+          {showBufferHint && (
+            <span className="text-[7px] font-black uppercase tracking-[0.25em] text-white/35">
+              {bufferPct > 0 ? `视频缓冲 ${bufferPct}%` : '视频加载中…'}
+            </span>
+          )}
         </div>
 
-        <div className="shrink-0 px-6 md:px-10 pb-6 md:pb-8 flex flex-col items-stretch">
+        <div className="shrink-0 px-6 md:px-10 pb-6 md:pb-8 flex flex-col items-stretch pointer-events-none">
           <div className={`transform transition-all duration-500 ease-out ${revealClass(motionPct >= REVEAL.enter)}`}>
             <button
               type="button"
               onClick={onEnter}
-              className="group relative w-full bg-primary/90 backdrop-blur-md text-white hover:bg-[#5F3D94] py-5 rounded-full border border-white/20 flex items-center justify-between px-8 overflow-hidden active:scale-98 transition-all shadow-lg"
+              className="pointer-events-auto group relative w-full bg-primary/90 backdrop-blur-md text-white hover:bg-[#5F3D94] py-5 rounded-full border border-white/20 flex items-center justify-between px-8 overflow-hidden active:scale-98 transition-all shadow-lg"
             >
               <span className="font-black uppercase tracking-[0.25em] text-[10px]">进入社区动态</span>
               <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
@@ -318,7 +318,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') onNavigate?.(f.view);
                   }}
-                  className={`group flex items-center justify-between py-4 px-4 rounded-2xl border backdrop-blur-md transition-colors duration-200 cursor-pointer ${
+                  className={`pointer-events-auto group flex items-center justify-between py-4 px-4 rounded-2xl border backdrop-blur-md transition-colors duration-200 cursor-pointer ${
                     activeFeature === i
                       ? 'bg-primary border-white/30 text-white'
                       : 'bg-black/40 border-white/10 text-white hover:bg-black/55'
@@ -351,7 +351,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
           })}
 
           <div className={`transform transition-all duration-500 ease-out ${revealClass(motionPct >= REVEAL.footer)}`}>
-            <footer className="pt-1 flex justify-between items-center text-white/40">
+            <footer className="pt-1 flex justify-between items-center text-white/40 pointer-events-none">
               <span className="text-[8px] font-mono font-bold tracking-widest uppercase">Protocol V.2.1-AXON</span>
               <div className="flex gap-2">
                 <span className="w-1.5 h-1.5 bg-white/20 rounded-full"></span>
