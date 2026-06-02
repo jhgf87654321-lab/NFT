@@ -286,15 +286,16 @@ export default function TryOnModule() {
         </div>
       </header>
 
-      <div className="flex-1 min-h-0 relative flex items-center justify-center overflow-hidden py-10 landscape:py-2 md:py-4">
-        <button
-          type="button"
-          onClick={() => {
-            if (!uploadedImageRef.current || !generatedNFTRef.current) return;
-            setViewMode((m) => (m === 'tryon' ? 'nft' : 'tryon'));
-          }}
-          className="relative w-[85%] max-h-full aspect-[3/4] h-auto landscape:h-full landscape:w-auto landscape:max-w-[min(85%,50vh)] md:h-full md:w-auto md:max-w-[85%] rounded-[3rem] overflow-hidden border border-white/10 text-left"
-        >
+      <div className="flex-1 min-h-0 flex flex-col landscape:flex-row md:flex-row overflow-hidden">
+        <div className="flex-1 min-h-0 min-w-0 relative flex items-center justify-center overflow-hidden py-10 landscape:py-4 landscape:px-4 md:py-4 md:px-6">
+          <button
+            type="button"
+            onClick={() => {
+              if (!uploadedImageRef.current || !generatedNFTRef.current) return;
+              setViewMode((m) => (m === 'tryon' ? 'nft' : 'tryon'));
+            }}
+            className="relative w-[85%] max-h-full aspect-[3/4] h-auto landscape:h-full landscape:w-auto landscape:max-w-full md:h-full md:w-auto md:max-w-full rounded-[3rem] overflow-hidden border border-white/10 text-left"
+          >
           {cameraMode !== 'off' ? (
             <div className="w-full h-full flex items-center justify-center bg-primary/10">
               <video
@@ -416,19 +417,20 @@ export default function TryOnModule() {
             </div>
           </div>
         </div>
-      </div>
+        </div>
 
-      <div className="shrink-0 bg-primary glass p-4 pb-28 landscape:p-3 landscape:pb-3 md:p-4 md:pb-4 rounded-t-[3rem] landscape:rounded-t-2xl md:rounded-t-[3rem] border-t border-white/10 z-30 flex justify-center">
-        <button
-          onClick={() => void handleApplyStyle()}
-          disabled={isApplying || (cooldownUntil !== null && Date.now() < cooldownUntil)}
-          className="w-full max-w-xs bg-primary/10 border border-primary/50 text-primary py-4 landscape:py-3 md:py-4 rounded-[2rem] flex items-center justify-center gap-3 group active:scale-95 transition-all shadow-[0_0_20px_rgba(95,61,148,0.2)] hover:bg-primary/20 backdrop-blur-md disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span className={`material-icons-round text-xl ${isApplying ? 'animate-spin' : ''}`}>{isApplying ? 'sync' : 'auto_awesome'}</span>
-          <span className="text-[10px] font-bold uppercase tracking-widest">
-            {isApplying ? 'Applying...' : cooldownUntil !== null && Date.now() < cooldownUntil ? 'Cooling down...' : 'Apply NFT Style'}
-          </span>
-        </button>
+        <div className="shrink-0 bg-primary glass p-4 pb-28 landscape:p-6 landscape:pb-6 landscape:w-56 landscape:border-l landscape:border-t-0 md:p-6 md:pb-6 md:w-64 md:border-l md:border-t-0 rounded-t-[3rem] landscape:rounded-none md:rounded-none border-t border-white/10 z-30 flex items-center justify-center">
+          <button
+            onClick={() => void handleApplyStyle()}
+            disabled={isApplying || (cooldownUntil !== null && Date.now() < cooldownUntil)}
+            className="w-full max-w-xs landscape:max-w-none md:max-w-none bg-primary/10 border border-primary/50 text-primary py-4 landscape:py-5 md:py-5 rounded-[2rem] flex flex-col items-center justify-center gap-3 group active:scale-95 transition-all shadow-[0_0_20px_rgba(95,61,148,0.2)] hover:bg-primary/20 backdrop-blur-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className={`material-icons-round text-2xl ${isApplying ? 'animate-spin' : ''}`}>{isApplying ? 'sync' : 'auto_awesome'}</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-center leading-relaxed">
+              {isApplying ? 'Applying...' : cooldownUntil !== null && Date.now() < cooldownUntil ? 'Cooling down...' : 'Apply NFT Style'}
+            </span>
+          </button>
+        </div>
       </div>
 
       {isCollectionModalOpen && myCyberCollection.length > 0 && (
