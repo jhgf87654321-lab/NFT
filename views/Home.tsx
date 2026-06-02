@@ -232,8 +232,8 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
   useEffect(() => clearSegmentStop, [clearSegmentStop]);
 
   const features = [
-    { title: '模特捏脸', desc: 'Parameterized Facial Synthesizer', stats: 'LIVE SYNC', view: View.CREATOR },
-    { title: '形象生成器', desc: 'Biometric Identity Wardrobe Node', stats: 'SYS.ACTIVE', view: View.MODEL_FACE_GEN },
+    { title: '模特捏脸', desc: 'Parameterized Facial Synthesizer', stats: 'LIVE SYNC', view: View.MODEL_FACE_GEN },
+    { title: '形象生成器', desc: 'Biometric Identity Wardrobe Node', stats: 'SYS.ACTIVE', view: View.CREATOR },
     { title: '虚拟试穿', desc: 'AI Specimen Fit Accuracy', stats: 'SYS.ONLINE', view: View.TRY_ON },
     { title: '数字衣橱', desc: 'Secured Digital Wardrobe System', stats: 'ARCHIVE', view: View.WARDROBE },
   ];
@@ -274,7 +274,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       <div className="relative z-10 h-full flex flex-col pointer-events-none">
         <header className="shrink-0 flex justify-between items-start px-6 md:px-10 pt-6 md:pt-8 pb-4 pointer-events-auto">
           <div className="flex items-center">
-            <img src={LogoImg} alt="LOKADA" className="h-14 sm:h-16 md:h-[4.5rem] w-auto object-contain" />
+            <img src={LogoImg} alt="LOKADA" className="h-28 sm:h-32 md:h-[9rem] w-auto object-contain" />
           </div>
           <button
             type="button"
