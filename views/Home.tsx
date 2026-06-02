@@ -5,21 +5,15 @@ import HomeHeroPoster from '../assets/home-hero.png';
 import LogoImg from '../assets/LOGO-02.png';
 
 const COVER_VIDEO_SRC = '/cover.mp4';
+const SEGMENT_COUNT = 4;
+const SEGMENT_DURATION = 3;
+const WHEEL_STEP_THRESHOLD = 48;
+const WHEEL_COOLDOWN_MS = 420;
 
 interface HomeProps {
   onEnter: () => void;
   onNavigate?: (view: View) => void;
 }
-
-/** 各 UI 项在视频进度（0–100）达到阈值后依次显现 */
-const REVEAL = {
-  enter: 6,
-  feature0: 22,
-  feature1: 38,
-  feature2: 54,
-  feature3: 70,
-  footer: 86,
-} as const;
 
 function revealClass(visible: boolean) {
   return visible
@@ -30,71 +24,92 @@ function revealClass(visible: boolean) {
 const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
   const [activeFeature, setActiveFeature] = useState<number | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [motionPct, setMotionPct] = useState(0);
+  /** 0 = 初始；1–4 = 四段视频，每段 3 秒，对应四次滚轮 */
+  const [segment, setSegment] = useState(0);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [scrubReady, setScrubReady] = useState(false);
   const [bufferPct, setBufferPct] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
-  const motionPctRef = useRef(0);
   const durationRef = useRef(0);
+  const segmentRef = useRef(0);
   const wheelAccumRef = useRef(0);
-  const wheelRafRef = useRef(0);
+  const wheelLockedRef = useRef(false);
+  const segmentStopRef = useRef<number | null>(null);
 
-  const setPct = useCallback((pct: number) => {
-    const clamped = Math.min(100, Math.max(0, pct));
-    motionPctRef.current = clamped;
-    setMotionPct(clamped);
+  const clearSegmentStop = useCallback(() => {
+    if (segmentStopRef.current !== null) {
+      window.clearTimeout(segmentStopRef.current);
+      segmentStopRef.current = null;
+    }
   }, []);
 
-  const seekToTime = useCallback(
-    (time: number) => {
+  const playSegment = useCallback(
+    (seg: number) => {
+      segmentRef.current = seg;
+      setSegment(seg);
+
       const video = videoRef.current;
-      const duration = durationRef.current;
+      clearSegmentStop();
 
-      if (!video || duration <= 0) {
-        setPct((time / Math.max(duration, 1)) * 100);
-        return false;
-      }
+      if (!video) return;
 
-      const t = Math.min(duration, Math.max(0, time));
-      try {
-        if (typeof video.fastSeek === 'function') {
-          video.fastSeek(t);
-        } else {
-          video.currentTime = t;
+      if (seg <= 0) {
+        video.pause();
+        try {
+          video.currentTime = 0;
+        } catch {
+          // ignore
         }
-      } catch {
-        video.currentTime = t;
+        return;
       }
 
-      setPct((t / duration) * 100);
-      return true;
+      const start = (seg - 1) * SEGMENT_DURATION;
+      const duration = durationRef.current;
+      const end = duration > 0 ? Math.min(start + SEGMENT_DURATION, duration) : start + SEGMENT_DURATION;
+
+      const beginPlay = () => {
+        try {
+          video.currentTime = start;
+        } catch {
+          // ignore
+        }
+        const playPromise = video.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {
+            video.pause();
+          });
+        }
+
+        segmentStopRef.current = window.setTimeout(() => {
+          video.pause();
+          try {
+            video.currentTime = end;
+          } catch {
+            // ignore
+          }
+        }, SEGMENT_DURATION * 1000);
+      };
+
+      if (video.readyState >= 2) {
+        beginPlay();
+      } else {
+        video.addEventListener('canplay', beginPlay, { once: true });
+      }
     },
-    [setPct],
+    [clearSegmentStop],
   );
 
-  const applyWheelDelta = useCallback(() => {
-    wheelRafRef.current = 0;
-    const deltaY = wheelAccumRef.current;
-    wheelAccumRef.current = 0;
-    if (deltaY === 0) return;
+  const stepSegment = useCallback(
+    (direction: 1 | -1) => {
+      const next = Math.min(SEGMENT_COUNT, Math.max(0, segmentRef.current + direction));
+      if (next === segmentRef.current) return;
+      playSegment(next);
+    },
+    [playSegment],
+  );
 
-    const video = videoRef.current;
-    const duration = durationRef.current;
-
-    if (!video || duration <= 0) {
-      const step = (deltaY / Math.max(window.innerHeight, 400)) * 14;
-      setPct(motionPctRef.current + step);
-      return;
-    }
-
-    const timeDelta = (deltaY / Math.max(window.innerHeight, 400)) * duration * 0.42;
-    seekToTime(video.currentTime + timeDelta);
-  }, [seekToTime, setPct]);
-
-  // 首屏先渲染静态封面，下一帧再开始拉视频，避免阻塞 React 挂载
   useEffect(() => {
     const id = window.requestAnimationFrame(() => setVideoSrc(COVER_VIDEO_SRC));
     return () => window.cancelAnimationFrame(id);
@@ -131,8 +146,6 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       if (Number.isFinite(video.duration) && video.duration > 0) {
         durationRef.current = video.duration;
         video.currentTime = 0;
-        motionPctRef.current = 0;
-        setMotionPct(0);
         setScrubReady(true);
       }
       updateBuffer();
@@ -143,9 +156,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       updateBuffer();
     };
 
-    const onError = () => {
-      setScrubReady(true);
-    };
+    const onError = () => setScrubReady(true);
 
     video.addEventListener('loadedmetadata', onLoadedMetadata);
     video.addEventListener('canplay', onCanPlay);
@@ -174,18 +185,28 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       e.preventDefault();
       e.stopPropagation();
 
+      if (wheelLockedRef.current) return;
+
       wheelAccumRef.current += e.deltaY;
-      if (!wheelRafRef.current) {
-        wheelRafRef.current = requestAnimationFrame(applyWheelDelta);
-      }
+      if (Math.abs(wheelAccumRef.current) < WHEEL_STEP_THRESHOLD) return;
+
+      const direction: 1 | -1 = wheelAccumRef.current > 0 ? 1 : -1;
+      wheelAccumRef.current = 0;
+      wheelLockedRef.current = true;
+      window.setTimeout(() => {
+        wheelLockedRef.current = false;
+      }, WHEEL_COOLDOWN_MS);
+
+      stepSegment(direction);
     };
 
     el.addEventListener('wheel', onWheel, { passive: false, capture: true });
     return () => {
       el.removeEventListener('wheel', onWheel, { capture: true });
-      if (wheelRafRef.current) cancelAnimationFrame(wheelRafRef.current);
     };
-  }, [applyWheelDelta]);
+  }, [stepSegment]);
+
+  useEffect(() => clearSegmentStop, [clearSegmentStop]);
 
   const features = [
     {
@@ -193,33 +214,36 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       desc: 'Parameterized Facial Synthesizer',
       stats: 'LIVE SYNC',
       view: View.CREATOR,
-      threshold: REVEAL.feature0,
     },
     {
       title: '形象生成器',
       desc: 'Biometric Identity Wardrobe Node',
       stats: 'SYS.ACTIVE',
       view: View.MODEL_FACE_GEN,
-      threshold: REVEAL.feature1,
     },
     {
       title: '虚拟试穿',
       desc: 'AI Specimen Fit Accuracy',
       stats: 'SYS.ONLINE',
       view: View.TRY_ON,
-      threshold: REVEAL.feature2,
     },
     {
       title: '数字衣橱',
       desc: 'Secured Digital Wardrobe System',
       stats: 'ARCHIVE',
       view: View.WARDROBE,
-      threshold: REVEAL.feature3,
     },
   ];
 
-  const revealedFeatures = features.filter((f) => motionPct >= f.threshold).length;
+  const progressPct = (segment / SEGMENT_COUNT) * 100;
+  const revealedFeatures =
+    segment <= 1 ? 0 : segment >= SEGMENT_COUNT ? 4 : segment - 1;
   const showBufferHint = videoSrc && !scrubReady && bufferPct < 100;
+
+  const isFeatureVisible = (index: number) => {
+    if (index < 3) return segment >= index + 2;
+    return segment >= SEGMENT_COUNT;
+  };
 
   return (
     <div ref={rootRef} className="absolute inset-0 overflow-hidden bg-black text-white font-sans">
@@ -247,7 +271,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       <div className="relative z-10 h-full flex flex-col pointer-events-none">
         <header className="shrink-0 flex justify-between items-start px-6 md:px-10 pt-6 md:pt-8 pb-4 pointer-events-auto">
           <div className="flex items-center">
-            <img src={LogoImg} alt="LOKADA" className="h-9 md:h-10 w-auto object-contain" />
+            <img src={LogoImg} alt="LOKADA" className="h-14 sm:h-16 md:h-[4.5rem] w-auto object-contain" />
           </div>
 
           <button
@@ -269,15 +293,22 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
             {String(revealedFeatures).padStart(2, '0')} // 04
           </span>
           <div className="w-20 h-0.5 bg-white/40 relative overflow-hidden">
-            <div className="absolute top-0 left-0 h-full bg-[#5F3D94] transition-[width] duration-150" style={{ width: `${motionPct}%` }}></div>
+            <div
+              className="absolute top-0 left-0 h-full bg-[#5F3D94] transition-[width] duration-300"
+              style={{ width: `${progressPct}%` }}
+            />
           </div>
-          <span className="text-[8px] font-black tracking-widest uppercase text-white/90 drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)] font-space">EDITORIAL NODE</span>
+          <span className="text-[8px] font-black tracking-widest uppercase text-white/90 drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)] font-space">
+            SEG {segment || 0} / {SEGMENT_COUNT}
+          </span>
         </div>
 
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center pointer-events-none gap-3">
-          {motionPct < REVEAL.enter && (
-            <span className="text-[8px] font-black uppercase tracking-[0.35em] text-white/45 select-none animate-pulse">
-              滚动滚轮拖动播放
+          {segment === 0 && (
+            <span className="text-[8px] font-black uppercase tracking-[0.35em] text-white/45 select-none animate-pulse text-center leading-relaxed">
+              滚动滚轮
+              <br />
+              共 {SEGMENT_COUNT} 段 · 每段 {SEGMENT_DURATION}s
             </span>
           )}
           {showBufferHint && (
@@ -288,7 +319,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
         </div>
 
         <div className="shrink-0 px-6 md:px-10 pb-6 md:pb-8 flex flex-col items-stretch pointer-events-none">
-          <div className={`transform transition-all duration-500 ease-out ${revealClass(motionPct >= REVEAL.enter)}`}>
+          <div className={`transform transition-all duration-500 ease-out ${revealClass(segment >= 1)}`}>
             <button
               type="button"
               onClick={onEnter}
@@ -302,7 +333,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
           </div>
 
           {features.map((f, i) => {
-            const visible = motionPct >= f.threshold;
+            const visible = isFeatureVisible(i);
             return (
               <div
                 key={f.title}
@@ -350,7 +381,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
             );
           })}
 
-          <div className={`transform transition-all duration-500 ease-out ${revealClass(motionPct >= REVEAL.footer)}`}>
+          <div className={`transform transition-all duration-500 ease-out ${revealClass(segment >= SEGMENT_COUNT)}`}>
             <footer className="pt-1 flex justify-between items-center text-white/40 pointer-events-none">
               <span className="text-[8px] font-mono font-bold tracking-widest uppercase">Protocol V.2.1-AXON</span>
               <div className="flex gap-2">
