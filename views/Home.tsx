@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View } from '../types';
 import { ensureUserProfile } from '../lib/userProfile';
-import HomeHeroImg from '../assets/home-hero.png';
+import coverVideo from '../assets/封面.mp4';
 
 interface HomeProps {
   onEnter: () => void;
@@ -11,6 +11,8 @@ interface HomeProps {
 const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
   const [activeFeature, setActiveFeature] = useState<number | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [motionPct, setMotionPct] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -28,19 +30,44 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
     };
   }, []);
 
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const onLoadedMetadata = () => {
+      if (Number.isFinite(video.duration) && video.duration > 0) {
+        video.currentTime = 0;
+      }
+    };
+
+    video.addEventListener('loadedmetadata', onLoadedMetadata);
+    if (video.readyState >= 1) onLoadedMetadata();
+
+    return () => {
+      video.removeEventListener('loadedmetadata', onLoadedMetadata);
+    };
+  }, []);
+
+  const handleMotionSlider = (value: number) => {
+    setMotionPct(value);
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+    video.currentTime = (value / 100) * video.duration;
+  };
+
   const features = [
-    {
-      title: '形象生成器',
-      desc: 'Biometric Identity Wardrobe Node',
-      icon: 'biotech',
-      stats: 'SYS.ACTIVE',
-      view: View.CREATOR,
-    },
     {
       title: '模特捏脸',
       desc: 'Parameterized Facial Synthesizer',
       icon: 'face',
       stats: 'LIVE SYNC',
+      view: View.CREATOR,
+    },
+    {
+      title: '形象生成器',
+      desc: 'Biometric Identity Wardrobe Node',
+      icon: 'biotech',
+      stats: 'SYS.ACTIVE',
       view: View.MODEL_FACE_GEN,
     },
     {
@@ -87,30 +114,59 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
           </button>
         </header>
 
-        <div
-          onClick={onEnter}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') onEnter();
-          }}
-          className="relative w-full h-[min(36vh,320px)] sm:h-[min(40vh,360px)] border border-primary rounded-[2rem] overflow-hidden shadow-md cursor-pointer group mb-10"
-        >
-          <img
-            src={HomeHeroImg}
-            alt="LOKADA Editorial"
-            className="absolute inset-0 w-full h-full object-cover object-[center_35%] group-hover:brightness-105 transition-[filter] duration-500"
-          />
-          <div className="absolute top-0 left-0 w-2 h-16 bg-[#5F3D94]"></div>
-          <div className="absolute top-6 right-6 z-10 flex flex-col items-end gap-1">
-            <span className="text-[10px] font-mono font-black tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">01 // 04</span>
-            <div className="w-20 h-0.5 bg-white/40 relative overflow-hidden">
-              <div className="absolute top-0 left-0 h-full w-[45%] bg-[#5F3D94]"></div>
+        <div className="relative w-full h-[min(36vh,320px)] sm:h-[min(40vh,360px)] border border-primary rounded-[2rem] overflow-hidden shadow-md group mb-10">
+          <div
+            onClick={onEnter}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') onEnter();
+            }}
+            className="absolute inset-0 cursor-pointer"
+          >
+            <video
+              ref={videoRef}
+              id="garment-video"
+              src={coverVideo}
+              muted
+              playsInline
+              preload="auto"
+              className="absolute inset-0 w-full h-full object-cover object-[center_35%] pointer-events-none group-hover:brightness-105 transition-[filter] duration-500"
+            />
+            <div className="absolute top-0 left-0 w-2 h-16 bg-[#5F3D94]"></div>
+            <div className="absolute top-6 right-6 z-10 flex flex-col items-end gap-1 pointer-events-none">
+              <span className="text-[10px] font-mono font-black tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">01 // 04</span>
+              <div className="w-20 h-0.5 bg-white/40 relative overflow-hidden">
+                <div className="absolute top-0 left-0 h-full bg-[#5F3D94] transition-[width] duration-75" style={{ width: `${motionPct}%` }}></div>
+              </div>
+              <span className="text-[8px] font-black tracking-widest uppercase text-white/90 drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)] font-space">EDITORIAL NODE</span>
             </div>
-            <span className="text-[8px] font-black tracking-widest uppercase text-white/90 drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)] font-space">EDITORIAL NODE</span>
+            <div className="absolute bottom-14 right-5 w-12 h-12 bg-[#5F3D94] rounded-full border border-primary flex items-center justify-center shadow-lg transform group-hover:scale-110 active:scale-95 transition-transform text-white pointer-events-none">
+              <span className="material-icons-round text-white text-lg animate-pulse">north_east</span>
+            </div>
           </div>
-          <div className="absolute bottom-5 right-5 w-12 h-12 bg-[#5F3D94] rounded-full border border-primary flex items-center justify-center shadow-lg transform group-hover:scale-110 active:scale-95 transition-transform text-white">
-            <span className="material-icons-round text-white text-lg animate-pulse">north_east</span>
+
+          <div
+            className="absolute bottom-0 left-0 right-0 z-20 px-5 pb-4 pt-6 bg-gradient-to-t from-black/70 via-black/35 to-transparent"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-[7px] font-black uppercase tracking-widest text-white/70 shrink-0">MOTION</span>
+              <input
+                id="motion-slider"
+                type="range"
+                min={0}
+                max={100}
+                step={0.1}
+                value={motionPct}
+                onChange={(e) => handleMotionSlider(Number(e.target.value))}
+                onInput={(e) => handleMotionSlider(Number((e.target as HTMLInputElement).value))}
+                className="motion-slider w-full h-1 appearance-none rounded-full bg-white/25 accent-[#5F3D94] cursor-pointer"
+                aria-label="视频进度滑动轴"
+              />
+              <span className="text-[7px] font-mono font-black text-white/80 shrink-0 w-8 text-right">{Math.round(motionPct)}</span>
+            </div>
           </div>
         </div>
 
