@@ -175,7 +175,7 @@ const App: React.FC = () => {
 
         <Navbar activeView={currentView} onViewChange={setCurrentView} />
 
-        <div className="flex-1 h-full overflow-y-auto relative z-10 pb-24 md:pb-0">
+        <div className={`flex-1 h-full min-h-0 relative z-10 pb-24 md:pb-0 ${currentView === View.TRY_ON ? 'overflow-hidden' : 'overflow-y-auto'}`}>
           {renderView()}
         </div>
       </div>

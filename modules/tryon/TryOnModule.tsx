@@ -273,8 +273,8 @@ export default function TryOnModule() {
   };
 
   return (
-    <div className="relative h-full flex flex-col overflow-hidden">
-      <header className="px-8 pt-12 flex justify-between items-start z-20">
+    <div className="relative h-full min-h-0 flex flex-col overflow-hidden">
+      <header className="shrink-0 px-8 pt-12 landscape:px-4 landscape:pt-3 md:pt-6 flex justify-between items-start z-20">
         <div className="flex items-center gap-1">
           <div className="w-8 h-8 bg-white flex items-center justify-center rounded-lg">
             <span className="material-icons-round text-black text-xl">blur_on</span>
@@ -286,14 +286,14 @@ export default function TryOnModule() {
         </div>
       </header>
 
-      <div className="flex-1 relative flex items-center justify-center overflow-hidden py-10">
+      <div className="flex-1 min-h-0 relative flex items-center justify-center overflow-hidden py-10 landscape:py-2 md:py-4">
         <button
           type="button"
           onClick={() => {
             if (!uploadedImageRef.current || !generatedNFTRef.current) return;
             setViewMode((m) => (m === 'tryon' ? 'nft' : 'tryon'));
           }}
-          className="relative w-[85%] aspect-[3/4] rounded-[3rem] overflow-hidden border border-white/10 text-left"
+          className="relative w-[85%] max-h-full aspect-[3/4] h-auto landscape:h-full landscape:w-auto landscape:max-w-[min(85%,50vh)] md:h-full md:w-auto md:max-w-[85%] rounded-[3rem] overflow-hidden border border-white/10 text-left"
         >
           {cameraMode !== 'off' ? (
             <div className="w-full h-full flex items-center justify-center bg-primary/10">
@@ -337,7 +337,7 @@ export default function TryOnModule() {
           )}
         </button>
 
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 p-2 glass rounded-full z-30">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 p-2 glass rounded-full z-30 landscape:left-2 landscape:scale-90 md:left-6">
           <button
             className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-black shadow-lg overflow-hidden"
             onClick={() => {
@@ -418,11 +418,11 @@ export default function TryOnModule() {
         </div>
       </div>
 
-      <div className="bg-primary glass p-4 pb-28 rounded-t-[3rem] border-t border-white/10 z-30 flex justify-center">
+      <div className="shrink-0 bg-primary glass p-4 pb-28 landscape:p-3 landscape:pb-3 md:p-4 md:pb-4 rounded-t-[3rem] landscape:rounded-t-2xl md:rounded-t-[3rem] border-t border-white/10 z-30 flex justify-center">
         <button
           onClick={() => void handleApplyStyle()}
           disabled={isApplying || (cooldownUntil !== null && Date.now() < cooldownUntil)}
-          className="w-full max-w-xs bg-primary/10 border border-primary/50 text-primary py-4 rounded-[2rem] flex items-center justify-center gap-3 group active:scale-95 transition-all shadow-[0_0_20px_rgba(95,61,148,0.2)] hover:bg-primary/20 backdrop-blur-md disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full max-w-xs bg-primary/10 border border-primary/50 text-primary py-4 landscape:py-3 md:py-4 rounded-[2rem] flex items-center justify-center gap-3 group active:scale-95 transition-all shadow-[0_0_20px_rgba(95,61,148,0.2)] hover:bg-primary/20 backdrop-blur-md disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span className={`material-icons-round text-xl ${isApplying ? 'animate-spin' : ''}`}>{isApplying ? 'sync' : 'auto_awesome'}</span>
           <span className="text-[10px] font-bold uppercase tracking-widest">
