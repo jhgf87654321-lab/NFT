@@ -8,12 +8,28 @@ interface HomeProps {
   onNavigate?: (view: View) => void;
 }
 
+/** 各 UI 项在视频进度（0–100）达到阈值后依次显现 */
+const REVEAL = {
+  enter: 6,
+  feature0: 22,
+  feature1: 38,
+  feature2: 54,
+  feature3: 70,
+  footer: 86,
+} as const;
+
+function revealClass(visible: boolean) {
+  return visible
+    ? 'opacity-100 translate-y-0 scale-100 max-h-96 pointer-events-auto mb-3'
+    : 'opacity-0 translate-y-6 scale-[0.98] max-h-0 pointer-events-none mb-0 overflow-hidden';
+}
+
 const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
   const [activeFeature, setActiveFeature] = useState<number | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [motionPct, setMotionPct] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const heroRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const motionPctRef = useRef(0);
 
   const seekToPct = (pct: number) => {
@@ -22,6 +38,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
     setMotionPct(clamped);
     const video = videoRef.current;
     if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+    video.pause();
     video.currentTime = (clamped / 100) * video.duration;
   };
 
@@ -46,7 +63,12 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
     if (!video) return;
 
     const onLoadedMetadata = () => {
-      seekToPct(0);
+      video.pause();
+      if (Number.isFinite(video.duration) && video.duration > 0) {
+        video.currentTime = 0;
+      }
+      motionPctRef.current = 0;
+      setMotionPct(0);
     };
 
     video.addEventListener('loadedmetadata', onLoadedMetadata);
@@ -58,53 +80,55 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
   }, []);
 
   useEffect(() => {
-    const el = heroRef.current;
+    const el = rootRef.current;
     if (!el) return;
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const step = Math.min(2.5, Math.max(0.2, Math.abs(e.deltaY) * 0.006));
+      const step = Math.min(2.2, Math.max(0.35, Math.abs(e.deltaY) * 0.007));
       seekToPct(motionPctRef.current + (e.deltaY > 0 ? step : -step));
     };
 
-    el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
+    el.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    return () => el.removeEventListener('wheel', onWheel, { capture: true });
   }, []);
 
   const features = [
     {
       title: '模特捏脸',
       desc: 'Parameterized Facial Synthesizer',
-      icon: 'face',
       stats: 'LIVE SYNC',
       view: View.CREATOR,
+      threshold: REVEAL.feature0,
     },
     {
       title: '形象生成器',
       desc: 'Biometric Identity Wardrobe Node',
-      icon: 'biotech',
       stats: 'SYS.ACTIVE',
       view: View.MODEL_FACE_GEN,
+      threshold: REVEAL.feature1,
     },
     {
       title: '虚拟试穿',
       desc: 'AI Specimen Fit Accuracy',
-      icon: 'view_in_ar',
       stats: 'SYS.ONLINE',
       view: View.TRY_ON,
+      threshold: REVEAL.feature2,
     },
     {
       title: '数字衣橱',
       desc: 'Secured Digital Wardrobe System',
-      icon: 'grid_view',
       stats: 'ARCHIVE',
       view: View.WARDROBE,
+      threshold: REVEAL.feature3,
     },
   ];
 
+  const revealedFeatures = features.filter((f) => motionPct >= f.threshold).length;
+
   return (
-    <div className="relative h-full w-full overflow-hidden bg-black text-white font-sans">
-      <div ref={heroRef} className="absolute inset-0 z-0">
+    <div ref={rootRef} className="relative h-full w-full overflow-hidden bg-black text-white font-sans">
+      <div className="absolute inset-0 z-0">
         <video
           ref={videoRef}
           id="garment-video"
@@ -114,7 +138,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
           preload="auto"
           className="absolute inset-0 w-full h-full object-cover object-[center_35%]"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/75 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/10 to-black/80 pointer-events-none"></div>
       </div>
 
       <div className="relative z-10 h-full flex flex-col pointer-events-none">
@@ -142,51 +166,61 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
         </header>
 
         <div className="absolute top-6 right-6 md:right-10 z-20 flex flex-col items-end gap-1 pointer-events-none">
-          <span className="text-[10px] font-mono font-black tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">01 // 04</span>
+          <span className="text-[10px] font-mono font-black tracking-widest text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            {String(revealedFeatures).padStart(2, '0')} // 04
+          </span>
           <div className="w-20 h-0.5 bg-white/40 relative overflow-hidden">
-            <div className="absolute top-0 left-0 h-full bg-[#5F3D94] transition-[width] duration-75" style={{ width: `${motionPct}%` }}></div>
+            <div className="absolute top-0 left-0 h-full bg-[#5F3D94] transition-[width] duration-150" style={{ width: `${motionPct}%` }}></div>
           </div>
           <span className="text-[8px] font-black tracking-widest uppercase text-white/90 drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.9)] font-space">EDITORIAL NODE</span>
         </div>
 
         <div className="flex-1 min-h-0 flex items-center justify-center pointer-events-none">
-          <span className="text-[8px] font-black uppercase tracking-[0.35em] text-white/45 select-none">滚动滚轮浏览动态</span>
+          {motionPct < REVEAL.enter && (
+            <span className="text-[8px] font-black uppercase tracking-[0.35em] text-white/45 select-none animate-pulse">
+              滚动滚轮拖动播放
+            </span>
+          )}
         </div>
 
-        <div className="shrink-0 pointer-events-auto px-6 md:px-10 pb-6 md:pb-8 max-h-[46vh] flex flex-col gap-4">
-          <button
-            type="button"
-            onClick={onEnter}
-            className="group relative w-full bg-primary/90 backdrop-blur-md text-white hover:bg-[#5F3D94] p-5 rounded-full border border-white/20 flex items-center justify-between px-8 overflow-hidden active:scale-98 transition-all shadow-lg shrink-0"
+        <div className="shrink-0 px-6 md:px-10 pb-6 md:pb-8 flex flex-col items-stretch">
+          <div
+            className={`transform transition-all duration-500 ease-out ${revealClass(motionPct >= REVEAL.enter)}`}
           >
-            <span className="font-black uppercase tracking-[0.25em] text-[10px]">进入社区动态</span>
-            <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-              <span className="material-icons-round text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
-            </div>
-          </button>
-
-          <div className="flex flex-col gap-3 overflow-y-auto no-scrollbar min-h-0 rounded-2xl bg-black/35 backdrop-blur-md border border-white/10 p-4">
-            <div className="flex justify-between items-end border-b border-white/15 pb-3 shrink-0">
-              <div>
-                <span className="bg-primary text-white text-[7px] font-black uppercase tracking-[0.4em] px-2.5 py-1 mb-1.5 inline-block">SPECULATIVE PIPELINE //</span>
-                <h3 className="text-xl font-black uppercase tracking-tighter leading-none font-display text-white">CHANNELS</h3>
+            <button
+              type="button"
+              onClick={onEnter}
+              className="group relative w-full bg-primary/90 backdrop-blur-md text-white hover:bg-[#5F3D94] py-5 rounded-full border border-white/20 flex items-center justify-between px-8 overflow-hidden active:scale-98 transition-all shadow-lg"
+            >
+              <span className="font-black uppercase tracking-[0.25em] text-[10px]">进入社区动态</span>
+              <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                <span className="material-icons-round text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
               </div>
-              <span className="text-[9px] font-black font-mono text-white/40">02 // 04</span>
-            </div>
+            </button>
+          </div>
 
-            <div className="flex flex-col divide-y divide-white/10">
-              {features.map((f, i) => (
+          {features.map((f, i) => {
+            const visible = motionPct >= f.threshold;
+            return (
+              <div
+                key={f.title}
+                className={`transform transition-all duration-500 ease-out ${revealClass(visible)}`}
+                style={{ transitionDelay: visible ? `${i * 60}ms` : '0ms' }}
+              >
                 <div
-                  key={f.title}
                   onClick={() => onNavigate?.(f.view)}
                   onMouseEnter={() => setActiveFeature(i)}
                   onMouseLeave={() => setActiveFeature(null)}
                   role="button"
-                  tabIndex={0}
+                  tabIndex={visible ? 0 : -1}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') onNavigate?.(f.view);
                   }}
-                  className={`group flex items-center justify-between py-4 transition-all duration-200 cursor-pointer ${activeFeature === i ? 'bg-primary text-white px-3 border-l-4 border-white/40 rounded-lg' : 'bg-transparent hover:px-2 text-white'}`}
+                  className={`group flex items-center justify-between py-4 px-4 rounded-2xl border backdrop-blur-md transition-colors duration-200 cursor-pointer ${
+                    activeFeature === i
+                      ? 'bg-primary border-white/30 text-white'
+                      : 'bg-black/40 border-white/10 text-white hover:bg-black/55'
+                  }`}
                 >
                   <div className="flex items-center gap-4">
                     <span className={`font-mono text-base font-black ${activeFeature === i ? 'text-white' : 'text-white/35'}`}>
@@ -194,28 +228,38 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
                     </span>
                     <div>
                       <h4 className="font-black uppercase tracking-tight text-sm">{f.title}</h4>
-                      <p className={`text-[8px] font-bold uppercase tracking-wider ${activeFeature === i ? 'text-white/60' : 'text-white/45'}`}>{f.desc}</p>
+                      <p className={`text-[8px] font-bold uppercase tracking-wider ${activeFeature === i ? 'text-white/60' : 'text-white/45'}`}>
+                        {f.desc}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`text-[7px] font-black uppercase tracking-widest px-2 py-0.5 border ${activeFeature === i ? 'border-white/40 text-white' : 'border-white/15 text-white/70 bg-white/10'}`}>
+                    <span
+                      className={`text-[7px] font-black uppercase tracking-widest px-2 py-0.5 border ${
+                        activeFeature === i ? 'border-white/40 text-white' : 'border-white/15 text-white/70 bg-white/10'
+                      }`}
+                    >
                       {f.stats}
                     </span>
                     <span className="material-icons-round text-sm transition-transform group-hover:translate-x-1.5">east</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
+            );
+          })}
 
-          <footer className="shrink-0 pt-2 flex justify-between items-center text-white/40">
-            <span className="text-[8px] font-mono font-bold tracking-widest uppercase">Protocol V.2.1-AXON</span>
-            <div className="flex gap-2">
-              <span className="w-1.5 h-1.5 bg-white/20 rounded-full"></span>
-              <span className="w-1.5 h-1.5 bg-white/20 rounded-full"></span>
-              <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-            </div>
-          </footer>
+          <div
+            className={`transform transition-all duration-500 ease-out ${revealClass(motionPct >= REVEAL.footer)}`}
+          >
+            <footer className="pt-1 flex justify-between items-center text-white/40">
+              <span className="text-[8px] font-mono font-bold tracking-widest uppercase">Protocol V.2.1-AXON</span>
+              <div className="flex gap-2">
+                <span className="w-1.5 h-1.5 bg-white/20 rounded-full"></span>
+                <span className="w-1.5 h-1.5 bg-white/20 rounded-full"></span>
+                <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
+              </div>
+            </footer>
+          </div>
         </div>
       </div>
     </div>
