@@ -10,7 +10,6 @@ const WHEEL_STEP_THRESHOLD = 48;
 const WHEEL_COOLDOWN_MS = 420;
 
 interface HomeProps {
-  onEnter: () => void;
   onNavigate?: (view: View) => void;
 }
 
@@ -20,7 +19,7 @@ function revealClass(visible: boolean) {
     : 'opacity-0 translate-y-6 scale-[0.98] max-h-0 pointer-events-none mb-0 overflow-hidden';
 }
 
-const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
+const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const [activeFeature, setActiveFeature] = useState<number | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [segment, setSegment] = useState(0);
@@ -272,7 +271,7 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
       </div>
 
       <div className="relative z-10 h-full flex flex-col pointer-events-none">
-        <header className="shrink-0 flex justify-between items-start px-6 md:px-10 pt-6 md:pt-8 pb-4 pointer-events-auto">
+        <header className="shrink-0 flex justify-between items-center px-6 md:px-10 pt-6 md:pt-8 pb-4 pointer-events-auto">
           <div className="flex items-center">
             <img src={LogoImg} alt="LOKADA" className="h-28 sm:h-32 md:h-[9rem] w-auto object-contain" />
           </div>
@@ -318,19 +317,6 @@ const Home: React.FC<HomeProps> = ({ onEnter, onNavigate }) => {
         </div>
 
         <div className="shrink-0 px-6 md:px-10 pb-6 md:pb-8 flex flex-col items-stretch pointer-events-none">
-          <div className={`transform transition-all duration-500 ease-out ${revealClass(segment >= 1)}`}>
-            <button
-              type="button"
-              onClick={onEnter}
-              className="pointer-events-auto group relative w-full bg-primary/90 backdrop-blur-md text-white hover:bg-[#5F3D94] py-5 rounded-full border border-white/20 flex items-center justify-between px-8 overflow-hidden active:scale-98 transition-all shadow-lg"
-            >
-              <span className="font-black uppercase tracking-[0.25em] text-[10px]">进入社区动态</span>
-              <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                <span className="material-icons-round text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
-              </div>
-            </button>
-          </div>
-
           {features.map((f, i) => {
             const visible = isFeatureVisible(i);
             return (

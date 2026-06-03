@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { generateGeminiImage } from '../../lib/geminiClient';
 
 type CameraMode = 'front' | 'rear' | 'off';
@@ -71,7 +71,6 @@ async function sha256Base64(input: string) {
 
 export default function TryOnModule() {
   const [cameraMode, setCameraMode] = useState<CameraMode>('off');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [generatedNFT, setGeneratedNFT] = useState<string | null>(null);
   const [myCyberCollection, setMyCyberCollection] = useState<CyberCollectionItem[]>([]);
   const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
@@ -79,6 +78,7 @@ export default function TryOnModule() {
   const [viewMode, setViewMode] = useState<'tryon' | 'nft'>('tryon');
   const [isApplying, setIsApplying] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [selectedOutfitKey, setSelectedOutfitKey] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -111,6 +111,48 @@ export default function TryOnModule() {
       setViewMode('tryon');
     }
   }, []);
+
+  const wardrobeOutfits = useMemo(() => {
+    const items: (CyberCollectionItem & { key: string })[] = [];
+    const seen = new Set<string>();
+    const push = (item: CyberCollectionItem, key: string) => {
+      if (!item.image || seen.has(item.image)) return;
+      seen.add(item.image);
+      items.push({ ...item, key });
+    };
+    if (generatedNFT) {
+      push({ image: generatedNFT, theme: '当前造型', serialNumber: 'LATEST' }, 'latest');
+    }
+    myCyberCollection.forEach((item, idx) => push(item, item.serialNumber || `saved-${idx}`));
+    return items;
+  }, [generatedNFT, myCyberCollection]);
+
+  useEffect(() => {
+    if (selectedOutfitKey) return;
+    if (wardrobeOutfits.length > 0) {
+      setSelectedOutfitKey(wardrobeOutfits[0]!.key);
+    }
+  }, [wardrobeOutfits, selectedOutfitKey]);
+
+  const activeOutfit = wardrobeOutfits.find((o) => o.key === selectedOutfitKey) ?? wardrobeOutfits[0] ?? null;
+
+  useEffect(() => {
+    if (activeOutfit?.image) {
+      setGeneratedNFT(activeOutfit.image);
+    }
+  }, [activeOutfit?.image]);
+
+  const applyHint = !uploadedImage && cameraMode === 'off'
+    ? '请先上传人像或打开相机'
+    : !activeOutfit
+      ? '请从右侧衣橱选择服装'
+      : '已就绪，点击下方生成试穿效果';
+
+  const applyLabel = isApplying
+    ? '生成中…'
+    : cooldownUntil !== null && Date.now() < cooldownUntil
+      ? '冷却中，请稍候'
+      : '生成试穿';
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -195,7 +237,7 @@ export default function TryOnModule() {
     }
     const currentGeneratedNFT = generatedNFTRef.current;
     if (!currentGeneratedNFT) {
-      alert('请先在“形象”中生成 NFT。');
+      alert('请先从衣橱选择服装造型。');
       return;
     }
 
@@ -287,14 +329,14 @@ export default function TryOnModule() {
       </header>
 
       <div className="flex-1 min-h-0 flex flex-col landscape:flex-row md:flex-row overflow-hidden">
-        <div className="flex-1 min-h-0 min-w-0 relative flex items-center justify-center overflow-hidden py-10 landscape:py-4 landscape:px-4 md:py-4 md:px-6">
+        <div className="flex-1 min-h-0 min-w-0 relative flex items-center justify-center overflow-hidden py-6 landscape:py-4 landscape:px-4 md:py-4 md:px-6">
           <button
             type="button"
             onClick={() => {
               if (!uploadedImageRef.current || !generatedNFTRef.current) return;
               setViewMode((m) => (m === 'tryon' ? 'nft' : 'tryon'));
             }}
-            className="relative w-[85%] max-h-full aspect-[3/4] h-auto landscape:h-full landscape:w-auto landscape:max-w-full md:h-full md:w-auto md:max-w-full rounded-[3rem] overflow-hidden border border-white/10 text-left"
+            className="relative w-[85%] max-h-full aspect-[3/4] h-auto landscape:h-full landscape:w-auto landscape:max-w-full md:h-full md:w-auto md:max-w-full rounded-xl overflow-hidden border border-white/10 text-left"
           >
           {cameraMode !== 'off' ? (
             <div className="w-full h-full flex items-center justify-center bg-primary/10">
@@ -319,125 +361,158 @@ export default function TryOnModule() {
               />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent"></div>
-          <div className="absolute left-0 right-0 h-[2px] bg-primary shadow-[0_0_20px_#5F3D94] animate-scan z-20"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent pointer-events-none"></div>
+          <div className="absolute left-0 right-0 h-[2px] bg-primary shadow-[0_0_20px_#5F3D94] animate-scan z-20 pointer-events-none"></div>
           {!uploadedImage && cameraMode === 'off' && (
-            <div className="absolute bottom-10 left-0 right-0 text-center pointer-events-none">
-              <div className="text-6xl font-display font-black text-white/20 leading-none">
-                TECH
-                <br />
-                WEAR
-              </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-6 text-center">
+              <span className="material-icons-round text-4xl text-white/30 mb-3">person_add</span>
+              <p className="text-sm font-bold text-white/70 mb-1">上传人像照片</p>
+              <p className="text-[10px] text-white/45 uppercase tracking-widest">点击左侧相册或相机图标</p>
             </div>
           )}
 
           {uploadedImage && generatedNFT && cameraMode === 'off' && (
-            <div className="absolute top-4 left-4 z-30 px-3 py-1 rounded-full bg-primary/50 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-white/70">
-              点击切换：{viewMode === 'tryon' ? '试穿' : 'NFT'}
+            <div className="absolute top-3 left-3 z-30 px-3 py-1 rounded-full bg-primary/50 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-white/70 pointer-events-none">
+              点击切换：{viewMode === 'tryon' ? '试穿效果' : '服装造型'}
             </div>
           )}
         </button>
 
         <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 p-2 glass rounded-full z-30 landscape:left-2 landscape:scale-90 md:left-6">
           <button
+            type="button"
             className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-black shadow-lg overflow-hidden"
+            title="选择人像"
             onClick={() => {
               if (myCyberCollection.length > 0) {
                 setIsCollectionModalOpen(true);
                 return;
               }
-              if (generatedNFT) {
-                setUploadedImage(generatedNFT);
-                setCameraMode('off');
-                return;
-              }
-              alert('请先在“形象”中生成 NFT。');
+              if (uploadedImage) return;
+              fileInputRef.current?.click();
             }}
           >
-            {uploadedImage || generatedNFT || myCyberCollection[0]?.image ? (
-              <img
-                src={uploadedImage || generatedNFT || myCyberCollection[0].image}
-                alt="Selected"
-                className="w-full h-full object-cover"
-              />
+            {uploadedImage ? (
+              <img src={uploadedImage} alt="人像" className="w-full h-full object-cover" />
             ) : (
               <span className="material-icons-round text-sm">person</span>
             )}
           </button>
           <button
+            type="button"
             className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
               cameraMode === 'rear' ? 'bg-primary text-white' : 'text-white/50'
             }`}
+            title="后置相机"
             onClick={() => setCameraMode(cameraMode === 'rear' ? 'off' : 'rear')}
           >
             <span className="material-icons-round text-sm">flip_camera_ios</span>
           </button>
           <button
+            type="button"
             className="w-10 h-10 rounded-full flex items-center justify-center text-white/50"
+            title="上传照片"
             onClick={() => fileInputRef.current?.click()}
           >
             <span className="material-icons-round text-sm">photo_library</span>
           </button>
           <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
         </div>
+        </div>
 
-        {/* Sidebar placeholder from upgrade4 */}
-        <div
-          className={`absolute right-0 top-1/2 -translate-y-1/2 flex items-center transition-transform duration-300 z-30 ${
-            isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
-        >
-          <button
-            className="w-8 h-16 bg-primary/50 backdrop-blur-md rounded-l-xl flex items-center justify-center border border-r-0 border-white/10 text-white/50 absolute -left-8"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          >
-            <span className="material-icons-round text-xl">{isSidebarOpen ? 'chevron_right' : 'chevron_left'}</span>
-          </button>
-          <div className="bg-primary/80 backdrop-blur-xl border border-white/10 p-4 rounded-l-3xl flex flex-col gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center p-2">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBG6WqRaM55MRml9LIPs_F5kVbZokZOg2YSXEGbMsVuJaVnAQcul7346_uJBQfrumeMs4RJiVPPq0C4EwSgycaRap4Wa4bVXnw8Oeb26kb3FQX08gbiOAYcgZK5kNmSxC3_IQXEOvQlOiHo1jtmsUxbA-5gYQPmcqtYnorvKBp9s2gJ6jYpum6fuqx7rk1d9NBrIOSAk-Qj_kjrZ9KLLaz1MHOsgcTHCYMcR-spaluEu3woUbt8YGT0nEQQAqMItW19S-MbmrJzPWm"
-                className="max-h-full object-contain mix-blend-multiply"
-                referrerPolicy="no-referrer"
-              />
+        <aside className="shrink-0 flex flex-col min-h-0 max-h-[46vh] landscape:max-h-none landscape:w-72 md:w-80 landscape:border-l border-t landscape:border-t-0 border-white/10 bg-primary/90 backdrop-blur-xl z-30">
+          <div className="shrink-0 px-4 pt-4 pb-3 border-b border-white/10">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-sm font-black uppercase tracking-widest">数字衣橱</h2>
+              <span className="text-[9px] font-mono text-white/50">{wardrobeOutfits.length} 件</span>
             </div>
-            <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center p-2 grayscale">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2Q-pOZFhFDId8Com849gNPMDIdk84Yw2ZccQg-Fvrbaj-Zc-VcMXfDuGuhNxV6s_Idsxl9QHdG75f7fH2GDsi5ALKimD42BMkZz1l24Ws9xMONdRNuZE8BBWc9-ZoJ7GI8bCmAHcuKAAPKAcN7pGtgA42Abo1NAEVMas9UiS38mHh8ZTRGSTnCNC5eBDGrgHCRkSCwsJTibEVnb7wNKt27uPA9T2lT8mm4gucQ12QR81i3kmuRM5oVGnhmkU02I1xgOdTGc88E2SI"
-                className="max-h-full object-contain"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-            <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center p-2 grayscale">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVucNnGP65fT1VxBGQcOoAzZo1MdQtInARpkrmjQ5DFXf7fJ-90am7UYwO8rJnGOamgndOjTd5M8DPSo31EuJR1CpEjd_w8Nfzf8PHhBjlR5vtEHG7CtmuE1s5e2sue2rQ9D8d9TkFgWbE7ei6X6iwZLk8zcoyu_RYcnlFjNJFEUH1hdJ7EFPAE4WNcpBQnzlTsPQpQe5WCL8cZ07unSfUy7N5r5DAmUQ8VhqEW9XlR_PA8JC9J2dGmALI-KiFraD9M2kyNkERE7vE"
-                className="max-h-full object-contain"
-                referrerPolicy="no-referrer"
-              />
-            </div>
+            <p className="text-[10px] text-white/45 leading-relaxed">选择服装造型，再点击底部「生成试穿」</p>
           </div>
-        </div>
-        </div>
 
-        <div className="shrink-0 bg-primary glass p-4 pb-28 landscape:p-6 landscape:pb-6 landscape:w-56 landscape:border-l landscape:border-t-0 md:p-6 md:pb-6 md:w-64 md:border-l md:border-t-0 rounded-t-[3rem] landscape:rounded-none md:rounded-none border-t border-white/10 z-30 flex items-center justify-center">
-          <button
-            onClick={() => void handleApplyStyle()}
-            disabled={isApplying || (cooldownUntil !== null && Date.now() < cooldownUntil)}
-            className="w-full max-w-xs landscape:max-w-none md:max-w-none bg-primary/10 border border-primary/50 text-primary py-4 landscape:py-5 md:py-5 rounded-[2rem] flex flex-col items-center justify-center gap-3 group active:scale-95 transition-all shadow-[0_0_20px_rgba(95,61,148,0.2)] hover:bg-primary/20 backdrop-blur-md disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className={`material-icons-round text-2xl ${isApplying ? 'animate-spin' : ''}`}>{isApplying ? 'sync' : 'auto_awesome'}</span>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-center leading-relaxed">
-              {isApplying ? 'Applying...' : cooldownUntil !== null && Date.now() < cooldownUntil ? 'Cooling down...' : 'Apply NFT Style'}
-            </span>
-          </button>
-        </div>
+          <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-4 py-3">
+            {wardrobeOutfits.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2.5">
+                {wardrobeOutfits.map((item) => {
+                  const isSelected = activeOutfit?.key === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => {
+                        setSelectedOutfitKey(item.key);
+                        setGeneratedNFT(item.image);
+                        generatedNFTRef.current = item.image;
+                        setViewMode('nft');
+                        setCameraMode('off');
+                      }}
+                      className={`group relative aspect-[3/4] rounded-lg overflow-hidden border transition-all text-left ${
+                        isSelected
+                          ? 'border-white ring-2 ring-white/30 scale-[1.02]'
+                          : 'border-white/15 hover:border-white/40 opacity-80 hover:opacity-100'
+                      }`}
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.theme || '服装'}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 py-2">
+                        <p className="text-[8px] font-bold uppercase tracking-wider truncate">
+                          {item.theme || 'Couture'}
+                        </p>
+                        <p className="text-[7px] text-white/50 font-mono">{item.serialNumber || '#GEN'}</p>
+                      </div>
+                      {isSelected && (
+                        <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-white flex items-center justify-center">
+                          <span className="material-icons-round text-primary text-sm">check</span>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="h-full min-h-[120px] flex flex-col items-center justify-center text-center px-4 py-8 border border-dashed border-white/15 rounded-lg">
+                <span className="material-icons-round text-3xl text-white/25 mb-2">checkroom</span>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1">衣橱为空</p>
+                <p className="text-[9px] text-white/40 leading-relaxed">
+                  请先在「形象生成器」中生成造型，保存后会出现在这里
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="shrink-0 p-4 pt-3 border-t border-white/10 space-y-3 pb-28 landscape:pb-4 md:pb-4">
+            <div className="flex items-start gap-2 rounded-lg bg-white/5 px-3 py-2.5">
+              <span className="material-icons-round text-sm text-primary shrink-0 mt-0.5">info</span>
+              <p className="text-[10px] text-white/60 leading-relaxed">{applyHint}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleApplyStyle()}
+              disabled={isApplying || (cooldownUntil !== null && Date.now() < cooldownUntil)}
+              className="w-full bg-white text-black py-4 rounded-xl flex items-center justify-between px-6 group active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            >
+              <div className="flex flex-col items-start gap-0.5">
+                <span className="text-base font-black uppercase tracking-widest">{applyLabel}</span>
+                <span className="text-[9px] text-black/45 font-bold uppercase tracking-wider">AI Virtual Try-On</span>
+              </div>
+              <div className="bg-primary p-2.5 rounded-lg text-white shrink-0">
+                <span className={`material-icons-round ${isApplying ? 'animate-spin' : ''}`}>
+                  {isApplying ? 'sync' : 'auto_awesome'}
+                </span>
+              </div>
+            </button>
+          </div>
+        </aside>
       </div>
 
       {isCollectionModalOpen && myCyberCollection.length > 0 && (
         <div className="fixed inset-0 z-[200] bg-primary/80 backdrop-blur-xl flex items-center justify-center p-6">
           <div className="w-full max-w-[380px] glass rounded-[2.5rem] border border-white/10 p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-primary">我的藏品</h3>
+              <h3 className="text-sm font-bold uppercase tracking-widest text-primary">选择人像</h3>
               <button
                 onClick={() => setIsCollectionModalOpen(false)}
                 className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:text-white"

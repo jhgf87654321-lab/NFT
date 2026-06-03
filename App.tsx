@@ -105,7 +105,7 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case View.HOME:
-        return <Home onEnter={() => setCurrentView(View.SHARE_HUB)} onNavigate={setCurrentView} />;
+        return <Home onNavigate={setCurrentView} />;
       case View.WARDROBE:
         return (
           <Wardrobe
@@ -164,7 +164,7 @@ const App: React.FC = () => {
       case View.MODEL_FACE_GEN:
         return <ModelFaceGen onBack={() => setCurrentView(View.HOME)} />;
       default:
-        return <Home onEnter={() => setCurrentView(View.SHARE_HUB)} onNavigate={setCurrentView} />;
+        return <Home onNavigate={setCurrentView} />;
     }
   };
 
