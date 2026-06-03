@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View } from '../types';
 import { COVER_VIDEO_FALLBACK, COVER_VIDEO_SRC } from '../lib/coverVideo';
 import HomeHeroPoster from '../assets/home-hero.png';
@@ -9,14 +9,149 @@ const SEGMENT_DURATION = 3;
 const WHEEL_STEP_THRESHOLD = 48;
 const WHEEL_COOLDOWN_MS = 420;
 
+const HERO_COPY: Record<number, { en: string; zh: string }> = {
+  1: { en: 'Deconstruct Fashion.', zh: '解构时尚' },
+  2: { en: 'Pixel-Perfect Craftsmanship.', zh: '像素级工艺' },
+  3: { en: 'Pixel-Perfect Craftsmanship.', zh: '像素级工艺' },
+};
+
 interface HomeProps {
   onNavigate?: (view: View) => void;
+}
+
+function FloatingDataOverlay() {
+  const nodes = useMemo(
+    () =>
+      Array.from({ length: 14 }, (_, i) => ({
+        id: i,
+        x: 8 + ((i * 17) % 84),
+        y: 12 + ((i * 23) % 76),
+        label: `${(i * 47) % 360}°`,
+        code: ['vec3 uv', 'σ: 0.84', 'tex_sample', 'bias +0.02', 'LOD: 2', 'normal.z'][i % 6],
+        delay: (i % 5) * 0.35,
+      })),
+    [],
+  );
+
+  return (
+    <div className="absolute inset-0 z-[3] pointer-events-none overflow-hidden" aria-hidden>
+      <svg className="absolute inset-0 w-full h-full opacity-25" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <line x1="0" y1="72" x2="100" y2="72" stroke="rgba(255,255,255,0.35)" strokeWidth="0.08" strokeDasharray="1.2 1.8" />
+        <line x1="18" y1="0" x2="18" y2="100" stroke="rgba(255,255,255,0.2)" strokeWidth="0.06" strokeDasharray="0.8 1.4" />
+        <line x1="0" y1="38" x2="62" y2="38" stroke="rgba(255,255,255,0.15)" strokeWidth="0.05" />
+      </svg>
+      {nodes.map((n) => (
+        <div
+          key={n.id}
+          className="absolute animate-pulse"
+          style={{ left: `${n.x}%`, top: `${n.y}%`, animationDelay: `${n.delay}s`, animationDuration: '2.4s' }}
+        >
+          <span className="block w-1 h-1 rounded-full bg-white/80 shadow-[0_0_6px_rgba(255,255,255,0.9)]" />
+          <span className="block mt-1 text-[6px] font-mono text-white/55 tracking-wider whitespace-nowrap">{n.label}</span>
+        </div>
+      ))}
+      <div className="absolute left-[6%] bottom-[18%] font-mono text-[7px] text-white/40 leading-relaxed tracking-widest">
+        <span className="block opacity-70">// mesh.topology</span>
+        <span className="block opacity-50">for (tex in layers) {'{'}</span>
+        <span className="block pl-2 opacity-40">decode(uv);</span>
+      </div>
+      <div className="absolute right-[8%] top-[22%] font-mono text-[6px] text-white/35 text-right leading-relaxed">
+        <span className="block">X: 128.004</span>
+        <span className="block">Y: 64.992</span>
+        <span className="block">Z: 01.000</span>
+      </div>
+    </div>
+  );
+}
+
+function MaterialScanOverlay({ active }: { active: boolean }) {
+  const tags = [
+    { label: 'Texture: Denim', sub: 'Weave · 12oz', top: '42%', left: '14%', w: '28%' },
+    { label: 'Material: Lace Pattern', sub: 'Opacity 0.72', top: '58%', left: '52%', w: '32%' },
+  ];
+
+  return (
+    <div className="absolute inset-0 z-[3] pointer-events-none overflow-hidden" aria-hidden>
+      <div
+        className={`absolute left-0 right-0 h-[2px] bg-white/70 shadow-[0_0_16px_rgba(255,255,255,0.55)] transition-opacity duration-500 ${active ? 'opacity-100 animate-scan' : 'opacity-0'}`}
+        style={{ top: active ? undefined : '50%' }}
+      />
+      {tags.map((t) => (
+        <div
+          key={t.label}
+          className={`absolute transition-all duration-700 ${active ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+          style={{ top: t.top, left: t.left, width: t.w }}
+        >
+          <div className="relative border border-white/50 bg-[#0a1628]/55 backdrop-blur-sm px-2 py-1.5">
+            <span className="absolute -top-px -left-px w-2 h-2 border-t border-l border-white/80" />
+            <span className="absolute -top-px -right-px w-2 h-2 border-t border-r border-white/80" />
+            <span className="absolute -bottom-px -left-px w-2 h-2 border-b border-l border-white/80" />
+            <span className="absolute -bottom-px -right-px w-2 h-2 border-b border-r border-white/80" />
+            <p className="text-[8px] font-mono font-bold uppercase tracking-wider text-white">{t.label}</p>
+            <p className="text-[6px] font-mono text-white/55 mt-0.5">{t.sub}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EyeFocusOverlay() {
+  return (
+    <div className="absolute inset-0 z-[3] pointer-events-none flex items-start justify-center pt-[28%] md:pt-[26%]" aria-hidden>
+      <div className="relative w-16 h-16 md:w-20 md:h-20">
+        <svg viewBox="0 0 80 80" className="w-full h-full animate-[spin_8s_linear_infinite]">
+          <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
+          <circle
+            cx="40"
+            cy="40"
+            r="34"
+            fill="none"
+            stroke="rgba(255,255,255,0.85)"
+            strokeWidth="1"
+            strokeDasharray="8 20 4 20"
+            strokeLinecap="round"
+          />
+        </svg>
+        <div className="absolute inset-[38%] rounded-full border border-white/60" />
+        <div className="absolute inset-[46%] rounded-full bg-white/80 shadow-[0_0_8px_rgba(255,255,255,0.9)]" />
+      </div>
+    </div>
+  );
+}
+
+function HeroCopyBlock({ segment }: { segment: number }) {
+  const copy = HERO_COPY[segment];
+  if (!copy) return null;
+
+  const parallaxY = -(segment - 1) * 14;
+
+  return (
+    <div
+      className="absolute inset-x-0 top-[38%] md:top-[36%] z-[4] flex flex-col items-center text-center px-8 pointer-events-none transition-all duration-700 ease-out"
+      style={{ transform: `translateY(${parallaxY}px)` }}
+    >
+      <p className="text-xl sm:text-2xl md:text-3xl font-display font-black uppercase tracking-[0.18em] text-white drop-shadow-[0_2px_24px_rgba(0,0,0,0.85)]">
+        {copy.en}
+      </p>
+      <p className="mt-2 text-[11px] sm:text-xs font-bold tracking-[0.35em] text-white/75 uppercase">{copy.zh}</p>
+      <p className="mt-3 max-w-xs text-[8px] font-mono text-white/40 tracking-widest leading-relaxed hidden sm:block">
+        AI precision · material fidelity · aesthetic control
+      </p>
+    </div>
+  );
 }
 
 function revealClass(visible: boolean) {
   return visible
     ? 'opacity-100 translate-y-0 scale-100 max-h-96 pointer-events-auto mb-3'
     : 'opacity-0 translate-y-6 scale-[0.98] max-h-0 pointer-events-none mb-0 overflow-hidden';
+}
+
+function featureRevealClass(visible: boolean) {
+  return visible
+    ? 'opacity-100 translate-y-0 max-h-96 pointer-events-auto mb-3'
+    : 'opacity-0 translate-y-14 max-h-0 pointer-events-none mb-0 overflow-hidden';
 }
 
 const Home: React.FC<HomeProps> = ({ onNavigate }) => {
@@ -26,6 +161,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [scrubReady, setScrubReady] = useState(false);
   const [bufferPct, setBufferPct] = useState(0);
+  const [featuresReady, setFeaturesReady] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -64,10 +200,15 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       segmentRef.current = seg;
       setSegment(seg);
 
+      if (seg !== SEGMENT_COUNT) {
+        setFeaturesReady(false);
+      }
+
       const video = videoRef.current;
       clearSegmentStop();
       if (!video || seg <= 0) {
         video?.pause();
+        setFeaturesReady(false);
         return;
       }
 
@@ -88,6 +229,9 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             video.currentTime = end;
           } catch {
             // ignore
+          }
+          if (seg === SEGMENT_COUNT) {
+            setFeaturesReady(true);
           }
         }, SEGMENT_DURATION * 1000);
       };
@@ -238,36 +382,47 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   ];
 
   const progressPct = (segment / SEGMENT_COUNT) * 100;
-  const revealedFeatures = segment <= 1 ? 0 : segment >= SEGMENT_COUNT ? 4 : segment - 1;
+  const revealedFeatures = featuresReady ? 4 : 0;
   const showBufferHint = videoSrc && !scrubReady;
   const showPoster = segment === 0 && !scrubReady;
+  const mediaSharp = segment > 0;
+  const showHeroCopy = segment >= 1 && segment <= 3;
+  const showFinalCta = segment >= SEGMENT_COUNT;
+  const showMaterialScan = segment === 2 || segment === 3;
+  const showDataOverlay = segment === 1;
+  const showEyeFocus = segment >= SEGMENT_COUNT;
 
-  const isFeatureVisible = (index: number) => {
-    if (index < 3) return segment >= index + 2;
-    return segment >= SEGMENT_COUNT;
-  };
+  const featureCount = features.length;
+  const featureStaggerMs = 100;
 
   return (
     <div ref={rootRef} className="absolute inset-0 overflow-hidden bg-black text-white font-sans">
-      <div className="absolute inset-0 z-0">
-        <img
-          src={HomeHeroPoster}
-          alt=""
-          aria-hidden
-          className={`absolute inset-0 w-full h-full object-cover object-[center_35%] transition-opacity duration-300 ${showPoster ? 'opacity-100' : 'opacity-0'}`}
-        />
-        <video
-          ref={videoRef}
-          id="garment-video"
-          src={videoSrc ?? undefined}
-          poster={HomeHeroPoster}
-          muted
-          playsInline
-          preload={videoSrc ? 'auto' : 'none'}
-          disablePictureInPicture
-          className={`absolute inset-0 z-[1] w-full h-full object-cover object-[center_35%] ${segment > 0 || scrubReady ? 'opacity-100' : 'opacity-0'}`}
-        />
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <div
+          className={`absolute inset-0 transition-all duration-700 ease-out ${mediaSharp ? 'blur-0 scale-100' : 'blur-[8px] scale-[1.03]'}`}
+        >
+          <img
+            src={HomeHeroPoster}
+            alt=""
+            aria-hidden
+            className={`absolute inset-0 w-full h-full object-cover object-[center_35%] transition-opacity duration-300 ${showPoster ? 'opacity-100' : 'opacity-0'}`}
+          />
+          <video
+            ref={videoRef}
+            id="garment-video"
+            src={videoSrc ?? undefined}
+            poster={HomeHeroPoster}
+            muted
+            playsInline
+            preload={videoSrc ? 'auto' : 'none'}
+            disablePictureInPicture
+            className={`absolute inset-0 z-[1] w-full h-full object-cover object-[center_35%] ${segment > 0 || scrubReady ? 'opacity-100' : 'opacity-0'}`}
+          />
+        </div>
         <div className="absolute inset-0 z-[2] bg-gradient-to-b from-black/55 via-black/10 to-black/80 pointer-events-none"></div>
+        {showDataOverlay && <FloatingDataOverlay />}
+        {showMaterialScan && <MaterialScanOverlay active={showMaterialScan} />}
+        {showEyeFocus && <EyeFocusOverlay />}
       </div>
 
       <div className="relative z-10 h-full flex flex-col pointer-events-none">
@@ -301,29 +456,49 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           </span>
         </div>
 
-        <div className="flex-1 min-h-0 flex flex-col items-center justify-center pointer-events-none gap-3">
-          {segment === 0 && (
-            <span className="text-[8px] font-black uppercase tracking-[0.35em] text-white/45 select-none animate-pulse text-center leading-relaxed">
-              滚动滚轮
-              <br />
-              共 {SEGMENT_COUNT} 段 · 每段 {SEGMENT_DURATION}s
-            </span>
+        <div className="flex-1 min-h-0 relative pointer-events-none">
+          {showHeroCopy && <HeroCopyBlock segment={segment} />}
+
+          {showFinalCta && (
+            <div className="absolute inset-x-0 top-[44%] md:top-[42%] z-[4] flex flex-col items-center px-8 pointer-events-auto animate-in fade-in duration-700">
+              <button
+                type="button"
+                onClick={() => onNavigate?.(View.CREATOR)}
+                className="group relative px-10 py-4 rounded-full border border-white/80 bg-[#0a1628]/40 backdrop-blur-md text-white hover:bg-white hover:text-[#0a1628] active:scale-[0.98] transition-all duration-300 shadow-[0_0_40px_rgba(255,255,255,0.12)]"
+              >
+                <span className="block text-sm font-black uppercase tracking-[0.3em]">立刻开始设计</span>
+                <span className="block mt-1 text-[9px] font-bold uppercase tracking-[0.25em] text-white/60 group-hover:text-[#0a1628]/60 transition-colors">
+                  Start Creating
+                </span>
+              </button>
+            </div>
           )}
-          {showBufferHint && (
-            <span className="text-[7px] font-black uppercase tracking-[0.25em] text-white/35">
-              {bufferPct > 0 ? `视频缓冲 ${bufferPct}%` : '视频加载中…'}
-            </span>
+
+          {segment === 0 && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+              <span className="text-[8px] font-black uppercase tracking-[0.35em] text-white/45 select-none animate-pulse text-center leading-relaxed">
+                滚动滚轮 · 探索 AI 时尚精度
+                <br />
+                共 {SEGMENT_COUNT} 段 · 每段 {SEGMENT_DURATION}s
+              </span>
+              {showBufferHint && (
+                <span className="text-[7px] font-black uppercase tracking-[0.25em] text-white/35">
+                  {bufferPct > 0 ? `视频缓冲 ${bufferPct}%` : '视频加载中…'}
+                </span>
+              )}
+            </div>
           )}
         </div>
 
         <div className="shrink-0 px-6 md:px-10 pb-6 md:pb-8 flex flex-col items-stretch pointer-events-none">
           {features.map((f, i) => {
-            const visible = isFeatureVisible(i);
+            const visible = featuresReady;
+            const delayMs = visible ? (featureCount - 1 - i) * featureStaggerMs : 0;
             return (
               <div
                 key={f.title}
-                className={`transform transition-all duration-500 ease-out ${revealClass(visible)}`}
-                style={{ transitionDelay: visible ? `${i * 60}ms` : '0ms' }}
+                className={`transform transition-all duration-700 ease-out ${featureRevealClass(visible)}`}
+                style={{ transitionDelay: visible ? `${delayMs}ms` : '0ms' }}
               >
                 <div
                   onClick={() => onNavigate?.(f.view)}
@@ -356,7 +531,10 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             );
           })}
 
-          <div className={`transform transition-all duration-500 ease-out ${revealClass(segment >= SEGMENT_COUNT)}`}>
+          <div
+            className={`transform transition-all duration-700 ease-out ${featureRevealClass(featuresReady)}`}
+            style={{ transitionDelay: featuresReady ? `${featureCount * featureStaggerMs + 80}ms` : '0ms' }}
+          >
             <footer className="pt-1 flex justify-between items-center text-white/40 pointer-events-none">
               <span className="text-[8px] font-mono font-bold tracking-widest uppercase">Protocol V.2.1-AXON</span>
               <div className="flex gap-2">
