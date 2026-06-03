@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import BlackLogoImg from '../../assets/BLACK-LOGO-02.png';
 import { generateGeminiImage } from '../../lib/geminiClient';
+import { View } from '../../types';
+
+interface TryOnModuleProps {
+  onNavigate?: (view: View) => void;
+}
 
 type CameraMode = 'front' | 'rear' | 'off';
 
@@ -69,8 +75,9 @@ async function sha256Base64(input: string) {
   return btoa(bin).replace(/=+$/g, '');
 }
 
-export default function TryOnModule() {
+export default function TryOnModule({ onNavigate }: TryOnModuleProps) {
   const [cameraMode, setCameraMode] = useState<CameraMode>('off');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [generatedNFT, setGeneratedNFT] = useState<string | null>(null);
   const [myCyberCollection, setMyCyberCollection] = useState<CyberCollectionItem[]>([]);
   const [portraitImage, setPortraitImage] = useState<string | null>(null);
@@ -91,6 +98,17 @@ export default function TryOnModule() {
   useEffect(() => {
     generatedNFTRef.current = generatedNFT;
   }, [generatedNFT]);
+
+  useEffect(() => {
+    void import('../../lib/userProfile').then(({ ensureUserProfile }) =>
+      ensureUserProfile()
+        .then((doc) => {
+          const url = doc?.avatarUrl ? String(doc.avatarUrl).trim() : '';
+          setAvatarUrl(url || null);
+        })
+        .catch(() => setAvatarUrl(null)),
+    );
+  }, []);
 
   useEffect(() => {
     const storedNFT = localStorage.getItem('generatedNFT');
@@ -315,28 +333,55 @@ export default function TryOnModule() {
   const placeholderPortrait =
     'https://lh3.googleusercontent.com/aida-public/AB6AXuCKAMKp0TtEWJYJNcZuRTSgY_qvozq8oPMukJQbQpVZgsHfEt4BELcOppAn9n2f69uW7rHKIppo3NkRAt0fNpWMEQet9_wvR1rbxCAsCi4cJxkoEIVWWgVreHMFkfNN0rRiDtjI1zo24VYB5qj6Vspq0H9mvbfg8v8AYD3amnNu3uYh6CPqSLVBcmRRYlxolIlYPXF2Ruc6Jqsn7-U6JhYZaue9IdiNF1JDy4KM4mM5jNjapu6onKj9gQY0JkJrsmRd4rW6qBYwzv45';
 
+  const panelTitleClass = 'text-[10px] font-black uppercase tracking-[0.2em] text-black/50';
+  const previewFrameClass =
+    'relative w-full max-w-[280px] h-full max-h-full aspect-[3/4] overflow-hidden border border-neutral-200 bg-neutral-100';
+
   return (
-    <div className="relative h-full min-h-0 flex flex-col overflow-hidden">
-      <header className="shrink-0 px-6 md:px-8 pt-12 landscape:pt-3 md:pt-6 flex justify-between items-center z-20">
-        <div className="flex items-center gap-1">
-          <div className="w-8 h-8 bg-white flex items-center justify-center rounded-lg">
-            <span className="material-icons-round text-black text-xl">blur_on</span>
-          </div>
-          <span className="text-2xl font-display font-black tracking-tighter">虚拟试穿</span>
+    <div className="relative min-h-full bg-[#FAF9F6] text-black selection:bg-primary selection:text-white flex flex-col">
+      <div className="fixed inset-0 pointer-events-none -z-20 overflow-hidden">
+        <div className="absolute top-[10%] right-[20%] w-[50%] h-[50%] bg-[#5F3D94]/5 blur-[150px] rounded-full" />
+      </div>
+
+      <header className="relative z-50 shrink-0 px-8 lg:px-16 pt-10 flex justify-between items-center mb-6 select-none">
+        <div className="flex items-center gap-6 font-sans">
+          <img src={BlackLogoImg} alt="LOKADA" className="h-12 sm:h-14 w-auto object-contain shrink-0" />
+          <h1 className="font-future font-black text-2xl leading-none text-black tracking-widest uppercase font-display">虚拟试穿</h1>
+          <div className="h-6 w-px bg-primary/15 hidden md:block" />
+          <p className="text-[9px] tracking-[0.3em] uppercase text-black/45 font-bold leading-none hidden md:block font-sans">
+            AI VIRTUAL TRY-ON
+          </p>
         </div>
-        <div className="bg-primary text-white px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase animate-pulse-fast">
-          AI Active
+        <div className="flex items-center gap-4">
+          <span className="text-[9px] font-mono text-black/45 tracking-widest hidden lg:block uppercase">[ FIT ENGINE ACTIVE ]</span>
+          <button
+            type="button"
+            onClick={() => onNavigate?.(View.AUTH)}
+            className="group flex items-center gap-3 bg-white hover:bg-neutral-100 border border-primary/10 rounded-full pl-5 pr-2 py-1.5 transition-all text-[9.5px] uppercase tracking-widest font-black active:scale-95 shadow-sm text-black"
+          >
+            <span>Network Node</span>
+            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-primary/10 group-hover:border-primary/50 transition-colors">
+              <img
+                src={avatarUrl || 'https://picsum.photos/100/100?seed=axon_prime'}
+                alt="User"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+              <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-primary border border-white animate-pulse" />
+            </div>
+          </button>
         </div>
       </header>
 
-      <div className="flex-1 min-h-0 flex flex-col landscape:flex-row md:flex-row overflow-hidden border-t border-white/10">
-        {/* 左：真人照片 */}
-        <section className="flex-1 min-h-0 min-w-0 flex flex-col border-b landscape:border-b-0 md:border-b-0 landscape:border-r md:border-r border-white/10 max-h-[32vh] landscape:max-h-none md:max-h-none">
-          <div className="shrink-0 px-4 py-2.5 border-b border-white/10">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">真人照片</h2>
-          </div>
-          <div className="flex-1 min-h-0 relative flex items-center justify-center p-4">
-            <div className="relative w-full max-w-[280px] h-full max-h-full aspect-[3/4] rounded-lg overflow-hidden border border-white/10 bg-primary/10">
+      <main className="flex-1 min-h-0 w-full max-w-7xl mx-auto px-4 lg:px-8 relative z-10 mb-28">
+        <div className="h-full min-h-[28rem] bg-white border border-neutral-300 overflow-hidden grid grid-cols-1 lg:grid-cols-12 lg:items-stretch divide-y lg:divide-y-0 lg:divide-x divide-neutral-200">
+          {/* 左：真人照片 */}
+          <section className="lg:col-span-4 flex flex-col min-h-0 min-h-[16rem] lg:min-h-0">
+            <div className="shrink-0 px-4 py-3 border-b border-neutral-200 bg-[#FAF9F6]">
+              <h2 className={panelTitleClass}>真人照片</h2>
+            </div>
+            <div className="flex-1 min-h-0 relative flex items-center justify-center p-4 bg-white">
+            <div className={previewFrameClass}>
               {cameraMode !== 'off' ? (
                 <video
                   ref={videoRef}
@@ -351,18 +396,20 @@ export default function TryOnModule() {
                 <>
                   <img src={placeholderPortrait} alt="" className="w-full h-full object-contain opacity-30 grayscale" referrerPolicy="no-referrer" />
                   <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center pointer-events-none">
-                    <span className="material-icons-round text-3xl text-white/30 mb-2">person_add</span>
-                    <p className="text-xs font-bold text-white/60">上传真人照片</p>
+                    <span className="material-icons-round text-3xl text-black/20 mb-2">person_add</span>
+                    <p className="text-xs font-bold text-black/45">上传真人照片</p>
                   </div>
                 </>
               )}
             </div>
-          </div>
-          <div className="shrink-0 px-4 pb-4 pt-2 flex justify-center gap-2">
+            </div>
+            <div className="shrink-0 px-4 pb-4 pt-2 flex justify-center gap-2 border-t border-neutral-200 bg-[#FAF9F6]">
             <button
               type="button"
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                cameraMode === 'rear' ? 'bg-primary text-white' : 'bg-white/10 text-white/60 hover:bg-white/15'
+              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-colors ${
+                cameraMode === 'rear'
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-white text-black/50 border-neutral-200 hover:border-primary/40'
               }`}
               title="相机"
               onClick={() => setCameraMode(cameraMode === 'rear' ? 'off' : 'rear')}
@@ -371,7 +418,7 @@ export default function TryOnModule() {
             </button>
             <button
               type="button"
-              className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg"
+              className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-sm border border-primary"
               title="上传照片"
               onClick={() => fileInputRef.current?.click()}
             >
@@ -382,12 +429,12 @@ export default function TryOnModule() {
         </section>
 
         {/* 中：生成预览 */}
-        <section className="flex-1 min-h-0 min-w-0 flex flex-col border-b landscape:border-b-0 md:border-b-0 landscape:border-r md:border-r border-white/10 max-h-[32vh] landscape:max-h-none md:max-h-none">
-          <div className="shrink-0 px-4 py-2.5 border-b border-white/10">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">生成预览</h2>
+        <section className="lg:col-span-4 flex flex-col min-h-0 min-h-[16rem] lg:min-h-0">
+          <div className="shrink-0 px-4 py-3 border-b border-neutral-200 bg-[#FAF9F6]">
+            <h2 className={panelTitleClass}>生成预览</h2>
           </div>
-          <div className="flex-1 min-h-0 relative flex items-center justify-center p-4">
-            <div className="relative w-full max-w-[280px] h-full max-h-full aspect-[3/4] rounded-lg overflow-hidden border border-white/10 bg-primary/10">
+          <div className="flex-1 min-h-0 relative flex items-center justify-center p-4 bg-white">
+            <div className={previewFrameClass}>
               {tryOnPreview ? (
                 <>
                   <img src={tryOnPreview} alt="试穿预览" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
@@ -395,15 +442,15 @@ export default function TryOnModule() {
                 </>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center pointer-events-none">
-                  <span className="material-icons-round text-3xl text-white/25 mb-2">auto_awesome</span>
-                  <p className="text-xs font-bold text-white/50">试穿效果将显示于此</p>
-                  <p className="text-[9px] text-white/35 mt-1 uppercase tracking-widest">Generate Preview</p>
+                  <span className="material-icons-round text-3xl text-primary/30 mb-2">auto_awesome</span>
+                  <p className="text-xs font-bold text-black/45">试穿效果将显示于此</p>
+                  <p className="text-[9px] text-black/30 mt-1 uppercase tracking-widest">Generate Preview</p>
                 </div>
               )}
               {isApplying && (
-                <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-20">
-                  <span className="material-icons-round text-3xl text-white animate-spin mb-2">sync</span>
-                  <p className="text-[10px] font-bold text-white uppercase tracking-widest">生成中…</p>
+                <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center z-20">
+                  <span className="material-icons-round text-3xl text-primary animate-spin mb-2">sync</span>
+                  <p className="text-[10px] font-bold text-black uppercase tracking-widest">生成中…</p>
                 </div>
               )}
             </div>
@@ -411,13 +458,15 @@ export default function TryOnModule() {
         </section>
 
         {/* 右：数字衣橱 */}
-        <aside className="shrink-0 flex flex-col min-h-0 flex-1 landscape:flex-none md:flex-none w-full landscape:w-64 md:w-72 lg:w-80 bg-primary text-white">
-          <div className="shrink-0 px-4 pt-4 pb-3 border-b border-white/15">
+        <aside className="lg:col-span-4 flex flex-col min-h-0 bg-[#FAF9F6] min-h-[18rem] lg:min-h-0">
+          <div className="shrink-0 px-4 pt-4 pb-3 border-b border-neutral-200">
             <div className="flex items-center justify-between mb-1">
-              <h2 className="text-sm font-black uppercase tracking-widest text-white">数字衣橱</h2>
-              <span className="text-[9px] font-mono text-white/70">{wardrobeOutfits.length} 件</span>
+              <h2 className="text-sm font-black uppercase tracking-widest text-black">数字衣橱</h2>
+              <span className="text-[9px] font-mono text-black/45 bg-white border border-neutral-200 px-2 py-0.5">
+                {wardrobeOutfits.length} SPEC
+              </span>
             </div>
-            <p className="text-[10px] text-white/75 leading-relaxed">选择服装造型，再点击底部「生成试穿」</p>
+            <p className="text-[10px] text-black/45 leading-relaxed">选择服装造型，再点击「生成试穿」</p>
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-4 py-3">
@@ -435,10 +484,10 @@ export default function TryOnModule() {
                         generatedNFTRef.current = item.image;
                         setCameraMode('off');
                       }}
-                      className={`group relative aspect-[3/4] rounded-lg overflow-hidden border transition-all text-left ${
+                      className={`group relative aspect-[3/4] overflow-hidden border transition-all text-left bg-white ${
                         isSelected
-                          ? 'border-white ring-2 ring-white/40 scale-[1.02]'
-                          : 'border-white/25 hover:border-white/60 opacity-90 hover:opacity-100'
+                          ? 'border-primary ring-1 ring-primary scale-[1.02]'
+                          : 'border-neutral-200 hover:border-primary/50'
                       }`}
                     >
                       <img
@@ -447,15 +496,15 @@ export default function TryOnModule() {
                         className="w-full h-full object-cover"
                         referrerPolicy="no-referrer"
                       />
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary via-primary/90 to-transparent px-1.5 py-1.5">
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1.5">
                         <p className="text-[6px] font-bold uppercase tracking-wider truncate text-white">
                           {item.theme || 'Couture'}
                         </p>
                         <p className="text-[5.5px] text-white/80 font-mono truncate">{item.serialNumber || '#GEN'}</p>
                       </div>
                       {isSelected && (
-                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-white flex items-center justify-center">
-                          <span className="material-icons-round text-primary text-xs">check</span>
+                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                          <span className="material-icons-round text-white text-xs">check</span>
                         </div>
                       )}
                     </button>
@@ -463,40 +512,39 @@ export default function TryOnModule() {
                 })}
               </div>
             ) : (
-              <div className="h-full min-h-[120px] flex flex-col items-center justify-center text-center px-4 py-8 border border-dashed border-white/25 rounded-lg">
-                <span className="material-icons-round text-3xl text-white/40 mb-2">checkroom</span>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white mb-1">衣橱为空</p>
-                <p className="text-[9px] text-white/75 leading-relaxed">
+              <div className="h-full min-h-[120px] flex flex-col items-center justify-center text-center px-4 py-8 border border-dashed border-neutral-300 bg-white">
+                <span className="material-icons-round text-3xl text-neutral-300 mb-2">checkroom</span>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-black/70 mb-1">衣橱为空</p>
+                <p className="text-[9px] text-black/45 leading-relaxed">
                   请先在「形象生成器」中生成造型，保存后会出现在这里
                 </p>
               </div>
             )}
           </div>
 
-          <div className="shrink-0 p-4 pt-3 border-t border-white/15 space-y-3 pb-28 md:pb-4">
-            <div className="flex items-start gap-2 rounded-lg bg-white/10 px-3 py-2.5">
-              <span className="material-icons-round text-sm text-white shrink-0 mt-0.5">info</span>
-              <p className="text-[10px] text-white leading-relaxed">{applyHint}</p>
+          <div className="shrink-0 p-4 pt-3 border-t border-neutral-200 space-y-3 bg-white">
+            <div className="flex items-start gap-2 border border-neutral-200 bg-neutral-50 px-3 py-2.5">
+              <span className="material-icons-round text-sm text-primary shrink-0 mt-0.5">info</span>
+              <p className="text-[10px] text-black/55 leading-relaxed">{applyHint}</p>
             </div>
             <button
               type="button"
               onClick={() => void handleApplyStyle()}
               disabled={isApplying || (cooldownUntil !== null && Date.now() < cooldownUntil)}
-              className="w-full bg-white py-4 rounded-xl flex items-center justify-between px-6 group active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              className="w-full bg-primary text-white py-3.5 flex items-center justify-between px-5 group active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_8px_24px_rgba(95,61,148,0.25)]"
             >
               <div className="flex flex-col items-start gap-0.5">
-                <span className="text-base font-black uppercase tracking-widest text-primary">{applyLabel}</span>
-                <span className="text-[9px] text-black/45 font-bold uppercase tracking-wider">AI Virtual Try-On</span>
+                <span className="text-sm font-black uppercase tracking-widest">{applyLabel}</span>
+                <span className="text-[8px] text-white/70 font-bold uppercase tracking-wider">AI Virtual Try-On</span>
               </div>
-              <div className="bg-primary p-2.5 rounded-lg text-white shrink-0">
-                <span className={`material-icons-round ${isApplying ? 'animate-spin' : ''}`}>
-                  {isApplying ? 'sync' : 'auto_awesome'}
-                </span>
-              </div>
+              <span className={`material-icons-round text-xl ${isApplying ? 'animate-spin' : ''}`}>
+                {isApplying ? 'sync' : 'auto_awesome'}
+              </span>
             </button>
           </div>
         </aside>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

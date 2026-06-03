@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import LokadaLogo from '../assets/lokada.png';
+import BlackLogoImg from '../assets/BLACK-LOGO-02.png';
 import HbaHoodieImg from '../assets/hba-hoodie.png';
 import { Product } from '../types';
 
@@ -155,7 +155,7 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
     <div className="p-6 pb-32">
        <header className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-2">
-          <img src={LokadaLogo} alt="LOKADA" className="h-28 w-auto" />
+          <img src={BlackLogoImg} alt="LOKADA" className="h-12 sm:h-14 w-auto object-contain" />
         </div>
         <div className="flex items-center gap-3">
           <button className="w-10 h-10 glass rounded-full flex items-center justify-center">
@@ -173,21 +173,22 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
 
       {/* Promo Card - Leaderboard carousel (image only, no text) */}
       <div className="mb-8 relative">
-        <div className="bg-white/5 rounded-[2.5rem] relative overflow-hidden border border-white/10 group h-64">
+        <div className="bg-[#FAF9F6] rounded-[2.5rem] relative overflow-hidden border border-neutral-200 group aspect-[16/10] min-h-[12rem] max-h-[20rem]">
           {(leaderImages.length ? leaderImages : fallbackLeaderboard.map((p) => p.image)).map((src, index) => {
             const meta = fallbackLeaderboard[index % fallbackLeaderboard.length];
             const product = meta;
             return (
               <div
                 key={`${product.id}-${index}`}
-                className={`absolute inset-0 transition-opacity duration-1000 flex items-center justify-center ${
+                className={`absolute inset-0 transition-opacity duration-1000 flex items-center justify-center p-3 ${
                   index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
                 }`}
               >
                 <img
                   src={src}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="max-w-full max-h-full w-auto h-auto object-contain"
+                  referrerPolicy="no-referrer"
                 />
               </div>
             );

@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { GoogleGenAI } from '@google/genai';
-import LogoImg from '../assets/LOGO-02.png';
+import BlackLogoImg from '../assets/BLACK-LOGO-02.png';
 
 import { View } from '../types';
 import { getRandomAestheticReferences, uploadImageToCloudBase, type AestheticReference } from '../lib/apiClient';
@@ -1341,7 +1341,7 @@ ${userContext}`;
 
       <header className="relative z-50 px-8 lg:px-16 pt-10 flex justify-between items-center mb-10 select-none">
         <div className="flex items-center gap-6 font-sans">
-          <img src={LogoImg} alt="LOKADA" className="h-12 sm:h-14 w-auto object-contain shrink-0" />
+          <img src={BlackLogoImg} alt="LOKADA" className="h-12 sm:h-14 w-auto object-contain shrink-0" />
           <h1 className="font-future font-black text-2xl leading-none text-black tracking-widest uppercase font-display">形象生成器</h1>
           <div className="h-6 w-px bg-primary/15 hidden md:block"></div>
           <p className="text-[9px] tracking-[0.3em] uppercase text-black/45 font-bold leading-none hidden md:block font-sans">COLLECTION VOLUME V.2</p>

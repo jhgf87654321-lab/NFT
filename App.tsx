@@ -117,7 +117,7 @@ const App: React.FC = () => {
             onOpenAuth={() => setCurrentView(View.AUTH)}
           />
         );
-      case View.TRY_ON: return <TryOn />;
+      case View.TRY_ON: return <TryOn onNavigate={setCurrentView} />;
       case View.CREATOR: return <Creator onNavigate={setCurrentView} />;
       case View.AUTH: return <Auth onNavigate={setCurrentView} />;
       case View.STORE: return (
@@ -175,7 +175,7 @@ const App: React.FC = () => {
 
         <Navbar activeView={currentView} onViewChange={setCurrentView} />
 
-        <div className={`flex-1 h-full min-h-0 relative z-10 pb-24 md:pb-0 ${currentView === View.TRY_ON || currentView === View.HOME ? 'overflow-hidden' : 'overflow-y-auto'} ${currentView === View.HOME ? 'bg-black' : ''}`}>
+        <div className={`flex-1 h-full min-h-0 relative z-10 pb-24 md:pb-0 ${currentView === View.HOME ? 'overflow-hidden bg-black' : 'overflow-y-auto'}`}>
           {renderView()}
         </div>
       </div>
