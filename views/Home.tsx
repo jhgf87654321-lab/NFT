@@ -150,18 +150,6 @@ function HeroCopyBlock({ segment }: { segment: number }) {
   );
 }
 
-function revealClass(visible: boolean) {
-  return visible
-    ? 'opacity-100 translate-y-0 scale-100 max-h-96 pointer-events-auto mb-3'
-    : 'opacity-0 translate-y-6 scale-[0.98] max-h-0 pointer-events-none mb-0 overflow-hidden';
-}
-
-function featureRevealClass(visible: boolean) {
-  return visible
-    ? 'opacity-100 translate-y-0 pointer-events-auto mb-2'
-    : 'opacity-0 translate-y-10 max-h-0 pointer-events-none mb-0 overflow-hidden';
-}
-
 const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const [activeFeature, setActiveFeature] = useState<number | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -400,8 +388,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const showDataOverlay = segment === 1;
   const showEyeFocus = segment >= SEGMENT_COUNT;
 
-  const featureCount = features.length;
-
   return (
     <div ref={rootRef} className="absolute inset-0 overflow-hidden bg-black text-white font-sans">
       <div className="absolute inset-0 z-0 overflow-hidden">
@@ -498,65 +484,69 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
 
         <div
-          className={`shrink-0 px-4 md:px-8 pb-5 md:pb-6 flex flex-col items-center pointer-events-none ${
-            featuresReady ? 'max-h-[36vh] md:max-h-[40vh] overflow-y-auto no-scrollbar' : ''
+          className={`shrink-0 w-full px-4 md:px-8 pb-5 md:pb-6 pointer-events-none transition-opacity duration-500 ${
+            featuresReady ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden pointer-events-none'
           }`}
         >
-          <div className="w-full max-w-lg md:max-w-xl mx-auto origin-bottom scale-[0.82] sm:scale-[0.88] md:scale-[0.9]">
-          <div className="grid grid-cols-2 gap-2">
-          {features.map((f, i) => {
-            const visible = featuresReady;
-            const rowFromBottom = 1 - Math.floor(i / 2);
-            const delayMs = visible ? rowFromBottom * 180 + (i % 2) * 90 : 0;
-            return (
-              <div
-                key={f.title}
-                className={`transform transition-all duration-700 ease-out ${featureRevealClass(visible)}`}
-                style={{ transitionDelay: visible ? `${delayMs}ms` : '0ms' }}
-              >
+          <div
+            className="mx-auto w-full max-w-[34rem] gap-x-3 gap-y-2.5"
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}
+          >
+            {features.map((f, i) => {
+              const rowFromBottom = 1 - Math.floor(i / 2);
+              const delayMs = rowFromBottom * 160 + (i % 2) * 80;
+              return (
                 <div
+                  key={f.title}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onNavigate?.(f.view)}
                   onMouseEnter={() => setActiveFeature(i)}
                   onMouseLeave={() => setActiveFeature(null)}
-                  role="button"
-                  tabIndex={visible ? 0 : -1}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') onNavigate?.(f.view);
                   }}
-                  className={`pointer-events-auto group flex flex-col gap-2 h-full py-2.5 px-2.5 rounded-xl border backdrop-blur-md transition-colors duration-200 cursor-pointer ${
-                    activeFeature === i ? 'bg-primary border-white/30 text-white' : 'bg-black/40 border-white/10 text-white hover:bg-black/55'
-                  }`}
+                  className={`col-span-1 w-full min-w-0 pointer-events-auto group flex flex-col gap-1.5 py-2.5 px-2.5 rounded-xl border backdrop-blur-md transition-all duration-700 ease-out cursor-pointer ${
+                    activeFeature === i ? 'bg-primary border-white/30 text-white' : 'bg-black/50 border-white/10 text-white hover:bg-black/60'
+                  } ${featuresReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                  style={{ transitionDelay: featuresReady ? `${delayMs}ms` : '0ms' }}
                 >
                   <div className="flex items-start justify-between gap-1">
-                    <span className={`font-mono text-xs font-black shrink-0 ${activeFeature === i ? 'text-white' : 'text-white/35'}`}>0{i + 1}</span>
+                    <span className={`font-mono text-xs font-black shrink-0 ${activeFeature === i ? 'text-white' : 'text-white/35'}`}>
+                      0{i + 1}
+                    </span>
                     <span className="material-icons-round text-xs transition-transform group-hover:translate-x-0.5 shrink-0">east</span>
                   </div>
                   <div className="min-w-0">
                     <h4 className="font-black uppercase tracking-tight text-[11px] leading-tight">{f.title}</h4>
-                    <p className={`text-[6px] font-bold uppercase tracking-wider mt-0.5 line-clamp-2 ${activeFeature === i ? 'text-white/60' : 'text-white/45'}`}>{f.desc}</p>
+                    <p className={`text-[6px] font-bold uppercase tracking-wider mt-0.5 line-clamp-2 ${activeFeature === i ? 'text-white/60' : 'text-white/45'}`}>
+                      {f.desc}
+                    </p>
                   </div>
-                  <span className={`self-start text-[6px] font-black uppercase tracking-widest px-1.5 py-0.5 border ${activeFeature === i ? 'border-white/40 text-white' : 'border-white/15 text-white/70 bg-white/10'}`}>
+                  <span
+                    className={`self-start text-[6px] font-black uppercase tracking-widest px-1.5 py-0.5 border ${
+                      activeFeature === i ? 'border-white/40 text-white' : 'border-white/15 text-white/70 bg-white/10'
+                    }`}
+                  >
                     {f.stats}
                   </span>
                 </div>
-              </div>
-            );
-          })}
-          </div>
+              );
+            })}
 
-          <div
-            className={`transform transition-all duration-700 ease-out ${featureRevealClass(featuresReady)}`}
-            style={{ transitionDelay: featuresReady ? `${featureCount * 90 + 200}ms` : '0ms' }}
-          >
-            <footer className="pt-1 flex justify-between items-center text-white/40 pointer-events-none">
+            <div
+              className={`col-span-2 pt-1 flex justify-between items-center text-white/40 pointer-events-none transition-all duration-700 ease-out ${
+                featuresReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}
+              style={{ transitionDelay: featuresReady ? '520ms' : '0ms' }}
+            >
               <span className="text-[7px] font-mono font-bold tracking-widest uppercase">Protocol V.2.1-AXON</span>
               <div className="flex gap-2">
                 <span className="w-1.5 h-1.5 bg-white/20 rounded-full"></span>
                 <span className="w-1.5 h-1.5 bg-white/20 rounded-full"></span>
                 <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
               </div>
-            </footer>
-          </div>
+            </div>
           </div>
         </div>
       </div>
