@@ -65,9 +65,17 @@ function FloatingDataOverlay() {
 }
 
 function MaterialScanOverlay({ active }: { active: boolean }) {
-  const tags = [
-    { label: 'Texture: Denim', sub: 'Weave · 12oz', top: '42%', left: '14%', w: '28%' },
-    { label: 'Material: Lace Pattern', sub: 'Opacity 0.72', top: '58%', left: '52%', w: '32%' },
+  const tags: {
+    label: string;
+    sub: string;
+    w: string;
+    top?: string;
+    left?: string;
+    bottom?: string;
+    right?: string;
+  }[] = [
+    { label: 'Material: Lace Pattern', sub: 'Opacity 0.72', top: '17%', left: '38%', w: '30%' },
+    { label: 'Texture: Denim', sub: 'Weave · 12oz', bottom: '18%', right: '7%', w: '28%' },
   ];
 
   return (
@@ -80,7 +88,7 @@ function MaterialScanOverlay({ active }: { active: boolean }) {
         <div
           key={t.label}
           className={`absolute transition-all duration-700 ${active ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
-          style={{ top: t.top, left: t.left, width: t.w }}
+          style={{ top: t.top, left: t.left, bottom: t.bottom, right: t.right, width: t.w }}
         >
           <div className="relative border border-white/50 bg-[#0a1628]/55 backdrop-blur-sm px-2 py-1.5">
             <span className="absolute -top-px -left-px w-2 h-2 border-t border-l border-white/80" />
@@ -150,8 +158,8 @@ function revealClass(visible: boolean) {
 
 function featureRevealClass(visible: boolean) {
   return visible
-    ? 'opacity-100 translate-y-0 max-h-96 pointer-events-auto mb-3'
-    : 'opacity-0 translate-y-14 max-h-0 pointer-events-none mb-0 overflow-hidden';
+    ? 'opacity-100 translate-y-0 pointer-events-auto mb-2'
+    : 'opacity-0 translate-y-10 max-h-0 pointer-events-none mb-0 overflow-hidden';
 }
 
 const Home: React.FC<HomeProps> = ({ onNavigate }) => {
@@ -387,7 +395,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const showPoster = segment === 0 && !scrubReady;
   const mediaSharp = segment > 0;
   const showHeroCopy = segment >= 1 && segment <= 3;
-  const showFinalCta = segment >= SEGMENT_COUNT;
+  const showFinalCta = segment >= SEGMENT_COUNT && !featuresReady;
   const showMaterialScan = segment === 2 || segment === 3;
   const showDataOverlay = segment === 1;
   const showEyeFocus = segment >= SEGMENT_COUNT;
@@ -460,14 +468,14 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           {showHeroCopy && <HeroCopyBlock segment={segment} />}
 
           {showFinalCta && (
-            <div className="absolute inset-x-0 top-[44%] md:top-[42%] z-[4] flex flex-col items-center px-8 pointer-events-auto animate-in fade-in duration-700">
+            <div className="absolute inset-x-0 top-[30%] md:top-[28%] z-[4] flex flex-col items-center px-8 pointer-events-auto animate-in fade-in duration-700">
               <button
                 type="button"
                 onClick={() => onNavigate?.(View.CREATOR)}
-                className="group relative px-10 py-4 rounded-full border border-white/80 bg-[#0a1628]/40 backdrop-blur-md text-white hover:bg-white hover:text-[#0a1628] active:scale-[0.98] transition-all duration-300 shadow-[0_0_40px_rgba(255,255,255,0.12)]"
+                className="group relative px-8 py-3 rounded-full border border-white/80 bg-[#0a1628]/40 backdrop-blur-md text-white hover:bg-white hover:text-[#0a1628] active:scale-[0.98] transition-all duration-300 shadow-[0_0_40px_rgba(255,255,255,0.12)]"
               >
-                <span className="block text-sm font-black uppercase tracking-[0.3em]">立刻开始设计</span>
-                <span className="block mt-1 text-[9px] font-bold uppercase tracking-[0.25em] text-white/60 group-hover:text-[#0a1628]/60 transition-colors">
+                <span className="block text-xs font-black uppercase tracking-[0.28em]">立刻开始设计</span>
+                <span className="block mt-1 text-[8px] font-bold uppercase tracking-[0.22em] text-white/60 group-hover:text-[#0a1628]/60 transition-colors">
                   Start Creating
                 </span>
               </button>
@@ -490,7 +498,12 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           )}
         </div>
 
-        <div className="shrink-0 px-6 md:px-10 pb-6 md:pb-8 flex flex-col items-stretch pointer-events-none">
+        <div
+          className={`shrink-0 px-4 md:px-8 pb-5 md:pb-6 flex flex-col items-center pointer-events-none ${
+            featuresReady ? 'max-h-[36vh] md:max-h-[40vh] overflow-y-auto no-scrollbar' : ''
+          }`}
+        >
+          <div className="w-full max-w-[min(100%,22rem)] md:max-w-md mx-auto origin-bottom scale-[0.82] sm:scale-[0.88] md:scale-[0.9]">
           {features.map((f, i) => {
             const visible = featuresReady;
             const delayMs = visible ? (featureCount - 1 - i) * featureStaggerMs : 0;
@@ -509,22 +522,22 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') onNavigate?.(f.view);
                   }}
-                  className={`pointer-events-auto group flex items-center justify-between py-4 px-4 rounded-2xl border backdrop-blur-md transition-colors duration-200 cursor-pointer ${
+                  className={`pointer-events-auto group flex items-center justify-between py-2.5 px-3 rounded-xl border backdrop-blur-md transition-colors duration-200 cursor-pointer ${
                     activeFeature === i ? 'bg-primary border-white/30 text-white' : 'bg-black/40 border-white/10 text-white hover:bg-black/55'
                   }`}
                 >
-                  <div className="flex items-center gap-4">
-                    <span className={`font-mono text-base font-black ${activeFeature === i ? 'text-white' : 'text-white/35'}`}>0{i + 1}</span>
-                    <div>
-                      <h4 className="font-black uppercase tracking-tight text-sm">{f.title}</h4>
-                      <p className={`text-[8px] font-bold uppercase tracking-wider ${activeFeature === i ? 'text-white/60' : 'text-white/45'}`}>{f.desc}</p>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={`font-mono text-sm font-black shrink-0 ${activeFeature === i ? 'text-white' : 'text-white/35'}`}>0{i + 1}</span>
+                    <div className="min-w-0">
+                      <h4 className="font-black uppercase tracking-tight text-xs truncate">{f.title}</h4>
+                      <p className={`text-[7px] font-bold uppercase tracking-wider truncate ${activeFeature === i ? 'text-white/60' : 'text-white/45'}`}>{f.desc}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`text-[7px] font-black uppercase tracking-widest px-2 py-0.5 border ${activeFeature === i ? 'border-white/40 text-white' : 'border-white/15 text-white/70 bg-white/10'}`}>
+                  <div className="flex items-center gap-2 shrink-0 ml-2">
+                    <span className={`text-[6px] font-black uppercase tracking-widest px-1.5 py-0.5 border ${activeFeature === i ? 'border-white/40 text-white' : 'border-white/15 text-white/70 bg-white/10'}`}>
                       {f.stats}
                     </span>
-                    <span className="material-icons-round text-sm transition-transform group-hover:translate-x-1.5">east</span>
+                    <span className="material-icons-round text-xs transition-transform group-hover:translate-x-1">east</span>
                   </div>
                 </div>
               </div>
@@ -536,13 +549,14 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             style={{ transitionDelay: featuresReady ? `${featureCount * featureStaggerMs + 80}ms` : '0ms' }}
           >
             <footer className="pt-1 flex justify-between items-center text-white/40 pointer-events-none">
-              <span className="text-[8px] font-mono font-bold tracking-widest uppercase">Protocol V.2.1-AXON</span>
+              <span className="text-[7px] font-mono font-bold tracking-widest uppercase">Protocol V.2.1-AXON</span>
               <div className="flex gap-2">
                 <span className="w-1.5 h-1.5 bg-white/20 rounded-full"></span>
                 <span className="w-1.5 h-1.5 bg-white/20 rounded-full"></span>
                 <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
               </div>
             </footer>
+          </div>
           </div>
         </div>
       </div>
