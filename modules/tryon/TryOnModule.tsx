@@ -73,21 +73,20 @@ export default function TryOnModule() {
   const [cameraMode, setCameraMode] = useState<CameraMode>('off');
   const [generatedNFT, setGeneratedNFT] = useState<string | null>(null);
   const [myCyberCollection, setMyCyberCollection] = useState<CyberCollectionItem[]>([]);
-  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'tryon' | 'nft'>('tryon');
+  const [portraitImage, setPortraitImage] = useState<string | null>(null);
+  const [tryOnPreview, setTryOnPreview] = useState<string | null>(null);
   const [isApplying, setIsApplying] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
   const [selectedOutfitKey, setSelectedOutfitKey] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const uploadedImageRef = useRef<string | null>(null);
+  const portraitImageRef = useRef<string | null>(null);
   const generatedNFTRef = useRef<string | null>(null);
 
   useEffect(() => {
-    uploadedImageRef.current = uploadedImage;
-  }, [uploadedImage]);
+    portraitImageRef.current = portraitImage;
+  }, [portraitImage]);
 
   useEffect(() => {
     generatedNFTRef.current = generatedNFT;
@@ -105,11 +104,11 @@ export default function TryOnModule() {
       console.error('Failed to parse myCyberCollection', parsed);
     }
 
+    const storedPortrait = localStorage.getItem('tryOnPortraitImage');
+    if (storedPortrait) setPortraitImage(storedPortrait);
+
     const storedTryOn = localStorage.getItem('tryOnLastImage');
-    if (storedTryOn) {
-      setUploadedImage(storedTryOn);
-      setViewMode('tryon');
-    }
+    if (storedTryOn) setTryOnPreview(storedTryOn);
   }, []);
 
   const wardrobeOutfits = useMemo(() => {
@@ -142,11 +141,11 @@ export default function TryOnModule() {
     }
   }, [activeOutfit?.image]);
 
-  const applyHint = !uploadedImage && cameraMode === 'off'
-    ? '请先上传人像或打开相机'
+  const applyHint = !portraitImage && cameraMode === 'off'
+    ? '请先上传真人照片或打开相机'
     : !activeOutfit
-      ? '请从右侧衣橱选择服装'
-      : '已就绪，点击下方生成试穿效果';
+      ? '请从衣橱选择一套服装'
+      : '已就绪，点击下方生成试穿';
 
   const applyLabel = isApplying
     ? '生成中…'
@@ -194,11 +193,12 @@ export default function TryOnModule() {
       }
       try {
         const compressed = await compressDataUrl(result, 1280, 0.85);
-        setUploadedImage(compressed);
+        setPortraitImage(compressed);
+        localStorage.setItem('tryOnPortraitImage', compressed);
       } catch {
-        setUploadedImage(result);
+        setPortraitImage(result);
+        localStorage.setItem('tryOnPortraitImage', result);
       }
-      setViewMode('tryon');
       setCameraMode('off');
     };
     reader.onerror = (err) => {
@@ -228,7 +228,7 @@ export default function TryOnModule() {
     }
 
     // Use ref to avoid stale state when user switches images quickly.
-    let baseImage = uploadedImageRef.current;
+    let baseImage = portraitImageRef.current;
     if (cameraMode !== 'off') baseImage = captureFrame();
 
     if (!baseImage) {
@@ -269,9 +269,8 @@ export default function TryOnModule() {
       const cacheStorageKey = `tryon_cache_${cacheKey}`;
       const cached = localStorage.getItem(cacheStorageKey);
       if (cached && cached.startsWith('data:image/')) {
-        setUploadedImage(cached);
+        setTryOnPreview(cached);
         localStorage.setItem('tryOnLastImage', cached);
-        setViewMode('tryon');
         setCameraMode('off');
         return;
       }
@@ -288,7 +287,7 @@ export default function TryOnModule() {
         // 不改模型（仅优化本地处理/请求）；如需更快可另开“极速模式”切换模型。
         model: 'gemini-3.1-flash-image-preview',
       });
-      setUploadedImage(newImgData);
+      setTryOnPreview(newImgData);
       localStorage.setItem('tryOnLastImage', newImgData);
       try {
         // Best-effort cache for future instant reruns.
@@ -296,7 +295,6 @@ export default function TryOnModule() {
       } catch {
         // ignore storage quota errors
       }
-      setViewMode('tryon');
       setCameraMode('off');
     } catch (error) {
       console.error('Error applying style', error);
@@ -314,119 +312,112 @@ export default function TryOnModule() {
     }
   };
 
+  const placeholderPortrait =
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuCKAMKp0TtEWJYJNcZuRTSgY_qvozq8oPMukJQbQpVZgsHfEt4BELcOppAn9n2f69uW7rHKIppo3NkRAt0fNpWMEQet9_wvR1rbxCAsCi4cJxkoEIVWWgVreHMFkfNN0rRiDtjI1zo24VYB5qj6Vspq0H9mvbfg8v8AYD3amnNu3uYh6CPqSLVBcmRRYlxolIlYPXF2Ruc6Jqsn7-U6JhYZaue9IdiNF1JDy4KM4mM5jNjapu6onKj9gQY0JkJrsmRd4rW6qBYwzv45';
+
   return (
     <div className="relative h-full min-h-0 flex flex-col overflow-hidden">
-      <header className="shrink-0 px-8 pt-12 landscape:px-4 landscape:pt-3 md:pt-6 flex justify-between items-start z-20">
+      <header className="shrink-0 px-6 md:px-8 pt-12 landscape:pt-3 md:pt-6 flex justify-between items-center z-20">
         <div className="flex items-center gap-1">
           <div className="w-8 h-8 bg-white flex items-center justify-center rounded-lg">
             <span className="material-icons-round text-black text-xl">blur_on</span>
           </div>
-          <span className="text-2xl font-display font-black tracking-tighter">试穿</span>
+          <span className="text-2xl font-display font-black tracking-tighter">虚拟试穿</span>
         </div>
         <div className="bg-primary text-white px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase animate-pulse-fast">
           AI Active
         </div>
       </header>
 
-      <div className="flex-1 min-h-0 flex flex-col landscape:flex-row md:flex-row overflow-hidden">
-        <div className="flex-1 min-h-0 min-w-0 relative flex items-center justify-center overflow-hidden py-6 landscape:py-4 landscape:px-4 md:py-4 md:px-6">
-          <button
-            type="button"
-            onClick={() => {
-              if (!uploadedImageRef.current || !generatedNFTRef.current) return;
-              setViewMode((m) => (m === 'tryon' ? 'nft' : 'tryon'));
-            }}
-            className="relative w-[85%] max-h-full aspect-[3/4] h-auto landscape:h-full landscape:w-auto landscape:max-w-full md:h-full md:w-auto md:max-w-full rounded-xl overflow-hidden border border-white/10 text-left"
-          >
-          {cameraMode !== 'off' ? (
-            <div className="w-full h-full flex items-center justify-center bg-primary/10">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className={`w-full h-full object-contain ${cameraMode === 'front' ? 'scale-x-[-1]' : ''}`}
-              />
+      <div className="flex-1 min-h-0 flex flex-col landscape:flex-row md:flex-row overflow-hidden border-t border-white/10">
+        {/* 左：真人照片 */}
+        <section className="flex-1 min-h-0 min-w-0 flex flex-col border-b landscape:border-b-0 md:border-b-0 landscape:border-r md:border-r border-white/10 max-h-[32vh] landscape:max-h-none md:max-h-none">
+          <div className="shrink-0 px-4 py-2.5 border-b border-white/10">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">真人照片</h2>
+          </div>
+          <div className="flex-1 min-h-0 relative flex items-center justify-center p-4">
+            <div className="relative w-full max-w-[280px] h-full max-h-full aspect-[3/4] rounded-lg overflow-hidden border border-white/10 bg-primary/10">
+              {cameraMode !== 'off' ? (
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className={`w-full h-full object-contain ${cameraMode === 'front' ? 'scale-x-[-1]' : ''}`}
+                />
+              ) : portraitImage ? (
+                <img src={portraitImage} alt="真人照片" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+              ) : (
+                <>
+                  <img src={placeholderPortrait} alt="" className="w-full h-full object-contain opacity-30 grayscale" referrerPolicy="no-referrer" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center pointer-events-none">
+                    <span className="material-icons-round text-3xl text-white/30 mb-2">person_add</span>
+                    <p className="text-xs font-bold text-white/60">上传真人照片</p>
+                  </div>
+                </>
+              )}
             </div>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-primary/10">
-              <img
-                src={
-                  (viewMode === 'nft' ? generatedNFT : uploadedImage) ||
-                  'https://lh3.googleusercontent.com/aida-public/AB6AXuCKAMKp0TtEWJYJNcZuRTSgY_qvozq8oPMukJQbQpVZgsHfEt4BELcOppAn9n2f69uW7rHKIppo3NkRAt0fNpWMEQet9_wvR1rbxCAsCi4cJxkoEIVWWgVreHMFkfNN0rRiDtjI1zo24VYB5qj6Vspq0H9mvbfg8v8AYD3amnNu3uYh6CPqSLVBcmRRYlxolIlYPXF2Ruc6Jqsn7-U6JhYZaue9IdiNF1JDy4KM4mM5jNjapu6onKj9gQY0JkJrsmRd4rW6qBYwzv45'
-                }
-                alt="Portrait"
-                className="w-full h-full object-contain"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent pointer-events-none"></div>
-          <div className="absolute left-0 right-0 h-[2px] bg-primary shadow-[0_0_20px_#5F3D94] animate-scan z-20 pointer-events-none"></div>
-          {!uploadedImage && cameraMode === 'off' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-6 text-center">
-              <span className="material-icons-round text-4xl text-white/30 mb-3">person_add</span>
-              <p className="text-sm font-bold text-white/70 mb-1">上传人像照片</p>
-              <p className="text-[10px] text-white/45 uppercase tracking-widest">点击左侧相册或相机图标</p>
-            </div>
-          )}
+          </div>
+          <div className="shrink-0 px-4 pb-4 pt-2 flex justify-center gap-2">
+            <button
+              type="button"
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                cameraMode === 'rear' ? 'bg-primary text-white' : 'bg-white/10 text-white/60 hover:bg-white/15'
+              }`}
+              title="相机"
+              onClick={() => setCameraMode(cameraMode === 'rear' ? 'off' : 'rear')}
+            >
+              <span className="material-icons-round text-sm">photo_camera</span>
+            </button>
+            <button
+              type="button"
+              className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg"
+              title="上传照片"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <span className="material-icons-round text-sm">photo_library</span>
+            </button>
+            <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+          </div>
+        </section>
 
-          {uploadedImage && generatedNFT && cameraMode === 'off' && (
-            <div className="absolute top-3 left-3 z-30 px-3 py-1 rounded-full bg-primary/50 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-white/70 pointer-events-none">
-              点击切换：{viewMode === 'tryon' ? '试穿效果' : '服装造型'}
+        {/* 中：生成预览 */}
+        <section className="flex-1 min-h-0 min-w-0 flex flex-col border-b landscape:border-b-0 md:border-b-0 landscape:border-r md:border-r border-white/10 max-h-[32vh] landscape:max-h-none md:max-h-none">
+          <div className="shrink-0 px-4 py-2.5 border-b border-white/10">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">生成预览</h2>
+          </div>
+          <div className="flex-1 min-h-0 relative flex items-center justify-center p-4">
+            <div className="relative w-full max-w-[280px] h-full max-h-full aspect-[3/4] rounded-lg overflow-hidden border border-white/10 bg-primary/10">
+              {tryOnPreview ? (
+                <>
+                  <img src={tryOnPreview} alt="试穿预览" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                  <div className="absolute left-0 right-0 h-[2px] bg-primary shadow-[0_0_20px_#5F3D94] animate-scan z-10 pointer-events-none"></div>
+                </>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center pointer-events-none">
+                  <span className="material-icons-round text-3xl text-white/25 mb-2">auto_awesome</span>
+                  <p className="text-xs font-bold text-white/50">试穿效果将显示于此</p>
+                  <p className="text-[9px] text-white/35 mt-1 uppercase tracking-widest">Generate Preview</p>
+                </div>
+              )}
+              {isApplying && (
+                <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-20">
+                  <span className="material-icons-round text-3xl text-white animate-spin mb-2">sync</span>
+                  <p className="text-[10px] font-bold text-white uppercase tracking-widest">生成中…</p>
+                </div>
+              )}
             </div>
-          )}
-        </button>
+          </div>
+        </section>
 
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 p-2 glass rounded-full z-30 landscape:left-2 landscape:scale-90 md:left-6">
-          <button
-            type="button"
-            className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-black shadow-lg overflow-hidden"
-            title="选择人像"
-            onClick={() => {
-              if (myCyberCollection.length > 0) {
-                setIsCollectionModalOpen(true);
-                return;
-              }
-              if (uploadedImage) return;
-              fileInputRef.current?.click();
-            }}
-          >
-            {uploadedImage ? (
-              <img src={uploadedImage} alt="人像" className="w-full h-full object-cover" />
-            ) : (
-              <span className="material-icons-round text-sm">person</span>
-            )}
-          </button>
-          <button
-            type="button"
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-              cameraMode === 'rear' ? 'bg-primary text-white' : 'text-white/50'
-            }`}
-            title="后置相机"
-            onClick={() => setCameraMode(cameraMode === 'rear' ? 'off' : 'rear')}
-          >
-            <span className="material-icons-round text-sm">flip_camera_ios</span>
-          </button>
-          <button
-            type="button"
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white/50"
-            title="上传照片"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <span className="material-icons-round text-sm">photo_library</span>
-          </button>
-          <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
-        </div>
-        </div>
-
-        <aside className="shrink-0 flex flex-col min-h-0 max-h-[46vh] landscape:max-h-none landscape:w-72 md:w-80 landscape:border-l border-t landscape:border-t-0 border-white/10 bg-primary/90 backdrop-blur-xl z-30">
-          <div className="shrink-0 px-4 pt-4 pb-3 border-b border-white/10">
+        {/* 右：数字衣橱 */}
+        <aside className="shrink-0 flex flex-col min-h-0 flex-1 landscape:flex-none md:flex-none w-full landscape:w-64 md:w-72 lg:w-80 bg-primary text-white">
+          <div className="shrink-0 px-4 pt-4 pb-3 border-b border-white/15">
             <div className="flex items-center justify-between mb-1">
-              <h2 className="text-sm font-black uppercase tracking-widest">数字衣橱</h2>
-              <span className="text-[9px] font-mono text-white/50">{wardrobeOutfits.length} 件</span>
+              <h2 className="text-sm font-black uppercase tracking-widest text-white">数字衣橱</h2>
+              <span className="text-[9px] font-mono text-white/70">{wardrobeOutfits.length} 件</span>
             </div>
-            <p className="text-[10px] text-white/45 leading-relaxed">选择服装造型，再点击底部「生成试穿」</p>
+            <p className="text-[10px] text-white/75 leading-relaxed">选择服装造型，再点击底部「生成试穿」</p>
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-4 py-3">
@@ -442,13 +433,12 @@ export default function TryOnModule() {
                         setSelectedOutfitKey(item.key);
                         setGeneratedNFT(item.image);
                         generatedNFTRef.current = item.image;
-                        setViewMode('nft');
                         setCameraMode('off');
                       }}
                       className={`group relative aspect-[3/4] rounded-lg overflow-hidden border transition-all text-left ${
                         isSelected
-                          ? 'border-white ring-2 ring-white/30 scale-[1.02]'
-                          : 'border-white/15 hover:border-white/40 opacity-80 hover:opacity-100'
+                          ? 'border-white ring-2 ring-white/40 scale-[1.02]'
+                          : 'border-white/25 hover:border-white/60 opacity-90 hover:opacity-100'
                       }`}
                     >
                       <img
@@ -457,15 +447,15 @@ export default function TryOnModule() {
                         className="w-full h-full object-cover"
                         referrerPolicy="no-referrer"
                       />
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 py-2">
-                        <p className="text-[8px] font-bold uppercase tracking-wider truncate">
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary via-primary/90 to-transparent px-1.5 py-1.5">
+                        <p className="text-[6px] font-bold uppercase tracking-wider truncate text-white">
                           {item.theme || 'Couture'}
                         </p>
-                        <p className="text-[7px] text-white/50 font-mono">{item.serialNumber || '#GEN'}</p>
+                        <p className="text-[5.5px] text-white/80 font-mono truncate">{item.serialNumber || '#GEN'}</p>
                       </div>
                       {isSelected && (
-                        <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-white flex items-center justify-center">
-                          <span className="material-icons-round text-primary text-sm">check</span>
+                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-white flex items-center justify-center">
+                          <span className="material-icons-round text-primary text-xs">check</span>
                         </div>
                       )}
                     </button>
@@ -473,29 +463,29 @@ export default function TryOnModule() {
                 })}
               </div>
             ) : (
-              <div className="h-full min-h-[120px] flex flex-col items-center justify-center text-center px-4 py-8 border border-dashed border-white/15 rounded-lg">
-                <span className="material-icons-round text-3xl text-white/25 mb-2">checkroom</span>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1">衣橱为空</p>
-                <p className="text-[9px] text-white/40 leading-relaxed">
+              <div className="h-full min-h-[120px] flex flex-col items-center justify-center text-center px-4 py-8 border border-dashed border-white/25 rounded-lg">
+                <span className="material-icons-round text-3xl text-white/40 mb-2">checkroom</span>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white mb-1">衣橱为空</p>
+                <p className="text-[9px] text-white/75 leading-relaxed">
                   请先在「形象生成器」中生成造型，保存后会出现在这里
                 </p>
               </div>
             )}
           </div>
 
-          <div className="shrink-0 p-4 pt-3 border-t border-white/10 space-y-3 pb-28 landscape:pb-4 md:pb-4">
-            <div className="flex items-start gap-2 rounded-lg bg-white/5 px-3 py-2.5">
-              <span className="material-icons-round text-sm text-primary shrink-0 mt-0.5">info</span>
-              <p className="text-[10px] text-white/60 leading-relaxed">{applyHint}</p>
+          <div className="shrink-0 p-4 pt-3 border-t border-white/15 space-y-3 pb-28 md:pb-4">
+            <div className="flex items-start gap-2 rounded-lg bg-white/10 px-3 py-2.5">
+              <span className="material-icons-round text-sm text-white shrink-0 mt-0.5">info</span>
+              <p className="text-[10px] text-white leading-relaxed">{applyHint}</p>
             </div>
             <button
               type="button"
               onClick={() => void handleApplyStyle()}
               disabled={isApplying || (cooldownUntil !== null && Date.now() < cooldownUntil)}
-              className="w-full bg-white text-black py-4 rounded-xl flex items-center justify-between px-6 group active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              className="w-full bg-white py-4 rounded-xl flex items-center justify-between px-6 group active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
               <div className="flex flex-col items-start gap-0.5">
-                <span className="text-base font-black uppercase tracking-widest">{applyLabel}</span>
+                <span className="text-base font-black uppercase tracking-widest text-primary">{applyLabel}</span>
                 <span className="text-[9px] text-black/45 font-bold uppercase tracking-wider">AI Virtual Try-On</span>
               </div>
               <div className="bg-primary p-2.5 rounded-lg text-white shrink-0">
@@ -507,46 +497,6 @@ export default function TryOnModule() {
           </div>
         </aside>
       </div>
-
-      {isCollectionModalOpen && myCyberCollection.length > 0 && (
-        <div className="fixed inset-0 z-[200] bg-primary/80 backdrop-blur-xl flex items-center justify-center p-6">
-          <div className="w-full max-w-[380px] glass rounded-[2.5rem] border border-white/10 p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-primary">选择人像</h3>
-              <button
-                onClick={() => setIsCollectionModalOpen(false)}
-                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:text-white"
-              >
-                <span className="material-icons-round">close</span>
-              </button>
-            </div>
-            <div className="grid grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto no-scrollbar">
-              {myCyberCollection.map((item, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    setUploadedImage(item.image);
-                  // Selecting a new base image should immediately affect the preview
-                  // and allow "Apply" without waiting for a previous cooldown.
-                  setViewMode('tryon');
-                  setCooldownUntil(null);
-                  try {
-                    localStorage.setItem('tryOnLastImage', item.image);
-                  } catch {
-                    // ignore storage quota errors
-                  }
-                    setCameraMode('off');
-                    setIsCollectionModalOpen(false);
-                  }}
-                  className="aspect-square rounded-2xl overflow-hidden border border-white/10 hover:border-primary/50 transition-colors"
-                >
-                  <img src={item.image} alt="NFT" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
