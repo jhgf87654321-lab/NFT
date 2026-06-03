@@ -401,7 +401,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const showEyeFocus = segment >= SEGMENT_COUNT;
 
   const featureCount = features.length;
-  const featureStaggerMs = 100;
 
   return (
     <div ref={rootRef} className="absolute inset-0 overflow-hidden bg-black text-white font-sans">
@@ -503,10 +502,12 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             featuresReady ? 'max-h-[36vh] md:max-h-[40vh] overflow-y-auto no-scrollbar' : ''
           }`}
         >
-          <div className="w-full max-w-[min(100%,22rem)] md:max-w-md mx-auto origin-bottom scale-[0.82] sm:scale-[0.88] md:scale-[0.9]">
+          <div className="w-full max-w-lg md:max-w-xl mx-auto origin-bottom scale-[0.82] sm:scale-[0.88] md:scale-[0.9]">
+          <div className="grid grid-cols-2 gap-2">
           {features.map((f, i) => {
             const visible = featuresReady;
-            const delayMs = visible ? (featureCount - 1 - i) * featureStaggerMs : 0;
+            const rowFromBottom = 1 - Math.floor(i / 2);
+            const delayMs = visible ? rowFromBottom * 180 + (i % 2) * 90 : 0;
             return (
               <div
                 key={f.title}
@@ -522,31 +523,30 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') onNavigate?.(f.view);
                   }}
-                  className={`pointer-events-auto group flex items-center justify-between py-2.5 px-3 rounded-xl border backdrop-blur-md transition-colors duration-200 cursor-pointer ${
+                  className={`pointer-events-auto group flex flex-col gap-2 h-full py-2.5 px-2.5 rounded-xl border backdrop-blur-md transition-colors duration-200 cursor-pointer ${
                     activeFeature === i ? 'bg-primary border-white/30 text-white' : 'bg-black/40 border-white/10 text-white hover:bg-black/55'
                   }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className={`font-mono text-sm font-black shrink-0 ${activeFeature === i ? 'text-white' : 'text-white/35'}`}>0{i + 1}</span>
-                    <div className="min-w-0">
-                      <h4 className="font-black uppercase tracking-tight text-xs truncate">{f.title}</h4>
-                      <p className={`text-[7px] font-bold uppercase tracking-wider truncate ${activeFeature === i ? 'text-white/60' : 'text-white/45'}`}>{f.desc}</p>
-                    </div>
+                  <div className="flex items-start justify-between gap-1">
+                    <span className={`font-mono text-xs font-black shrink-0 ${activeFeature === i ? 'text-white' : 'text-white/35'}`}>0{i + 1}</span>
+                    <span className="material-icons-round text-xs transition-transform group-hover:translate-x-0.5 shrink-0">east</span>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 ml-2">
-                    <span className={`text-[6px] font-black uppercase tracking-widest px-1.5 py-0.5 border ${activeFeature === i ? 'border-white/40 text-white' : 'border-white/15 text-white/70 bg-white/10'}`}>
-                      {f.stats}
-                    </span>
-                    <span className="material-icons-round text-xs transition-transform group-hover:translate-x-1">east</span>
+                  <div className="min-w-0">
+                    <h4 className="font-black uppercase tracking-tight text-[11px] leading-tight">{f.title}</h4>
+                    <p className={`text-[6px] font-bold uppercase tracking-wider mt-0.5 line-clamp-2 ${activeFeature === i ? 'text-white/60' : 'text-white/45'}`}>{f.desc}</p>
                   </div>
+                  <span className={`self-start text-[6px] font-black uppercase tracking-widest px-1.5 py-0.5 border ${activeFeature === i ? 'border-white/40 text-white' : 'border-white/15 text-white/70 bg-white/10'}`}>
+                    {f.stats}
+                  </span>
                 </div>
               </div>
             );
           })}
+          </div>
 
           <div
             className={`transform transition-all duration-700 ease-out ${featureRevealClass(featuresReady)}`}
-            style={{ transitionDelay: featuresReady ? `${featureCount * featureStaggerMs + 80}ms` : '0ms' }}
+            style={{ transitionDelay: featuresReady ? `${featureCount * 90 + 200}ms` : '0ms' }}
           >
             <footer className="pt-1 flex justify-between items-center text-white/40 pointer-events-none">
               <span className="text-[7px] font-mono font-bold tracking-widest uppercase">Protocol V.2.1-AXON</span>
