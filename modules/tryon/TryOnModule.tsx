@@ -335,7 +335,7 @@ export default function TryOnModule({ onNavigate }: TryOnModuleProps) {
 
   const panelTitleClass = 'text-[10px] font-black uppercase tracking-[0.2em] text-black/50';
   const previewFrameClass =
-    'relative w-full max-w-[280px] h-full max-h-full aspect-[3/4] overflow-hidden border border-neutral-200 bg-neutral-100';
+    'relative w-full max-w-[220px] sm:max-w-[240px] mx-auto aspect-[3/4] overflow-hidden border border-neutral-200 bg-neutral-100';
 
   return (
     <div className="relative min-h-full bg-[#FAF9F6] text-black selection:bg-primary selection:text-white flex flex-col">
@@ -343,7 +343,7 @@ export default function TryOnModule({ onNavigate }: TryOnModuleProps) {
         <div className="absolute top-[10%] right-[20%] w-[50%] h-[50%] bg-[#5F3D94]/5 blur-[150px] rounded-full" />
       </div>
 
-      <header className="relative z-50 shrink-0 px-8 lg:px-16 pt-10 flex justify-between items-center mb-6 select-none">
+      <header className="relative z-50 shrink-0 px-8 lg:px-16 pt-10 flex justify-between items-center mb-4 select-none">
         <div className="flex items-center gap-6 font-sans">
           <img src={BlackLogoImg} alt="LOKADA" className="h-12 sm:h-14 w-auto object-contain shrink-0" />
           <h1 className="font-future font-black text-2xl leading-none text-black tracking-widest uppercase font-display">虚拟试穿</h1>
@@ -374,13 +374,13 @@ export default function TryOnModule({ onNavigate }: TryOnModuleProps) {
       </header>
 
       <main className="flex-1 min-h-0 w-full max-w-7xl mx-auto px-4 lg:px-8 relative z-10 mb-28">
-        <div className="h-full min-h-[28rem] bg-white border border-neutral-300 overflow-hidden grid grid-cols-1 lg:grid-cols-12 lg:items-stretch divide-y lg:divide-y-0 lg:divide-x divide-neutral-200">
+        <div className="bg-white border border-neutral-300 overflow-hidden grid grid-cols-1 lg:grid-cols-12 lg:items-start divide-y lg:divide-y-0 lg:divide-x divide-neutral-200">
           {/* 左：真人照片 */}
-          <section className="lg:col-span-4 flex flex-col min-h-0 min-h-[16rem] lg:min-h-0">
-            <div className="shrink-0 px-4 py-3 border-b border-neutral-200 bg-[#FAF9F6]">
+          <section className="lg:col-span-4 flex flex-col">
+            <div className="shrink-0 px-4 py-2 border-b border-neutral-200 bg-[#FAF9F6]">
               <h2 className={panelTitleClass}>真人照片</h2>
             </div>
-            <div className="flex-1 min-h-0 relative flex items-center justify-center p-4 bg-white">
+            <div className="relative px-3 py-2 bg-white">
             <div className={previewFrameClass}>
               {cameraMode !== 'off' ? (
                 <video
@@ -403,7 +403,7 @@ export default function TryOnModule({ onNavigate }: TryOnModuleProps) {
               )}
             </div>
             </div>
-            <div className="shrink-0 px-4 pb-4 pt-2 flex justify-center gap-2 border-t border-neutral-200 bg-[#FAF9F6]">
+            <div className="shrink-0 px-3 pb-2 pt-1 flex justify-center gap-2 border-t border-neutral-200 bg-[#FAF9F6]">
             <button
               type="button"
               className={`w-10 h-10 rounded-full flex items-center justify-center border transition-colors ${
@@ -429,11 +429,11 @@ export default function TryOnModule({ onNavigate }: TryOnModuleProps) {
         </section>
 
         {/* 中：生成预览 */}
-        <section className="lg:col-span-4 flex flex-col min-h-0 min-h-[16rem] lg:min-h-0">
-          <div className="shrink-0 px-4 py-3 border-b border-neutral-200 bg-[#FAF9F6]">
+        <section className="lg:col-span-4 flex flex-col">
+          <div className="shrink-0 px-4 py-2 border-b border-neutral-200 bg-[#FAF9F6]">
             <h2 className={panelTitleClass}>生成预览</h2>
           </div>
-          <div className="flex-1 min-h-0 relative flex items-center justify-center p-4 bg-white">
+          <div className="relative px-3 py-2 bg-white">
             <div className={previewFrameClass}>
               {tryOnPreview ? (
                 <>
@@ -458,20 +458,20 @@ export default function TryOnModule({ onNavigate }: TryOnModuleProps) {
         </section>
 
         {/* 右：数字衣橱 */}
-        <aside className="lg:col-span-4 flex flex-col min-h-0 bg-[#FAF9F6] min-h-[18rem] lg:min-h-0">
-          <div className="shrink-0 px-4 pt-4 pb-3 border-b border-neutral-200">
-            <div className="flex items-center justify-between mb-1">
+        <aside className="lg:col-span-4 flex flex-col bg-[#FAF9F6] max-h-[42vh] lg:max-h-[26rem]">
+          <div className="shrink-0 px-4 pt-3 pb-2 border-b border-neutral-200">
+            <div className="flex items-center justify-between mb-0.5">
               <h2 className="text-sm font-black uppercase tracking-widest text-black">数字衣橱</h2>
               <span className="text-[9px] font-mono text-black/45 bg-white border border-neutral-200 px-2 py-0.5">
                 {wardrobeOutfits.length} SPEC
               </span>
             </div>
-            <p className="text-[10px] text-black/45 leading-relaxed">选择服装造型，再点击「生成试穿」</p>
+            <p className="text-[9px] text-black/45 leading-relaxed">选择造型后生成试穿</p>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-4 py-3">
+          <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-3 py-2">
             {wardrobeOutfits.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 gap-2">
                 {wardrobeOutfits.map((item) => {
                   const isSelected = activeOutfit?.key === item.key;
                   return (
@@ -512,7 +512,7 @@ export default function TryOnModule({ onNavigate }: TryOnModuleProps) {
                 })}
               </div>
             ) : (
-              <div className="h-full min-h-[120px] flex flex-col items-center justify-center text-center px-4 py-8 border border-dashed border-neutral-300 bg-white">
+              <div className="min-h-[5rem] flex flex-col items-center justify-center text-center px-3 py-4 border border-dashed border-neutral-300 bg-white">
                 <span className="material-icons-round text-3xl text-neutral-300 mb-2">checkroom</span>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-black/70 mb-1">衣橱为空</p>
                 <p className="text-[9px] text-black/45 leading-relaxed">
@@ -522,16 +522,16 @@ export default function TryOnModule({ onNavigate }: TryOnModuleProps) {
             )}
           </div>
 
-          <div className="shrink-0 p-4 pt-3 border-t border-neutral-200 space-y-3 bg-white">
-            <div className="flex items-start gap-2 border border-neutral-200 bg-neutral-50 px-3 py-2.5">
+          <div className="shrink-0 p-3 border-t border-neutral-200 space-y-2 bg-white">
+            <div className="flex items-start gap-2 border border-neutral-200 bg-neutral-50 px-2.5 py-2">
               <span className="material-icons-round text-sm text-primary shrink-0 mt-0.5">info</span>
-              <p className="text-[10px] text-black/55 leading-relaxed">{applyHint}</p>
+              <p className="text-[9px] text-black/55 leading-relaxed">{applyHint}</p>
             </div>
             <button
               type="button"
               onClick={() => void handleApplyStyle()}
               disabled={isApplying || (cooldownUntil !== null && Date.now() < cooldownUntil)}
-              className="w-full bg-primary text-white py-3.5 flex items-center justify-between px-5 group active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_8px_24px_rgba(95,61,148,0.25)]"
+              className="w-full bg-primary text-white py-3 flex items-center justify-between px-4 group active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_8px_24px_rgba(95,61,148,0.25)]"
             >
               <div className="flex flex-col items-start gap-0.5">
                 <span className="text-sm font-black uppercase tracking-widest">{applyLabel}</span>
