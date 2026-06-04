@@ -173,9 +173,19 @@ const App: React.FC = () => {
       <div className="relative w-full h-full bg-[#FAF9F6] overflow-hidden flex flex-col md:flex-row">
         <div className="absolute inset-0 grid-bg pointer-events-none opacity-[0.03]"></div>
 
-        <Navbar activeView={currentView} onViewChange={setCurrentView} />
+        {currentView !== View.MODEL_FACE_GEN && (
+          <Navbar activeView={currentView} onViewChange={setCurrentView} />
+        )}
 
-        <div className={`flex-1 h-full min-h-0 relative z-10 pb-24 md:pb-0 ${currentView === View.HOME ? 'overflow-hidden bg-black' : 'overflow-y-auto'}`}>
+        <div
+          className={`flex-1 h-full min-h-0 relative z-10 ${
+            currentView === View.MODEL_FACE_GEN
+              ? 'overflow-hidden p-0'
+              : currentView === View.HOME
+                ? 'overflow-hidden bg-black pb-24 md:pb-0'
+                : 'overflow-y-auto pb-24 md:pb-0'
+          }`}
+        >
           {renderView()}
         </div>
       </div>

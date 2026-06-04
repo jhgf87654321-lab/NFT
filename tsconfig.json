@@ -21,6 +21,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@nftt/lib/*": [
+        "./lib/*"
       ]
     },
     "allowImportingTsExtensions": true,
