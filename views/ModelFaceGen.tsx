@@ -72,7 +72,7 @@ const ModelFaceGen: React.FC<ModelFaceGenProps> = ({ onNavigate }) => {
       </header>
 
       <main className="w-full max-w-7xl mx-auto px-4 lg:px-8 relative z-10 mb-28">
-        <div className="bg-white border border-neutral-300 rounded-none overflow-visible shadow-none">
+        <div className="bg-white border border-neutral-300 rounded-none overflow-hidden shadow-none">
           <Suspense
             fallback={
               <div className="flex min-h-[420px] items-center justify-center bg-[#FAF9F6] text-[10px] font-bold uppercase tracking-widest text-black/40">

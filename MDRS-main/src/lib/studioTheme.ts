@@ -1,5 +1,11 @@
 export type StudioTheme = 'mdrs' | 'axon';
 
+/** 与形象生成器一致：单栏最大视口高度，内部滚动、底栏固定 */
+export const AXON_STUDIO_VIEWPORT_HEIGHT = 'h-[85vh] max-h-[85vh] min-h-[420px]';
+
+export const axonStudioColumnClass =
+  'lg:col-span-4 flex w-full min-h-0 flex-col overflow-hidden ' + AXON_STUDIO_VIEWPORT_HEIGHT;
+
 export function isAxonTheme(theme: StudioTheme): boolean {
   return theme === 'axon';
 }

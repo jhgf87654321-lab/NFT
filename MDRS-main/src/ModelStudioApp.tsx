@@ -21,6 +21,7 @@ import { getLandingMusicResolvedSrc } from '@nftt/lib/landingMusic';
 import { VIDEO_NAV_HREF } from './lib/navConstants';
 import { MtmAuth } from './MtmAuth';
 import { cn } from './lib/utils';
+import { AXON_STUDIO_VIEWPORT_HEIGHT } from './lib/studioTheme';
 const ThreeViewDevelopingPage = React.lazy(() =>
   import('./components/ThreeViewDevelopingPage').then((m) => ({ default: m.ThreeViewDevelopingPage })),
 );
@@ -794,7 +795,12 @@ export function ModelStudioApp({ embed = false, axonShell = false, onNavigateAut
         </div>
       ) : axonShell ? (
         <>
-          <div className="grid w-full min-h-[min(85vh,920px)] grid-cols-1 items-stretch font-sans text-black lg:grid-cols-12 lg:divide-x lg:divide-neutral-200">
+          <div
+            className={cn(
+              'grid w-full grid-cols-1 items-stretch overflow-hidden font-sans text-black lg:grid-cols-12 lg:divide-x lg:divide-neutral-200',
+              AXON_STUDIO_VIEWPORT_HEIGHT,
+            )}
+          >
             {workspace}
           </div>
           <AnimatePresence>

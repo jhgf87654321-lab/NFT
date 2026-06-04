@@ -7,7 +7,7 @@ import { renderModelCardToPngDataUrl } from '../lib/modelCardCanvas';
 import { CharacterAttributes } from '../types';
 import type { StudioTheme } from '../lib/studioTheme';
 import { cn } from '../lib/utils';
-import { isAxonTheme } from '../lib/studioTheme';
+import { axonStudioColumnClass, isAxonTheme } from '../lib/studioTheme';
 
 export type MainViewportHandle = {
   /** 截取含外圈摩卡阴影的整张模卡为 PNG data URL（供 COS 上传） */
@@ -213,14 +213,14 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
   return (
     <div
       className={cn(
-        'relative flex h-full flex-col overflow-hidden',
+        'relative flex h-full min-h-0 flex-col overflow-hidden',
         axon
-          ? 'lg:col-span-4 w-full min-h-[min(85vh,920px)] max-h-none bg-white border-b border-[#E5E5E5] p-5 lg:border-b-0 lg:border-r-0 rounded-none'
+          ? cn(axonStudioColumnClass, 'bg-white border-b border-[#E5E5E5] p-5 lg:border-b-0 lg:border-r-0 rounded-none')
           : 'flex-1 items-center overflow-y-auto p-12 no-scrollbar',
       )}
     >
       {axon && (
-        <div className="shrink-0 flex items-center justify-between pb-3 border-b border-[#E5E5E5] mb-4">
+        <div className="shrink-0 flex items-center justify-between pb-3 border-b border-[#E5E5E5] mb-3">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 bg-primary border border-primary" />
             <span className="text-[10px] font-bold tracking-wider uppercase font-mono text-neutral-800">
@@ -235,7 +235,7 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
       )}
       <div
         className={cn(
-          'relative flex flex-1 flex-col min-h-0',
+          'relative flex min-h-0 flex-1 flex-col',
           axon ? 'items-center justify-start overflow-y-auto no-scrollbar' : 'items-center',
         )}
       >
@@ -244,12 +244,15 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
         ref={fullCardRef}
         className={cn(
           'relative box-border w-full flex-shrink-0',
-          axon ? 'max-w-[340px] mx-auto bg-[#FAF9F6] p-4' : 'max-w-[min(100%,44rem)] bg-[#f8f8f8] p-10 sm:p-14',
+          axon ? 'max-w-[340px] mx-auto bg-[#FAF9F6] p-4 pb-2' : 'max-w-[min(100%,44rem)] bg-[#f8f8f8] p-10 sm:p-14',
         )}
       >
       <div
         data-mtm-card-root
-        className="relative mx-auto flex w-full max-w-2xl flex-shrink-0 flex-col overflow-hidden border border-black/5 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.1)] min-h-[44rem]"
+        className={cn(
+          'relative mx-auto flex w-full max-w-2xl flex-shrink-0 flex-col overflow-hidden border border-black/5 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.1)]',
+          axon ? 'min-h-[28rem]' : 'min-h-[44rem]',
+        )}
         style={useAdaptiveCard ? { aspectRatio: `${imageAspect}` } : { aspectRatio: '3 / 4' }}
       >
         <AnimatePresence mode="wait">
@@ -393,7 +396,12 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
       </div>
       </div>
 
-      <div className="mt-8 flex w-full max-w-2xl flex-col items-center pb-12">
+      <div
+        className={cn(
+          'flex w-full flex-col items-center shrink-0',
+          axon ? 'max-w-[340px] mx-auto border-t border-[#E5E5E5] pt-3 mt-1 pb-1' : 'mt-8 max-w-2xl pb-12',
+        )}
+      >
         {imageUrl && !isGenerating && (
           <p className="mb-3 text-center text-[8px] font-bold uppercase tracking-widest text-black/35">
             右键上方大图「图片另存为」可保存不含模卡装饰的纯生成图；左侧按钮下载整张模卡

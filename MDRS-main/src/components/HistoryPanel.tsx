@@ -14,7 +14,7 @@ import { Search, MoreHorizontal } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 import type { StudioTheme } from '../lib/studioTheme';
-import { isAxonTheme } from '../lib/studioTheme';
+import { axonStudioColumnClass, isAxonTheme } from '../lib/studioTheme';
 
 export type PersonalCard = { imageUrl: string; keywords: string };
 
@@ -232,7 +232,7 @@ export function HistoryPanel({
       className={cn(
         'z-40 flex h-full flex-col overflow-hidden',
         axon
-          ? 'lg:col-span-4 w-full min-h-[min(85vh,920px)] max-h-none bg-[#FAF9F6] text-black p-5 rounded-none overflow-y-auto no-scrollbar'
+          ? cn(axonStudioColumnClass, 'bg-[#FAF9F6] text-black p-5 rounded-none')
           : 'w-[300px] min-w-0 max-w-[300px] flex-shrink-0 border-l border-black/5 bg-white px-4 py-5',
       )}
     >
@@ -391,7 +391,12 @@ export function HistoryPanel({
         </div>
       </div>
 
-      <div className="flex shrink-0 flex-col gap-2.5 border-t border-black/10 bg-white pt-3">
+      <div
+        className={cn(
+          'flex shrink-0 flex-col gap-2.5 border-t pt-3',
+          axon ? 'border-[#E5E5E5] bg-[#FAF9F6]' : 'border-black/10 bg-white',
+        )}
+      >
         <label className="flex min-w-0 cursor-pointer items-start gap-2 rounded-sm border border-black/10 bg-black/[0.02] px-2 py-1.5 transition-colors hover:border-black/20">
           <input
             type="checkbox"

@@ -12,6 +12,7 @@ import {
   studioIconBtnActive,
   studioPrimaryBtn,
   studioRangeAccent,
+  axonStudioColumnClass,
 } from '../lib/studioTheme';
 
 interface CustomizationPanelProps {
@@ -101,13 +102,13 @@ export function CustomizationPanel({
   return (
     <div
       className={cn(
-        'flex flex-col z-40 h-full overflow-y-auto no-scrollbar',
+        'z-40 flex h-full min-h-0 flex-col overflow-hidden',
         axon
-          ? 'lg:col-span-4 w-full min-h-[min(85vh,920px)] max-h-none bg-[#FAF9F6] text-black border-b border-[#E5E5E5] p-5 lg:border-b-0 lg:border-r-0 rounded-none'
+          ? cn(axonStudioColumnClass, 'bg-[#FAF9F6] text-black border-b border-[#E5E5E5] p-5 lg:border-b-0 lg:border-r-0 rounded-none')
           : 'w-[400px] bg-white border-r border-black/5 p-8',
       )}
     >
-      <div className={cn('flex items-start justify-between', axon ? 'mb-6' : 'mb-12')}>
+      <div className={cn('shrink-0 flex items-start justify-between', axon ? 'mb-6' : 'mb-12')}>
         <div className="flex flex-col gap-1 w-full mr-4">
           <div className="flex items-center gap-2 mb-1">
             {axon && <span className="w-1.5 h-1.5 bg-primary border border-primary shrink-0" />}
@@ -206,7 +207,7 @@ export function CustomizationPanel({
       </div>
 
       {attributes.isVirtualRestoration && (
-        <div className="mb-8 p-4 bg-black/5 border border-black/5 flex items-center justify-between">
+        <div className="shrink-0 mb-8 p-4 bg-black/5 border border-black/5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-black/10 rounded-sm overflow-hidden">
               <img src={attributes.virtualImage!} alt="Virtual" className="w-full h-full object-cover" />
@@ -227,7 +228,7 @@ export function CustomizationPanel({
 
       {/* 参考图 + 权重（紧凑单行布局，减少纵向占用） */}
       <div
-        className="mb-3 rounded-sm border border-black/5 bg-black/5 p-2"
+        className="shrink-0 mb-3 rounded-sm border border-black/5 bg-black/5 p-2"
         id="tutorial-step-2"
       >
         <div className="flex items-center gap-2">
@@ -287,7 +288,7 @@ export function CustomizationPanel({
       </div>
 
       {attributes.interrogatedPrompt && (
-        <div className="mb-6 p-3 bg-black/5 border border-black/5 space-y-3">
+        <div className="shrink-0 mb-6 p-3 bg-black/5 border border-black/5 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-black text-[8px] font-bold tracking-widest uppercase">反推提示词 (Interrogated Prompt)</span>
             <button 
@@ -320,7 +321,7 @@ export function CustomizationPanel({
         </div>
       )}
 
-      <div className="flex gap-8 mb-6 border-b border-black/5" id="tutorial-step-3">
+      <div className="shrink-0 flex gap-8 mb-6 border-b border-black/5" id="tutorial-step-3">
         {(['male', 'female', 'creature'] as const).map((g) => (
           <button
             key={g}
@@ -339,7 +340,7 @@ export function CustomizationPanel({
         ))}
       </div>
 
-      <div className={cn('flex gap-8 mb-12 border-b', axon ? 'border-[#E5E5E5]' : 'border-black/5')}>
+      <div className={cn('shrink-0 flex gap-8 mb-6 border-b', axon ? 'mb-4 border-[#E5E5E5]' : 'mb-12 border-black/5')}>
         {categories.map((cat) => (
           <button
             key={cat.id}
@@ -360,7 +361,7 @@ export function CustomizationPanel({
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar space-y-10">
+      <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar space-y-10">
         {attributes.isVirtualRestoration ? (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-12">
             <div className="w-12 h-12 border border-black/10 flex items-center justify-center">
@@ -588,7 +589,7 @@ export function CustomizationPanel({
         )}
       </div>
 
-      <div className={cn('pt-6 mt-4 z-10', axon ? 'bg-[#FAF9F6]' : 'bg-white')}>
+      <div className={cn('shrink-0 border-t pt-4 mt-2 z-10', axon ? 'border-[#E5E5E5] bg-[#FAF9F6]' : 'border-black/5 bg-white')}>
         <button
           onClick={onGenerate}
           disabled={isGenerating}
