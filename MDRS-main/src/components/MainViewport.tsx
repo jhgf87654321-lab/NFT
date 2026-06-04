@@ -5,6 +5,9 @@ import html2canvas from 'html2canvas';
 import { t } from '../lib/translations';
 import { renderModelCardToPngDataUrl } from '../lib/modelCardCanvas';
 import { CharacterAttributes } from '../types';
+import type { StudioTheme } from '../lib/studioTheme';
+import { cn } from '../lib/utils';
+import { isAxonTheme } from '../lib/studioTheme';
 
 export type MainViewportHandle = {
   /** 截取含外圈摩卡阴影的整张模卡为 PNG data URL（供 COS 上传） */
@@ -12,6 +15,7 @@ export type MainViewportHandle = {
 };
 
 interface MainViewportProps {
+  theme?: StudioTheme;
   imageUrl: string | null;
   isGenerating: boolean;
   onGenerate: () => void;
@@ -33,9 +37,21 @@ async function dataUrlToDownload(dataUrl: string, filename: string) {
 }
 
 export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(function MainViewport(
-  { imageUrl, isGenerating, onGenerate, error, persistNotice, isPersisting, onRetryPersist, attributes, onAttributesChange },
+  {
+    theme = 'mdrs',
+    imageUrl,
+    isGenerating,
+    onGenerate,
+    error,
+    persistNotice,
+    isPersisting,
+    onRetryPersist,
+    attributes,
+    onAttributesChange,
+  },
   ref,
 ) {
+  const axon = isAxonTheme(theme);
   /** 含外圈白底、阴影、边框的完整模卡区域 */
   const fullCardRef = useRef<HTMLDivElement>(null);
   const [imageAspect, setImageAspect] = useState<number>(3 / 4);
@@ -195,11 +211,41 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
   };
 
   return (
-    <div className="relative flex h-full flex-1 flex-col items-center overflow-y-auto p-12 no-scrollbar">
+    <div
+      className={cn(
+        'relative flex h-full flex-col overflow-hidden',
+        axon
+          ? 'lg:col-span-4 w-full max-h-[85vh] bg-white border-b lg:border-b-0 border-r border-[#E5E5E5] p-5 rounded-none'
+          : 'flex-1 items-center overflow-y-auto p-12 no-scrollbar',
+      )}
+    >
+      {axon && (
+        <div className="shrink-0 flex items-center justify-between pb-3 border-b border-[#E5E5E5] mb-4">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-primary border border-primary" />
+            <span className="text-[10px] font-bold tracking-wider uppercase font-mono text-neutral-800">
+              MODEL CARD PREVIEW
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-neutral-100 border border-neutral-300 py-0.5 px-3 rounded-none">
+            <span className="text-[8.5px] font-mono font-black uppercase text-black">MTM</span>
+            <span className="text-[8.5px] font-mono font-bold text-primary">LIVE</span>
+          </div>
+        </div>
+      )}
+      <div
+        className={cn(
+          'relative flex flex-1 flex-col min-h-0',
+          axon ? 'items-center justify-start overflow-y-auto no-scrollbar' : 'items-center',
+        )}
+      >
       {/* 外层留白 + 背景，避免大阴影被 overflow 裁掉；html2canvas 截此根节点 */}
       <div
         ref={fullCardRef}
-        className="relative box-border w-full max-w-[min(100%,44rem)] flex-shrink-0 bg-[#f8f8f8] p-10 sm:p-14"
+        className={cn(
+          'relative box-border w-full flex-shrink-0',
+          axon ? 'max-w-[340px] mx-auto bg-[#FAF9F6] p-4' : 'max-w-[min(100%,44rem)] bg-[#f8f8f8] p-10 sm:p-14',
+        )}
       >
       <div
         data-mtm-card-root
@@ -288,7 +334,12 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
                   <button
                     type="button"
                     onClick={() => void handleDownloadModelCard()}
-                    className="flex h-8 w-8 items-center justify-center border border-black/10 text-black transition-all hover:bg-black hover:text-white"
+                    className={cn(
+                      'flex h-8 w-8 items-center justify-center border text-black transition-all',
+                      axon
+                        ? 'border-primary/20 hover:bg-primary hover:text-white'
+                        : 'border-black/10 hover:bg-black hover:text-white',
+                    )}
                     title="下载整张模卡（含外圈摩卡）"
                   >
                     <Download size={14} />
@@ -401,6 +452,7 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
             </p>
           </motion.div>
         </div>
+      </div>
       </div>
     </div>
   );

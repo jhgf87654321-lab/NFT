@@ -4,8 +4,18 @@ import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 import { ChevronDown, ChevronUp, Plus, Camera, Cpu, X, ImagePlus } from 'lucide-react';
 import { t } from '../lib/translations';
+import type { StudioTheme } from '../lib/studioTheme';
+import {
+  isAxonTheme,
+  studioChipIdle,
+  studioChipSelected,
+  studioIconBtnActive,
+  studioPrimaryBtn,
+  studioRangeAccent,
+} from '../lib/studioTheme';
 
 interface CustomizationPanelProps {
+  theme?: StudioTheme;
   attributes: CharacterAttributes;
   onChange: (attrs: CharacterAttributes) => void;
   onGenerate: () => void;
@@ -34,7 +44,15 @@ const getSkinColor = (tone: string) => {
   return colors[tone] || '#f9ebe0';
 };
 
-export function CustomizationPanel({ attributes, onChange, onGenerate, onInterrogate, isGenerating }: CustomizationPanelProps) {
+export function CustomizationPanel({
+  theme = 'mdrs',
+  attributes,
+  onChange,
+  onGenerate,
+  onInterrogate,
+  isGenerating,
+}: CustomizationPanelProps) {
+  const axon = isAxonTheme(theme);
   const [activeCategory, setActiveCategory] = React.useState('face');
   const interrogateInputRef = React.useRef<HTMLInputElement>(null);
   const virtualInputRef = React.useRef<HTMLInputElement>(null);
@@ -81,13 +99,30 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
   };
 
   return (
-    <div className="w-[400px] bg-white border-r border-black/5 flex flex-col p-8 z-40 h-full">
-      <div className="flex items-start justify-between mb-12">
+    <div
+      className={cn(
+        'flex flex-col z-40 h-full overflow-y-auto no-scrollbar',
+        axon
+          ? 'lg:col-span-4 w-full max-h-[85vh] bg-[#FAF9F6] text-black border-b lg:border-b-0 border-r border-[#E5E5E5] p-5 rounded-none'
+          : 'w-[400px] bg-white border-r border-black/5 p-8',
+      )}
+    >
+      <div className={cn('flex items-start justify-between', axon ? 'mb-6' : 'mb-12')}>
         <div className="flex flex-col gap-1 w-full mr-4">
-          <h2 className="text-black text-2xl font-display font-bold tracking-tight">
-            模特定制与库
-          </h2>
-          <p className="text-black/40 text-[10px] font-bold tracking-[0.2em]">生成 · 归档 · 公区</p>
+          <div className="flex items-center gap-2 mb-1">
+            {axon && <span className="w-1.5 h-1.5 bg-primary border border-primary shrink-0" />}
+            <h2
+              className={cn(
+                'text-black font-bold tracking-tight',
+                axon ? 'text-[11px] font-mono uppercase tracking-wider' : 'text-2xl font-display',
+              )}
+            >
+              {axon ? 'PARAMETRIC CONTROLS' : '模特定制与库'}
+            </h2>
+          </div>
+          <p className={cn('font-bold uppercase', axon ? 'text-[9px] tracking-[0.25em] text-black/45' : 'text-black/40 text-[10px] tracking-[0.2em]')}>
+            {axon ? '面部 · 毛发 · 场景' : '生成 · 归档 · 公区'}
+          </p>
         </div>
         
         <div className="flex gap-2">
@@ -96,10 +131,12 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
             id="tutorial-step-1"
             onClick={() => referenceInputRef.current?.click()}
             className={cn(
-              "w-10 h-10 border flex items-center justify-center transition-all group relative",
-              attributes.referenceImage 
-                ? "bg-black text-white border-black" 
-                : "border-black/5 hover:bg-black hover:text-white animate-flash-bw-btn hover:animate-none"
+              'w-10 h-10 border flex items-center justify-center transition-all group relative',
+              attributes.referenceImage
+                ? studioIconBtnActive(theme)
+                : axon
+                  ? 'border-primary/20 text-primary hover:bg-primary hover:text-white'
+                  : 'border-black/5 hover:bg-black hover:text-white animate-flash-bw-btn hover:animate-none',
             )}
             title="参考图"
           >
@@ -119,7 +156,12 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
           {/* Reverse Prompt Button */}
           <button 
             onClick={() => interrogateInputRef.current?.click()}
-            className="w-10 h-10 border border-black/5 flex items-center justify-center hover:bg-black hover:text-white transition-all group relative"
+            className={cn(
+              'w-10 h-10 border flex items-center justify-center transition-all group relative',
+              axon
+                ? 'border-primary/20 text-primary/70 hover:bg-primary hover:text-white'
+                : 'border-black/5 hover:bg-black hover:text-white',
+            )}
             title="关键词反推"
           >
             <Camera size={16} />
@@ -140,7 +182,11 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
             onClick={() => virtualInputRef.current?.click()}
             className={cn(
               "w-10 h-10 border flex items-center justify-center transition-all group relative",
-              attributes.isVirtualRestoration ? "bg-black text-white border-black" : "border-black/5 hover:bg-black hover:text-white"
+              attributes.isVirtualRestoration
+                ? studioIconBtnActive(theme)
+                : axon
+                  ? 'border-primary/20 text-primary/70 hover:bg-primary hover:text-white'
+                  : 'border-black/5 hover:bg-black hover:text-white',
             )}
             title="3D 还原真人"
           >
@@ -219,7 +265,10 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
               max={100}
               value={Math.round(attributes.referenceWeight * 100)}
               onChange={(e) => updateAttr('referenceWeight', parseInt(e.target.value, 10) / 100)}
-              className="h-1 w-full cursor-pointer appearance-none rounded-full bg-black/10 accent-black"
+              className={cn(
+                'h-1 w-full cursor-pointer appearance-none rounded-full bg-black/10',
+                studioRangeAccent(theme),
+              )}
             />
           </div>
           {attributes.referenceImage ? (
@@ -261,7 +310,10 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
                 interrogatedPrompt: null 
               });
             }}
-            className="w-full py-2 bg-black text-white text-[8px] font-bold tracking-widest uppercase hover:bg-black/90 transition-all"
+            className={cn(
+              'w-full py-2 text-[8px] font-bold tracking-widest uppercase transition-all',
+              axon ? 'bg-primary text-white hover:bg-primary/90' : 'bg-black text-white hover:bg-black/90',
+            )}
           >
             Apply to Custom Prompt
           </button>
@@ -275,7 +327,11 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
             onClick={() => updateAttr('gender', g)}
             className={cn(
               "flex-1 py-2 text-[10px] font-bold tracking-widest uppercase transition-all",
-              attributes.gender === g ? "bg-black text-white" : "text-black/40 hover:text-black"
+              attributes.gender === g
+                ? studioChipSelected(theme)
+                : axon
+                  ? 'text-black/40 hover:text-primary'
+                  : 'text-black/40 hover:text-black',
             )}
           >
             {t(g)}
@@ -283,7 +339,7 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
         ))}
       </div>
 
-      <div className="flex gap-8 mb-12 border-b border-black/5">
+      <div className={cn('flex gap-8 mb-12 border-b', axon ? 'border-[#E5E5E5]' : 'border-black/5')}>
         {categories.map((cat) => (
           <button
             key={cat.id}
@@ -295,7 +351,10 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
           >
             {cat.label}
             {activeCategory === cat.id && (
-              <motion.div layoutId="activeCat" className="absolute bottom-0 left-0 right-0 h-0.5 bg-black" />
+              <motion.div
+                layoutId="activeCat"
+                className={cn('absolute bottom-0 left-0 right-0 h-0.5', axon ? 'bg-primary' : 'bg-black')}
+              />
             )}
           </button>
         ))}
@@ -314,20 +373,23 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
           <>
             {activeCategory === 'face' && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <AttributeSlider 
+                <AttributeSlider
+                  theme={theme}
                   label="年龄 (Age)" 
                   value={attributes.age} 
                   min={18} 
                   max={80} 
                   onChange={(v: number) => updateAttr('age', v)} 
                 />
-                <AttributeSelect 
+                <AttributeSelect
+                  theme={theme}
                   label="人种 (Ethnicity)" 
                   value={attributes.ethnicity} 
                   options={['Caucasian', 'Asian', 'African', 'Hispanic', 'Middle Eastern']} 
                   onChange={(v: string) => updateAttr('ethnicity', v)} 
                 />
-                <AttributeSelect 
+                <AttributeSelect
+                  theme={theme}
                   label="脸型 (Face Shape)" 
                   value={attributes.faceShape} 
                   options={[
@@ -344,38 +406,44 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
                   onChange={(v: string) => updateAttr('faceShape', v)} 
                 />
                 <div className="grid grid-cols-2 gap-4">
-                  <AttributeSelect 
+                  <AttributeSelect
+                  theme={theme}
                     label="鼻高 (Nose Height)" 
                     value={attributes.noseHeight} 
                     options={['High', 'Medium', 'Low']} 
                     onChange={(v: string) => updateAttr('noseHeight', v)} 
                   />
-                  <AttributeSelect 
+                  <AttributeSelect
+                  theme={theme}
                     label="鼻宽 (Nose Width)" 
                     value={attributes.noseWidth} 
                     options={['Wide', 'Narrow', 'Average']} 
                     onChange={(v: string) => updateAttr('noseWidth', v)} 
                   />
                 </div>
-                <AttributeSelect 
+                <AttributeSelect
+                  theme={theme}
                   label="眼型 (Eye Shape)" 
                   value={attributes.eyeShape} 
                   options={['Almond', 'Monolid', 'Hooded', 'Downturned', 'Upturned']} 
                   onChange={(v: string) => updateAttr('eyeShape', v)} 
                 />
-                <AttributeSelect 
+                <AttributeSelect
+                  theme={theme}
                   label="嘴型 (Mouth Shape)" 
                   value={attributes.mouthShape} 
                   options={['Full', 'Thin', 'Bow-shaped']} 
                   onChange={(v: string) => updateAttr('mouthShape', v)} 
                 />
-                <AttributeSelect 
+                <AttributeSelect
+                  theme={theme}
                   label="瞳色 (Eye Color)" 
                   value={attributes.eyeColor} 
                   options={['Blue', 'Brown', 'Green', 'Hazel', 'Grey', 'Piercing Green']} 
                   onChange={(v: string) => updateAttr('eyeColor', v)} 
                 />
-                <AttributeSelect 
+                <AttributeSelect
+                  theme={theme}
                   label="表情 (Expression)" 
                   value={attributes.expression} 
                   options={['Neutral', 'Happy', 'Serious', 'Angry', 'Surprised', 'Smirk']} 
@@ -386,7 +454,8 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
 
             {activeCategory === 'hair' && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <VisualAttributeSelect 
+                <VisualAttributeSelect
+                  theme={theme}
                   label="发型 (Hair Style)" 
                   value={attributes.hairStyle} 
                   options={[
@@ -415,19 +484,22 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
                     />
                   </div>
                 )}
-                <AttributeSelect 
+                <AttributeSelect
+                  theme={theme}
                   label="发色 (Hair Color)" 
                   value={attributes.hairColor} 
                   options={['Blonde', 'Black', 'Brown', 'Red', 'White', 'Blue', 'Dark brown']} 
                   onChange={(v: string) => updateAttr('hairColor', v)} 
                 />
-                <VisualAttributeSelect 
+                <VisualAttributeSelect
+                  theme={theme}
                   label="眉毛 (Eyebrows)" 
                   value={attributes.eyebrows} 
                   options={['Arched', 'Straight', 'Bushy', 'Thick', 'Thin']} 
                   onChange={(v: string) => updateAttr('eyebrows', v)} 
                 />
-                <VisualAttributeSelect 
+                <VisualAttributeSelect
+                  theme={theme}
                   label="胡须 (Beard)" 
                   value={attributes.beard} 
                   options={['Clean-shaven', 'Stubble', 'Full beard', 'Goatee', 'Mustache']} 
@@ -438,7 +510,8 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
 
             {activeCategory === 'body' && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <AttributeSlider 
+                <AttributeSlider
+                  theme={theme}
                   label="身高 (Height)" 
                   value={attributes.height} 
                   min={150} 
@@ -469,13 +542,15 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
                   max={100}
                   onChange={(v: number) => updateAttr('faceMarkingDetail', v)}
                 />
-                <AttributeSelect 
+                <AttributeSelect
+                  theme={theme}
                   label="体型 (Body Type)" 
                   value={attributes.bodyType} 
                   options={['Athletic', 'Slim', 'Muscular', 'Average', 'Curvy']} 
                   onChange={(v: string) => updateAttr('bodyType', v)} 
                 />
-                <AttributeSelect 
+                <AttributeSelect
+                  theme={theme}
                   label="服装 (Clothing)" 
                   value={attributes.clothing} 
                   options={['Minimalist techwear', 'Casual hoodie', 'Formal suit', 'Cyberpunk armor', 'T-shirt', 'Simple black tank top']} 
@@ -486,19 +561,22 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
 
             {activeCategory === 'scene' && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <AttributeSelect 
+                <AttributeSelect
+                  theme={theme}
                   label="妆容 (Makeup)" 
                   value={attributes.makeup} 
                   options={['No makeup', 'Natural beauty', 'Soft', 'Bold', 'Editorial']} 
                   onChange={(v: string) => updateAttr('makeup', v)} 
                 />
-                <AttributeSelect 
+                <AttributeSelect
+                  theme={theme}
                   label="光照 (Lighting)" 
                   value={attributes.lighting} 
                   options={['Soft studio lighting', 'Cinematic Studio', 'Natural light', 'Dramatic', 'Neon']} 
                   onChange={(v: string) => updateAttr('lighting', v)} 
                 />
-                <AttributeSelect 
+                <AttributeSelect
+                  theme={theme}
                   label="背景 (Background)" 
                   value={attributes.background} 
                   options={['Plain white wall', 'Futuristic studio', 'Urban', 'Nature', 'Solid Black']} 
@@ -510,25 +588,27 @@ export function CustomizationPanel({ attributes, onChange, onGenerate, onInterro
         )}
       </div>
 
-      <div className="pt-6 mt-4 bg-white z-10">
+      <div className={cn('pt-6 mt-4 z-10', axon ? 'bg-[#FAF9F6]' : 'bg-white')}>
         <button
           onClick={onGenerate}
           disabled={isGenerating}
           className={cn(
-            "w-full py-5 rounded-sm text-[10px] font-bold tracking-[0.3em] uppercase transition-all duration-500",
-            isGenerating 
-              ? "bg-black/5 text-black/20 cursor-not-allowed" 
-              : "bg-black text-white hover:bg-black/90 active:scale-[0.98] shadow-2xl"
+            'w-full py-4 rounded-none text-[10px] font-bold tracking-[0.3em] uppercase transition-all duration-500',
+            isGenerating
+              ? axon
+                ? 'bg-neutral-200 text-black/30 cursor-not-allowed'
+                : 'bg-black/5 text-black/20 cursor-not-allowed'
+              : studioPrimaryBtn(false, theme),
           )}
         >
-          {isGenerating ? "Processing..." : "Generate Model"}
+          {isGenerating ? 'Processing...' : axon ? 'Generate Model Card' : 'Generate Model'}
         </button>
       </div>
     </div>
   );
 }
 
-function AttributeSlider({ label, value, min, max, onChange }: any) {
+function AttributeSlider({ label, value, min, max, onChange, theme = 'mdrs' }: any) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -541,13 +621,16 @@ function AttributeSlider({ label, value, min, max, onChange }: any) {
         max={max} 
         value={value} 
         onChange={(e) => onChange(parseInt(e.target.value))}
-        className="w-full h-[2px] bg-black/5 rounded-full appearance-none cursor-pointer accent-black"
+        className={cn(
+          'w-full h-[2px] bg-black/5 rounded-full appearance-none cursor-pointer',
+          studioRangeAccent(theme),
+        )}
       />
     </div>
   );
 }
 
-function AttributeSelect({ label, value, options, onChange }: any) {
+function AttributeSelect({ label, value, options, onChange, theme = 'mdrs' }: any) {
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
@@ -572,7 +655,9 @@ function AttributeSelect({ label, value, options, onChange }: any) {
               }}
               className={cn(
                 "w-full px-4 py-3 text-left text-[10px] font-bold tracking-widest uppercase transition-colors",
-                value === opt ? "bg-black text-white" : "text-black/40 hover:text-black hover:bg-black/5"
+                value === opt
+                  ? studioChipSelected(theme)
+                  : 'text-black/40 hover:text-black hover:bg-black/5'
               )}
             >
               {t(opt)}
@@ -584,7 +669,7 @@ function AttributeSelect({ label, value, options, onChange }: any) {
   );
 }
 
-function VisualAttributeSelect({ label, value, options, onChange }: any) {
+function VisualAttributeSelect({ label, value, options, onChange, theme = 'mdrs' }: any) {
   return (
     <div className="space-y-4">
       <span className="text-black/40 text-[10px] font-bold tracking-widest uppercase">{label}</span>
@@ -594,10 +679,8 @@ function VisualAttributeSelect({ label, value, options, onChange }: any) {
             key={opt}
             onClick={() => onChange(opt)}
             className={cn(
-              "flex items-center justify-center px-4 py-3 rounded-sm border text-[9px] font-bold tracking-widest uppercase transition-all duration-300",
-              value === opt 
-                ? "bg-black border-black text-white shadow-xl" 
-                : "bg-transparent border-black/5 text-black/40 hover:border-black/20"
+              'flex items-center justify-center px-4 py-3 rounded-sm border text-[9px] font-bold tracking-widest uppercase transition-all duration-300',
+              value === opt ? studioChipSelected(theme) : studioChipIdle(theme),
             )}
           >
             {t(opt)}

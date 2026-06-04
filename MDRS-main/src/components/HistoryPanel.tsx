@@ -13,6 +13,8 @@ import {
 import { Search, MoreHorizontal } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
+import type { StudioTheme } from '../lib/studioTheme';
+import { isAxonTheme } from '../lib/studioTheme';
 
 export type PersonalCard = { imageUrl: string; keywords: string };
 
@@ -25,6 +27,7 @@ function buildPersonalCards(urls: string[], files: ModelFileDoc[]): PersonalCard
 }
 
 type Props = {
+  theme?: StudioTheme;
   uid: string;
   email?: string;
   refreshKey: number;
@@ -36,6 +39,8 @@ type Props = {
   onOpenGlobalGallery?: () => void;
   /** Archive 搜索框：回车或点击图标；含中文时会先译英再搜 MODELFILE.keywords */
   onSubmitKeywordSearch?: (keyword: string) => void | Promise<void>;
+  /** 主站：跳转统一登录页 */
+  onOpenAuth?: () => void;
 };
 
 const GLOBAL_PREVIEW_LIMIT = 4;
@@ -44,6 +49,7 @@ const REALTIME_WATCH_ENABLED =
   String(import.meta.env.VITE_ENABLE_DB_WATCH || '').trim() === '1';
 
 export function HistoryPanel({
+  theme = 'mdrs',
   uid,
   email,
   refreshKey,
@@ -52,7 +58,9 @@ export function HistoryPanel({
   onOpenPersonalGallery,
   onOpenGlobalGallery,
   onSubmitKeywordSearch,
+  onOpenAuth,
 }: Props) {
+  const axon = isAxonTheme(theme);
   const [searchDraft, setSearchDraft] = React.useState('');
   const [searchBusy, setSearchBusy] = React.useState(false);
   const [personalCards, setPersonalCards] = React.useState<PersonalCard[]>([]);
@@ -220,7 +228,33 @@ export function HistoryPanel({
   };
 
   return (
-    <div className="z-40 flex h-full w-[300px] min-w-0 max-w-[300px] flex-shrink-0 flex-col overflow-hidden border-l border-black/5 bg-white px-4 py-5">
+    <div
+      className={cn(
+        'z-40 flex h-full flex-col overflow-hidden',
+        axon
+          ? 'lg:col-span-4 w-full max-h-[85vh] bg-[#FAF9F6] text-black border-t lg:border-t-0 p-5 rounded-none overflow-y-auto no-scrollbar'
+          : 'w-[300px] min-w-0 max-w-[300px] flex-shrink-0 border-l border-black/5 bg-white px-4 py-5',
+      )}
+    >
+      {axon && (
+        <div className="shrink-0 flex items-center justify-between pb-3 border-b border-[#E5E5E5] mb-4">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-primary border border-primary" />
+            <span className="text-[10px] font-bold tracking-wider uppercase font-mono text-neutral-800">
+              MODEL ARCHIVE
+            </span>
+          </div>
+          {isGuest && onOpenAuth && (
+            <button
+              type="button"
+              onClick={onOpenAuth}
+              className="text-[8px] font-black uppercase tracking-widest text-primary hover:underline"
+            >
+              登录同步
+            </button>
+          )}
+        </div>
+      )}
       <div className="no-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto pr-1">
         <div className="flex min-w-0 flex-col gap-5 pb-4">
       <div className="min-w-0 flex flex-col gap-2">
@@ -260,7 +294,7 @@ export function HistoryPanel({
         <div className="flex items-center justify-between">
           <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-black">Personal</h3>
           <div className="flex gap-1">
-            <div className="h-1 w-1 animate-pulse bg-black" />
+            <div className={cn('h-1 w-1 animate-pulse', axon ? 'bg-primary' : 'bg-black')} />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2">

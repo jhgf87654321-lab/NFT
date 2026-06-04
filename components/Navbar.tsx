@@ -39,6 +39,15 @@ const Navbar: React.FC<NavbarProps> = ({ activeView, onViewChange }) => {
             <span className="text-[7px] font-mono tracking-widest font-black leading-none mt-1">OH</span>
           </button>
 
+          {/* MODEL_FACE (MF) */}
+          <button
+            onClick={() => onViewChange(View.MODEL_FACE_GEN)}
+            className={`group w-full flex flex-col items-center gap-0.5 transition-all relative py-1 focus:outline-none ${activeView === View.MODEL_FACE_GEN ? 'text-primary font-black' : 'text-neutral-400 hover:text-primary'}`}
+          >
+            <span className="material-icons-round text-[19px]">face</span>
+            <span className="text-[7px] font-mono tracking-widest font-black leading-none mt-1">MF</span>
+          </button>
+
           {/* TRY_ON (3D) */}
           <button 
             onClick={() => onViewChange(View.TRY_ON)}

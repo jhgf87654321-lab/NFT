@@ -20,6 +20,7 @@ import { loadDemoModelSlotUrls, persistDemoModelSlotUrls } from './lib/demoModel
 import { getLandingMusicResolvedSrc } from '@nftt/lib/landingMusic';
 import { VIDEO_NAV_HREF } from './lib/navConstants';
 import { MtmAuth } from './MtmAuth';
+import { cn } from './lib/utils';
 const ThreeViewDevelopingPage = React.lazy(() =>
   import('./components/ThreeViewDevelopingPage').then((m) => ({ default: m.ThreeViewDevelopingPage })),
 );
@@ -27,10 +28,14 @@ const ThreeViewDevelopingPage = React.lazy(() =>
 export type ModelStudioAppProps = {
   /** 嵌入主站「模特捏脸」：直接进入生成工作台，不显示开屏/滚筒 */
   embed?: boolean;
-  onBack?: () => void;
+  /** 主站融合：三栏布局 + 品牌色，无 MDRS 侧栏/开屏 BGM */
+  axonShell?: boolean;
+  onNavigateAuth?: () => void;
 };
 
-export function ModelStudioApp({ embed = false }: ModelStudioAppProps = {}) {
+export function ModelStudioApp({ embed = false, axonShell = false, onNavigateAuth }: ModelStudioAppProps = {}) {
+  const integrated = embed || axonShell;
+  const theme = axonShell ? 'axon' : 'mdrs';
   const [attributes, setAttributes] = React.useState<CharacterAttributes>(DEFAULT_ATTRIBUTES);
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
   const [isGenerating, setIsGenerating] = React.useState(false);
@@ -333,7 +338,7 @@ export function ModelStudioApp({ embed = false }: ModelStudioAppProps = {}) {
     });
   }, []);
   const [showSettings, setShowSettings] = React.useState(false);
-  const [currentView, setCurrentView] = React.useState<'landing' | 'models' | 'app'>(embed ? 'app' : 'landing');
+  const [currentView, setCurrentView] = React.useState<'landing' | 'models' | 'app'>(integrated ? 'app' : 'landing');
   const [tutorialStep, setTutorialStep] = React.useState(0);
   /** 开屏滚筒与 Models（demo）共用 8 槽位 */
   const [demoModelSlotUrls, setDemoModelSlotUrls] = React.useState(loadDemoModelSlotUrls);
@@ -711,26 +716,113 @@ export function ModelStudioApp({ embed = false }: ModelStudioAppProps = {}) {
     }
   }, []);
 
+  const workspace = hydrated ? (
+    <>
+      <CustomizationPanel
+        theme={theme}
+        attributes={attributes}
+        onChange={setAttributes}
+        onGenerate={() => void handleGenerate()}
+        onInterrogate={handleInterrogate}
+        isGenerating={isGenerating}
+      />
+      <MainViewport
+        theme={theme}
+        ref={mainViewportRef}
+        imageUrl={imageUrl}
+        isGenerating={isGenerating}
+        onGenerate={() => void handleGenerate()}
+        error={error}
+        persistNotice={persistNotice}
+        isPersisting={isPersisting}
+        onRetryPersist={() => void handleRetryPersist()}
+        attributes={attributes}
+        onAttributesChange={(attrs) => setAttributes(attrs)}
+      />
+      <HistoryPanel
+        theme={theme}
+        uid={cloudUser?.uid ?? ''}
+        email={cloudUser?.email}
+        refreshKey={historyRefreshKey}
+        publishToGlobal={publishToGlobal}
+        onPublishToGlobalChange={setPublishToGlobal}
+        onOpenPersonalGallery={cloudUser?.uid ? () => setAppGallery('personal') : undefined}
+        onOpenGlobalGallery={() => setAppGallery('global')}
+        onSubmitKeywordSearch={
+          cloudUser?.uid
+            ? async (kw) => {
+                const raw = kw.trim();
+                const q = (await translateSearchKeywordIfChinese(kw)).trim();
+                const effective = q || raw;
+                setGallerySearchKeyword(effective);
+                setGallerySearchAlt(raw && raw !== effective ? raw : '');
+                setAppGallery('search');
+              }
+            : undefined
+        }
+        onOpenAuth={axonShell ? onNavigateAuth : undefined}
+      />
+    </>
+  ) : (
+    <div
+      className={cn(
+        'col-span-full flex items-center justify-center py-24 font-sans text-[10px] font-bold uppercase tracking-widest text-black/40',
+        axonShell ? 'bg-[#FAF9F6]' : 'min-h-[50vh] bg-white',
+      )}
+    >
+      加载中…
+    </div>
+  );
+
   return (
     <>
-      <audio
-        ref={bgmRefSetter}
-        src={bgmSrc}
-        loop
-        playsInline
-        preload="auto"
-        autoPlay
-        className="pointer-events-none fixed left-0 top-0 h-px w-px opacity-0"
-        aria-hidden
-      />
-      {!hydrated ? (
+      {!axonShell && (
+        <audio
+          ref={bgmRefSetter}
+          src={bgmSrc}
+          loop
+          playsInline
+          preload="auto"
+          autoPlay
+          className="pointer-events-none fixed left-0 top-0 h-px w-px opacity-0"
+          aria-hidden
+        />
+      )}
+      {!hydrated && !axonShell ? (
         <div className="flex h-screen w-screen items-center justify-center bg-white font-sans text-[10px] font-bold uppercase tracking-widest text-black/40">
           加载中…
         </div>
+      ) : axonShell ? (
+        <>
+          <div className="w-full font-sans text-black">{workspace}</div>
+          <AnimatePresence>
+            {appGallery &&
+              (appGallery === 'global' || cloudUser?.uid) &&
+              React.createElement(ModelsPage, {
+                key: `${appGallery}-${gallerySearchKeyword}-${gallerySearchAlt}`,
+                variant: appGallery,
+                uid: cloudUser?.uid,
+                email: cloudUser?.email,
+                listRefreshKey: historyRefreshKey,
+                searchKeyword: appGallery === 'search' ? gallerySearchKeyword : undefined,
+                searchKeywordAlt: appGallery === 'search' ? gallerySearchAlt || undefined : undefined,
+                onBack: () => {
+                  setAppGallery(null);
+                  setGallerySearchKeyword('');
+                  setGallerySearchAlt('');
+                },
+              })}
+          </AnimatePresence>
+          <MtmAuth
+            open={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
+            onSignedIn={(info) => setCloudUser({ uid: info.uid, email: info.email })}
+          />
+        </>
       ) : (
     <div className="relative flex h-screen w-screen overflow-hidden bg-white font-sans">
       <AnimatePresence>
-        {!embed && currentView === 'landing' && (
+        {!integrated && currentView === 'landing' && (
           <LandingPage
             cylinderImages={demoModelSlotUrls}
             onEnter={handleEnterApp}
@@ -741,7 +833,7 @@ export function ModelStudioApp({ embed = false }: ModelStudioAppProps = {}) {
             onOpenVideo={() => window.open(VIDEO_NAV_HREF, '_blank', 'noopener,noreferrer')}
           />
         )}
-        {!embed && currentView === 'models' && (
+        {!integrated && currentView === 'models' && (
           <ModelsPage
             variant="demo"
             demoSlotUrls={demoModelSlotUrls}
@@ -768,6 +860,7 @@ export function ModelStudioApp({ embed = false }: ModelStudioAppProps = {}) {
       />
       <div className="relative z-10 ml-24 flex flex-1 gap-0">
         <CustomizationPanel
+          theme="mdrs"
           attributes={attributes}
           onChange={setAttributes}
           onGenerate={() => void handleGenerate()}
@@ -776,6 +869,7 @@ export function ModelStudioApp({ embed = false }: ModelStudioAppProps = {}) {
         />
         <div className="min-w-0 flex-1 bg-[#f8f8f8]">
           <MainViewport
+            theme="mdrs"
             ref={mainViewportRef}
             imageUrl={imageUrl}
             isGenerating={isGenerating}
@@ -789,14 +883,13 @@ export function ModelStudioApp({ embed = false }: ModelStudioAppProps = {}) {
           />
         </div>
         <HistoryPanel
+          theme="mdrs"
           uid={cloudUser?.uid ?? ''}
           email={cloudUser?.email}
           refreshKey={historyRefreshKey}
           publishToGlobal={publishToGlobal}
           onPublishToGlobalChange={setPublishToGlobal}
-          onOpenPersonalGallery={
-            cloudUser?.uid ? () => setAppGallery('personal') : undefined
-          }
+          onOpenPersonalGallery={cloudUser?.uid ? () => setAppGallery('personal') : undefined}
           onOpenGlobalGallery={() => setAppGallery('global')}
           onSubmitKeywordSearch={
             cloudUser?.uid
@@ -920,7 +1013,7 @@ export function ModelStudioApp({ embed = false }: ModelStudioAppProps = {}) {
         )}
       </AnimatePresence>
 
-      {currentView === 'app' && !cloudUser && (
+      {currentView === 'app' && !cloudUser && !axonShell && (
         <button
           type="button"
           onClick={() => setShowAuthModal(true)}
