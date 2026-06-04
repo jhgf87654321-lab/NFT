@@ -103,7 +103,7 @@ export function CustomizationPanel({
       className={cn(
         'flex flex-col z-40 h-full overflow-y-auto no-scrollbar',
         axon
-          ? 'lg:col-span-4 w-full max-h-[85vh] bg-[#FAF9F6] text-black border-b lg:border-b-0 border-r border-[#E5E5E5] p-5 rounded-none'
+          ? 'lg:col-span-4 w-full min-h-[min(85vh,920px)] max-h-none bg-[#FAF9F6] text-black border-b border-[#E5E5E5] p-5 lg:border-b-0 lg:border-r-0 rounded-none'
           : 'w-[400px] bg-white border-r border-black/5 p-8',
       )}
     >

@@ -232,7 +232,7 @@ export function HistoryPanel({
       className={cn(
         'z-40 flex h-full flex-col overflow-hidden',
         axon
-          ? 'lg:col-span-4 w-full max-h-[85vh] bg-[#FAF9F6] text-black border-t lg:border-t-0 p-5 rounded-none overflow-y-auto no-scrollbar'
+          ? 'lg:col-span-4 w-full min-h-[min(85vh,920px)] max-h-none bg-[#FAF9F6] text-black p-5 rounded-none overflow-y-auto no-scrollbar'
           : 'w-[300px] min-w-0 max-w-[300px] flex-shrink-0 border-l border-black/5 bg-white px-4 py-5',
       )}
     >

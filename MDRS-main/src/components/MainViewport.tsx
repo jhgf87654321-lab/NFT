@@ -215,7 +215,7 @@ export const MainViewport = forwardRef<MainViewportHandle, MainViewportProps>(fu
       className={cn(
         'relative flex h-full flex-col overflow-hidden',
         axon
-          ? 'lg:col-span-4 w-full max-h-[85vh] bg-white border-b lg:border-b-0 border-r border-[#E5E5E5] p-5 rounded-none'
+          ? 'lg:col-span-4 w-full min-h-[min(85vh,920px)] max-h-none bg-white border-b border-[#E5E5E5] p-5 lg:border-b-0 lg:border-r-0 rounded-none'
           : 'flex-1 items-center overflow-y-auto p-12 no-scrollbar',
       )}
     >

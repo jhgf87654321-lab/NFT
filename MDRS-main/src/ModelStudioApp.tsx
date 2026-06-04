@@ -794,7 +794,9 @@ export function ModelStudioApp({ embed = false, axonShell = false, onNavigateAut
         </div>
       ) : axonShell ? (
         <>
-          <div className="w-full font-sans text-black">{workspace}</div>
+          <div className="grid w-full min-h-[min(85vh,920px)] grid-cols-1 items-stretch font-sans text-black lg:grid-cols-12 lg:divide-x lg:divide-neutral-200">
+            {workspace}
+          </div>
           <AnimatePresence>
             {appGallery &&
               (appGallery === 'global' || cloudUser?.uid) &&
