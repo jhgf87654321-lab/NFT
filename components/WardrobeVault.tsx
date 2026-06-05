@@ -84,7 +84,7 @@ export const WardrobeVault: React.FC<WardrobeVaultProps> = ({
                   <img
                     src={nft.image}
                     alt={nft.theme}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
+                    className="w-full h-full object-contain object-center bg-neutral-50 transition-transform duration-300 group-hover:scale-[1.02]"
                     referrerPolicy="no-referrer"
                   />
                   {/* Select button Overlay on hover */}

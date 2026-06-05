@@ -172,22 +172,22 @@ const Store: React.FC<StoreProps> = ({ onOpenDrop, onOpenCollection, onOpenCart,
       </header>
 
       {/* Promo Card - Leaderboard carousel (image only, no text) */}
-      <div className="mb-8 relative">
-        <div className="bg-[#FAF9F6] rounded-[2.5rem] relative overflow-hidden border border-neutral-200 group aspect-[16/10] min-h-[12rem] max-h-[20rem]">
+      <div className="mb-8 relative w-full">
+        <div className="relative w-full overflow-hidden rounded-[2.5rem] border border-neutral-200 bg-[#FAF9F6] h-[clamp(9.5rem,34vw,15.5rem)] sm:h-[clamp(11rem,30vw,17rem)]">
           {(leaderImages.length ? leaderImages : fallbackLeaderboard.map((p) => p.image)).map((src, index) => {
             const meta = fallbackLeaderboard[index % fallbackLeaderboard.length];
             const product = meta;
             return (
               <div
                 key={`${product.id}-${index}`}
-                className={`absolute inset-0 transition-opacity duration-1000 flex items-center justify-center p-3 ${
+                className={`absolute inset-0 transition-opacity duration-1000 flex items-center justify-center px-3 py-2 sm:px-4 sm:py-3 ${
                   index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
                 }`}
               >
                 <img
                   src={src}
                   alt={product.name}
-                  className="max-w-full max-h-full w-auto h-auto object-contain"
+                  className="max-w-full max-h-full w-auto h-auto object-contain object-center"
                   referrerPolicy="no-referrer"
                 />
               </div>

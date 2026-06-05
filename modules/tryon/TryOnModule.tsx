@@ -493,7 +493,7 @@ export default function TryOnModule({ onNavigate }: TryOnModuleProps) {
                       <img
                         src={item.image}
                         alt={item.theme || '服装'}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain object-center bg-[#FAF9F6]"
                         referrerPolicy="no-referrer"
                       />
                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1.5">

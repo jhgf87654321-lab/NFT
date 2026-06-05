@@ -447,12 +447,12 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                     <button
                       type="button"
                       onClick={() => setSelectedNft(item)}
-                      className="h-36 mb-3 flex items-center justify-center relative rounded-2xl overflow-hidden border border-white/10 w-full"
+                      className="aspect-[3/4] mb-3 flex items-center justify-center relative rounded-2xl overflow-hidden border border-white/10 w-full bg-white/5"
                     >
                       <img
                         src={item.image}
                         alt={item.theme || 'NFT'}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
+                        className="w-full h-full object-contain object-center group-hover:scale-105 transition-all duration-500"
                       />
                       <div className="absolute top-2 right-2 bg-primary text-white text-[8px] font-bold px-2 py-1 rounded-full uppercase">
                         {item.isSpecial ? '特别' : '已铸造'}
@@ -524,8 +524,8 @@ const Wardrobe: React.FC<WardrobeProps> = ({ onShare, onOpenShareHub, onOpenAuth
                 {selectedNft.serialNumber}
               </p>
             </div>
-            <div className="rounded-3xl overflow-hidden border border-white/10 mb-4">
-              <img src={selectedNft.image} alt={selectedNft.theme} className="w-full h-full object-cover" />
+            <div className="rounded-3xl overflow-hidden border border-white/10 mb-4 aspect-[3/4] bg-white/5 flex items-center justify-center">
+              <img src={selectedNft.image} alt={selectedNft.theme} className="w-full h-full object-contain object-center" />
             </div>
             <div className="flex flex-col gap-3">
               <div className="flex gap-3">
